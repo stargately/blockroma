@@ -168,7 +168,11 @@ export class ExplorerResolver {
         pageInfo: txsWithPageInfo.pageInfo,
       };
     } catch (err) {
-      logger.error(`failed to get transactions: ${err}: ${err.stack}`);
+      logger.error(
+        `failed to get transactions: ${err}: ${
+          err instanceof Error && err.stack
+        }`
+      );
       return {
         edges: [],
         pageInfo: emptyPage,

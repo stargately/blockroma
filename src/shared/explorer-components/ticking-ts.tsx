@@ -24,7 +24,7 @@ export function TickingTs({
     <span
       className={className}
       data-from-now={timestamp}
-      in-tile={Boolean(inTile)}
+      in-tile={String(Boolean(inTile))}
     >
       {val}
     </span>

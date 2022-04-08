@@ -13,6 +13,7 @@ Feature List
 - [x] realtime + catchup indexer, based on web3 JSONRPC and WSS APIs, for blocks, txs, and addresses.
 - [x] GraphQL APIs and PostgreSQL Data models for blocks, txs, and addresses.
 - [x] basic web UI for home page, search bar, blocks, txs, and addresses.
+- [x] dark mode and light mode.
 - [ ] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.

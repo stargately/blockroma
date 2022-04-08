@@ -42,7 +42,9 @@ export class ImporterService {
     } catch (err) {
       // TODO(dora): should handle error
       logger.error(
-        `failed to process range ${JSON.stringify(range)}, ${err} ${err.stack}`
+        `failed to process range ${JSON.stringify(range)}, ${err} ${
+          err instanceof Error && err.stack
+        }`
       );
     }
   }

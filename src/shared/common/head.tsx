@@ -2,7 +2,7 @@ import { assetURL } from "onefx/lib/asset-url";
 import { t } from "onefx/lib/iso-i18n";
 import { mobileViewPortContent } from "onefx/lib/iso-react-render/root/mobile-view-port-content";
 
-import { Helmet } from "onefx/lib/react-helmet";
+import { Helmet } from "react-helmet";
 import React from "react";
 import { useSelector } from "react-redux";
 import { noFlashColorMode } from "./no-flash-color-mode";
@@ -18,42 +18,37 @@ function HeadInner({
   gaMeasurementId: string;
 }): JSX.Element {
   return (
-    <Helmet
-      link={[
-        // PWA & mobile
-        { rel: "manifest", href: assetURL("manifest.json") },
-        { rel: "apple-touch-icon", href: "/favicon.svg" },
+    // @ts-ignore
+    <Helmet>
+      <title>
+        {t("meta.title")} - ${t("meta.description")}
+      </title>
+      <meta name="viewport" content={mobileViewPortContent} />
+      <meta name="description" content={t("meta.description")} />
+      <meta name="theme-color" content={colors.primary} />
+      <meta property="og:title" content={t("meta.title")} />
+      <meta property="og:description" content={t("meta.description")} />
+      <meta property="og:image" content={assetURL("favicon.png")} />
+      <meta property="twitter:card" content="summary_large_image" />
+      <link rel="manifest" href={assetURL("manifest.json")} />
+      <link rel="apple-touch-icon" href={assetURL("favicon.svg")} />
+      <link
+        rel="icon"
+        type="image/png"
+        sizes="any"
+        href={assetURL("favicon.png")}
+      />
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href={assetURL("stylesheets/non-critical.css")}
+      />
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="/stylesheets/main-page.css"
+      />
 
-        {
-          rel: "icon",
-          type: "image/png",
-          sizes: "any",
-          href: assetURL("favicon.png"),
-        },
-
-        // styles
-        {
-          rel: "stylesheet",
-          type: "text/css",
-          href: assetURL("stylesheets/non-critical.css"),
-        },
-        // {
-        //   rel:"stylesheet", href:"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css", integrity:"sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA==", crossorigin: "anonymous", referrerpolicy:"no-referrer"
-        // }
-      ]}
-      meta={[
-        { name: "viewport", content: mobileViewPortContent },
-        { name: "description", content: t("meta.description") },
-        { name: "theme-color", content: colors.primary },
-
-        // social
-        { property: "og:title", content: `${t("meta.title")}` },
-        { property: "og:description", content: t("meta.description") },
-        { property: "og:image", content: assetURL("favicon.png") },
-        { property: "twitter:card", content: "summary_large_image" },
-      ]}
-      title={`${t("meta.title")} - ${t("meta.description")}`}
-    >
       <html lang={locale} />
       <script type="text/javascript" nonce={nonce}>
         {noFlashColorMode({ defaultMode: "light" })}

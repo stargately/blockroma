@@ -9,7 +9,7 @@ export function manifestMiddleware() {
       // eslint-disable-next-line global-require
       manifest = require("../../../dist/asset-manifest.json");
     } catch (e) {
-      logger.info(`cannot load manifest: ${e.stack}`);
+      logger.info(`cannot load manifest: ${e instanceof Error && e.stack}`);
     }
     ctx.setState("base.manifest", manifest);
     await next();

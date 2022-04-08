@@ -47,7 +47,11 @@ export async function startServer(): Promise<Server> {
   mountBlockRealtimeFetcher(server);
 
   mountBlockCatchupFetcher({ server }).catch((err) => {
-    logger.error(`failed to mountBlockCatchupFetcher: ${err}\n${err.stack}`);
+    logger.error(
+      `failed to mountBlockCatchupFetcher: ${err}\n${
+        err instanceof Error && err.stack
+      }`
+    );
   });
 
   const port = Number(process.env.PORT || config.get("server.port"));

@@ -1,0 +1,76 @@
+@import "./mixins";
+
+/* Phoenix flash messages */
+.alert:empty {
+  display: none;
+}
+
+/* This file is for your main application css. */
+
+// Bootstrap Core CSS
+@import "../../../node_modules/bootstrap/scss/functions";
+@import "../../../node_modules/bootstrap/scss/variables";
+@import "../../../node_modules/bootstrap/scss/mixins";
+
+@import "theme/variables";
+
+@import "../../../node_modules/bootstrap/scss/root";
+@import "../../../node_modules/bootstrap/scss/reboot";
+@import "../../../node_modules/bootstrap/scss/grid";
+@import "../../../node_modules/bootstrap/scss/buttons";
+@import "../../../node_modules/bootstrap/scss/forms";
+@import "../../../node_modules/bootstrap/scss/input-group";
+@import "../../../node_modules/bootstrap/scss/utilities/spacing";
+@import "../../../node_modules/bootstrap/scss/utilities/sizing";
+@import "../../../node_modules/bootstrap/scss/utilities/display";
+@import "../../../node_modules/bootstrap/scss/utilities/flex";
+@import "../../../node_modules/bootstrap/scss/utilities/float";
+@import "../../../node_modules/bootstrap/scss/utilities/text";
+@import "../../../node_modules/bootstrap/scss/utilities/borders";
+
+// Bootstrap Components
+@import "../../../node_modules/bootstrap/scss/alert";
+@import "../../../node_modules/bootstrap/scss/badge";
+@import "../../../node_modules/bootstrap/scss/card";
+@import "../../../node_modules/bootstrap/scss/dropdown";
+@import "../../../node_modules/bootstrap/scss/forms";
+@import "../../../node_modules/bootstrap/scss/nav";
+@import "../../../node_modules/bootstrap/scss/navbar";
+@import "../../../node_modules/bootstrap/scss/transitions";
+
+//Custom theme
+@import "theme/fonts";
+
+// Custom SCSS
+@import "layout";
+@import "typography";
+@import "helpers";
+@import "elements";
+@import "components/nav_tabs";
+@import "components/address_link";
+@import "components/footer";
+@import "components/button";
+@import "components/navbar";
+@import "components/alerts";
+@import "components/animations";
+@import "components/card";
+@import "components/tile";
+@import "components/dashboard-banner";
+@import "components/badge";
+@import "components/nounderline-link";
+@import "components/dropdown";
+@import "components/btn_full";
+@import "components/btn_line";
+@import "components/stakes_variables";
+@import "components/btn_add_to_mm";
+@import "components/errors";
+@import "components/btn_no_border";
+@import "components/custom_tooltips";
+@import "components/label";
+@import "components/ad";
+@import "components/_search";
+@import "components/token_tile_view_more";
+// Font Awesome
+@import "components/_fontawesome_icon";
+
+@import "theme/dark-theme";

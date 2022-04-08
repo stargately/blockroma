@@ -1,0 +1,5 @@
+src/client/static/*
+src/client/stylesheets/*
+translations/*
+*.graphql
+src/shared/blockscout-web-js-lib/*

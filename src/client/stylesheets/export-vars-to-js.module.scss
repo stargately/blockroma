@@ -1,0 +1,32 @@
+@import "./mixins";
+
+// Bootstrap Core CSS
+@import "../../../node_modules/bootstrap/scss/functions";
+@import "../../../node_modules/bootstrap/scss/variables";
+@import "../../../node_modules/bootstrap/scss/mixins";
+
+@import "theme/variables";
+
+@import "../../../node_modules/bootstrap/scss/utilities/background";
+@import "../../../node_modules/bootstrap/scss/utilities/position";
+@import "../../../node_modules/bootstrap/scss/utilities/borders";
+@import "../../../node_modules/bootstrap/scss/progress";
+
+@import "components/navbar";
+@import "components/alerts";
+@import "components/stakes_variables";
+@import "components/stakes_table";
+@import "components/dashboard-banner";
+
+@import "theme/dark-theme";
+
+@import "theme/custom_contracts/dark-forest-theme";
+@import "theme/custom_contracts/circles-theme";
+
+
+:export {
+  dashboardBannerChartAxisFontColor: $dashboard-banner-chart-axis-font-color;
+  dashboardLineColorMarket: $dashboard-line-color-market;
+  dashboardLineColorPrice: $dashboard-line-color-price;
+  dashboardLineColorTransactions: $dashboard-line-color-transactions;
+}

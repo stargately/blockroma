@@ -1,0 +1,50 @@
+.i-tooltip-2 {
+    color: $i-tooltip-background;
+
+    &:hover {
+      color: $i-tooltip-background-active;
+    }
+}
+
+.color-inherit {
+  color: inherit;
+}
+
+// make it work with non jQuery based tooltip
+
+.i-tooltip-2 {
+  position: relative;
+  color: $i-tooltip-background;
+}
+
+.i-tooltip-2:hover::after {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  display: inline-block;
+  min-width: 120px;
+  padding: 5px;
+  margin: 0 auto;
+  color: #FFF;
+  text-align: center;
+  content: attr(title);
+  background: #000;
+  border-radius: 3px;
+  transform: translate(-50%, -100%);
+}
+
+.i-tooltip-2:hover::before {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  pointer-events: none;
+  content: " ";
+  border: solid transparent;
+  border-color: rgba(0, 0, 0, 0);
+  border-width: 5px;
+  border-top-color: #000;
+  transform: translate(0, 0);
+}

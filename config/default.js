@@ -4,7 +4,10 @@ config();
 const routePrefix = "";
 
 module.exports = {
-  project: "web-onefx-boilerplate",
+  project: "blockroma",
+  chain: {
+    endpoint: "https://api-testnet.boommo.com",
+  },
   server: {
     routePrefix,
     port: process.env.PORT || 4134,

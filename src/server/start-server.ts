@@ -12,6 +12,9 @@ import { Service, setService } from "./service";
 export type MyServer = Server & {
   gateways: Gateways;
   config: Config & {
+    chain: {
+      endpoint: string;
+    };
     indexer: {
       catchup: {
         enabled?: boolean;

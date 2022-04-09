@@ -20,6 +20,6 @@ export async function setGateways(server: MyServer): Promise<void> {
   }
 
   server.gateways.chainProvider = new ethers.providers.JsonRpcProvider(
-    "https://api-testnet.boommo.com"
+    server.config.chain.endpoint
   );
 }

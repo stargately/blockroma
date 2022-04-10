@@ -21,7 +21,7 @@ function HeadInner({
     // @ts-ignore
     <Helmet>
       <title>
-        {t("meta.title")} - ${t("meta.description")}
+        {t("meta.title")} - {t("meta.description")}
       </title>
       <meta name="viewport" content={mobileViewPortContent} />
       <meta name="description" content={t("meta.description")} />
@@ -46,7 +46,7 @@ function HeadInner({
       <link
         rel="stylesheet"
         type="text/css"
-        href="/stylesheets/main-page.css"
+        href={assetURL("stylesheets/main-page.css")}
       />
 
       <html lang={locale} />

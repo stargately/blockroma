@@ -76,4 +76,13 @@ export class Transaction {
 
   @Field(() => String)
   value?: string;
+
+  @Field(() => String)
+  revertReason?: string;
+
+  @Field(() => String)
+  maxPriorityFeePerGas?: Decimal;
+
+  @Field(() => String)
+  maxFeePerGas?: Decimal;
 }

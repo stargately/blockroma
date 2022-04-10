@@ -15,11 +15,19 @@ export async function setGateways(server: MyServer): Promise<void> {
       url: server.config.gateways.postgresql.uri,
       entities: [`${__dirname}/../../model/**/*{.js,.ts}`],
       synchronize: true,
-      ssl: true,
+      ssl: server.config.gateways.postgresql.ssl,
     });
   }
 
+  const chainConfig = server.config.chain;
   server.gateways.chainProvider = new ethers.providers.JsonRpcProvider(
-    server.config.chain.endpoint
+    {
+      url: chainConfig.rpcUrl,
+      timeout: 5000,
+    },
+    {
+      name: chainConfig.chainName,
+      chainId: chainConfig.chainId,
+    }
   );
 }

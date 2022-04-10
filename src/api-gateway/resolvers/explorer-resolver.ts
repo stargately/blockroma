@@ -194,10 +194,24 @@ export class ExplorerResolver {
         "NOT_FOUND"
       );
     }
-    // @ts-ignore
-    tx.id = txHashId("Transaction", tx.hash);
-    // @ts-ignore
-    return tx;
+    const txWithId = {
+      id: txHashId("Transaction", tx.hash),
+      ...tx,
+    };
+    if (txWithId.gasUsed === null) {
+      try {
+        const receipt = await ctx.gateways.chainProvider.getTransactionReceipt(
+          `0x${tx.hash.toString("hex")}`
+        );
+        return {
+          ...txWithId,
+          gasUsed: receipt.gasUsed.toString(),
+        };
+      } catch (e) {
+        logger.error(`failed to get receipt: ${e}`);
+      }
+    }
+    return txWithId;
   }
 
   @Query(() => Address)

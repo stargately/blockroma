@@ -139,8 +139,11 @@ type Transaction {
   id: ID!
   index: Int
   input: Buffer
+  maxFeePerGas: String
+  maxPriorityFeePerGas: String
   nonce: Int
   r: String
+  revertReason: String
   s: String
   status: Status
   timestamp: DateTime

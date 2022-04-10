@@ -57,13 +57,16 @@ export const BlkBlockItem: React.FC<Props> = ({ blk }) => {
             {/* transactions */}
             <span className="mr-2">{blk.numTxs} transactions</span>
             {/* size */}
-            <span className="mr-2"> {blk.size} bytes </span>
+            <span className="mr-2">
+              {" "}
+              {Number(blk.size).toLocaleString()} bytes{" "}
+            </span>
             {/* age */}
             <TickingTs timestamp={blk.timestamp} />
           </div>
           <div className="text-nowrap text-truncate mt-3 mt-md-0">
             {/* validator */}
-            Validator
+            Validator{" "}
             <a data-test="address_hash_link" href={`/address/${blk.miner}`}>
               <span data-address-hash={blk.miner}>
                 <span

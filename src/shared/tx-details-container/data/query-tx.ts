@@ -22,6 +22,9 @@ export const queryTx = gql`
       r
       s
       v
+      revertReason
+      maxPriorityFeePerGas
+      maxFeePerGas
     }
   }
 `;

@@ -46,7 +46,7 @@ export function BlkTile({ blk }: Props): JSX.Element {
             <TickingTs className="text-nowrap" timestamp={blk.timestamp} />
           </div>
           <div className="text-truncate">
-            Validator
+            Validator{" "}
             <a data-test="address_hash_link" href={`/address/${blk.miner}`}>
               <span data-address-hash={blk.miner}>
                 <span

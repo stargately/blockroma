@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { assetURL } from "onefx/lib/asset-url";
+import { useChainConfig } from "@/shared/common/use-chain-config";
 import { TOP_BAR_HEIGHT } from "./top-bar";
 
 const addChainToMM = require("../blockscout-web-js-lib/add_chain_to_mm");
@@ -12,7 +13,7 @@ export const FOOTER_ABOVE = {
 
 export function Footer(): JSX.Element {
   const [mmAdded, setMmAdded] = useState(false);
-
+  const chainConfig = useChainConfig();
   return (
     <footer className="footer">
       <div className="footer-body container">
@@ -97,7 +98,7 @@ export function Footer(): JSX.Element {
               <li>
                 <a
                   onClick={async () => {
-                    await setMmAdded(await addChainToMM());
+                    await setMmAdded(await addChainToMM(chainConfig));
                   }}
                   className="footer-link js-btn-add-chain-to-mm btn-add-chain-to-mm in-footer"
                   style={{ cursor: "pointer" }}

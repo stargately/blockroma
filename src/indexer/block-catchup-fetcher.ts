@@ -9,8 +9,8 @@ type TaskOpts = {
 
 export async function mountBlockCatchupFetcher(opts: TaskOpts): Promise<void> {
   const config = opts.server.config.indexer.catchup;
+  logger.info(`catchup indexer is enabled: ${config.enabled}`);
   if (!config.enabled) {
-    logger.info("indexer is not enabled");
     return;
   }
 

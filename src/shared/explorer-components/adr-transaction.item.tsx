@@ -2,6 +2,7 @@ import React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
 import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
+import { useChainConfig } from "@/shared/common/use-chain-config";
 import { Status } from "../../../__generated__/globalTypes";
 
 type AdrTx = {
@@ -35,6 +36,7 @@ export const AdrTransactionItem: React.FC<Props> = ({
   tx,
   selfAddressHash,
 }) => {
+  const chainConfig = useChainConfig();
   if (!tx) {
     return <></>;
   }
@@ -89,7 +91,7 @@ export const AdrTransactionItem: React.FC<Props> = ({
           </span>
           <span className="d-flex flex-md-row flex-column mt-3 mt-md-0">
             <span className="tile-title">
-              {normalizeTokenValue(tx.value)} BMO
+              {normalizeTokenValue(tx.value)} {chainConfig.symbol}
             </span>
             <span className="ml-0 ml-md-1 text-nowrap">
               {tx.gasUsed} TX Fee

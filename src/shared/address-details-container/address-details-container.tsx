@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router";
 import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { AddressTransactionsContainer } from "@/shared/address-details-container/address-transactions-container";
+import { useChainConfig } from "@/shared/common/use-chain-config";
 import { useGetAddr } from "./hooks/use-get-addr";
 import { QrModal } from "./components/qr-modal";
 import { CopyAddress } from "../explorer-components/copy-address";
@@ -17,6 +18,7 @@ export interface Addr {
 }
 
 export const AddressDetailsContainer: React.FC = () => {
+  const chainConfig = useChainConfig();
   const params = useParams<{ addressHash: string }>();
   const { addressHash } = params;
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -97,7 +99,7 @@ export const AddressDetailsContainer: React.FC = () => {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Address balance in BMO (doesn't include ERC20, ERC721, ERC1155 tokens)."
+                        title={`Address balance in ${chainConfig.symbol} (doesn't include ERC20, ERC721, ERC1155 tokens).`}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -107,7 +109,8 @@ export const AddressDetailsContainer: React.FC = () => {
                       className="col-sm-8 col-md-8 col-lg-9"
                       data-test="address_balance"
                     >
-                      {normalizeTokenValue(addr.fetchedCoinBalance)} BMO
+                      {normalizeTokenValue(addr.fetchedCoinBalance)}{" "}
+                      {chainConfig.symbol}
                       {/*
 
                       // TODO(dora) coin balance

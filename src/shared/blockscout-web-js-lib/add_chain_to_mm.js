@@ -1,13 +1,4 @@
-const mmCfg = {
-  chainId: 7778,
-  chainName: "BoomMo Chain",
-  symbol: "BMO",
-  rpcUrl: "https://api-testnet.boommo.com",
-  decimals: 18,
-  networkPath: "",
-}
-
-module.exports = async function addChainToMM () {
+module.exports = async function addChainToMM (mmCfg) {
   try {
     const chainID = await window.ethereum.request({ method: 'eth_chainId' })
     const chainIDFromEnvVar = mmCfg.chainId
@@ -31,7 +22,7 @@ module.exports = async function addChainToMM () {
     }
     return true;
   } catch (error) {
-    console.error(error)
+    console.error(`failed to add chain to metamask: ${error}`)
     return false;
   }
 }

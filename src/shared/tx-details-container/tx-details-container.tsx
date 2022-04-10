@@ -7,9 +7,20 @@ import { getGasUsedPercent } from "@/shared/common/get-gas-used-percent";
 import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
+import { useChainConfig } from "@/shared/common/use-chain-config";
+import { DataInput } from "../explorer-components/data-input";
 
 export function TxDetailsContainer(): JSX.Element {
   const params = useParams<{ txHash: string }>();
+  const chainConfig = useChainConfig();
+  function divDecimals(num?: string | null): string {
+    if (!num) {
+      return "0";
+    }
+    return (Number(num) / 10 ** chainConfig.decimals)
+      .toFixed(20)
+      .replace(/\.?0*$/, "");
+  }
   const { data, loading, error, refetch } = useQueryTx({ hash: params.txHash });
   if (loading) {
     // TODO(dora):
@@ -28,7 +39,7 @@ export function TxDetailsContainer(): JSX.Element {
   const tx = data?.transaction;
   let txFee = "0";
   try {
-    txFee = (Number(tx?.gas ?? 0) * Number(tx?.gasPrice ?? 0)).toString();
+    txFee = (Number(tx?.gasUsed ?? 0) * Number(tx?.gasPrice ?? 0)).toString();
   } catch (err) {
     console.error(`failed to calc txFee: ${err}`);
   }
@@ -272,7 +283,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {normalizeTokenValue(tx?.value)} BMO
+                      {normalizeTokenValue(tx?.value)} {chainConfig.symbol}
                       {/*
                       TODO(dora): coin balance price
 
@@ -335,7 +346,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {tx?.gasPrice} Gwei{" "}
+                      {divDecimals(tx?.gasPrice)} {chainConfig.symbol}{" "}
                     </dd>
                   </dl>
                   <dl className="row">
@@ -371,8 +382,54 @@ export function TxDetailsContainer(): JSX.Element {
                       </span>
                       Gas Limit
                     </dt>
-                    <dd className="col-sm-9 col-lg-10"> {tx?.gas} </dd>
+                    <dd className="col-sm-9 col-lg-10">
+                      {" "}
+                      {Number(tx?.gas).toLocaleString()}{" "}
+                    </dd>
                   </dl>
+                  <dl className="row">
+                    <dt className="col-sm-3 col-lg-2 text-muted">
+                      <span
+                        className="i-tooltip-2 "
+                        data-boundary="window"
+                        data-container="body"
+                        data-html="true"
+                        data-placement="top"
+                        data-toggle="tooltip"
+                        title="Maximum total amount per unit of gas a user is willing to pay for a transaction, including base fee and priority fee."
+                      >
+                        <i className="fa-solid fa-info-circle"></i>{" "}
+                      </span>
+                      Max Fee per Gas
+                    </dt>
+                    <dd className="col-sm-9 col-lg-10">
+                      {" "}
+                      {divDecimals(tx?.maxFeePerGas)} {chainConfig.symbol}
+                    </dd>
+                  </dl>
+
+                  <dl className="row">
+                    <dt className="col-sm-3 col-lg-2 text-muted">
+                      <span
+                        className="i-tooltip-2 "
+                        data-boundary="window"
+                        data-container="body"
+                        data-html="true"
+                        data-placement="top"
+                        data-toggle="tooltip"
+                        title="User defined maximum fee (tip) per unit of gas paid to validator for transaction prioritization."
+                      >
+                        <i className="fa-solid fa-info-circle"></i>{" "}
+                      </span>
+                      Max Priority Fee per Gas
+                    </dt>
+                    <dd className="col-sm-9 col-lg-10">
+                      {" "}
+                      {divDecimals(tx?.maxPriorityFeePerGas)}{" "}
+                      {chainConfig.symbol}
+                    </dd>
+                  </dl>
+
                   <dl className="row">
                     <dt className="col-sm-3 col-lg-2 text-muted transaction-gas-used">
                       <span
@@ -419,6 +476,27 @@ export function TxDetailsContainer(): JSX.Element {
                       {" "}
                       {tx?.nonce}
                       <span className="index-label ml-2">{tx?.index}</span>{" "}
+                    </dd>
+                  </dl>
+
+                  <dl className="row">
+                    <dt className="col-sm-3 col-lg-2 text-muted">
+                      <span
+                        className="i-tooltip-2 "
+                        data-boundary="window"
+                        data-container="body"
+                        data-html="true"
+                        data-placement="top"
+                        data-toggle="tooltip"
+                        title=""
+                        data-original-title="Binary data included with the transaction. See input / logs below for additional info."
+                      >
+                        <i className="fa-solid fa-info-circle"></i>{" "}
+                      </span>
+                      Raw Input
+                    </dt>
+                    <dd className="col-sm-9 col-lg-10">
+                      <DataInput input={tx?.input} />
                     </dd>
                   </dl>
                 </div>

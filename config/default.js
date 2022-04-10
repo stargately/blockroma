@@ -6,7 +6,12 @@ const routePrefix = "";
 module.exports = {
   project: "blockroma",
   chain: {
-    endpoint: "https://api-testnet.boommo.com",
+    chainId: 7778,
+    chainName: "BoomMo Chain",
+    symbol: "BMO",
+    rpcUrl: "https://api-testnet.boommo.com",
+    decimals: 18,
+    networkPath: "",
   },
   server: {
     routePrefix,
@@ -51,6 +56,7 @@ module.exports = {
     },
     postgresql: {
       uri: process.env.DATABASE_URL,
+      ssl: false,
     },
   },
   analytics: {

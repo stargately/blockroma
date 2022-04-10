@@ -16,6 +16,7 @@ export function setServerRoutes(server: MyServer): void {
 
   server.get("SPA", /^(?!\/?api-gateway\/).+$/, async (ctx: Context) => {
     ctx.setState("base.nonce", ctx.state.nonce);
+    ctx.setState("base.chain", server.config.chain);
 
     ctx.body = await apolloSSR(ctx, {
       VDom: <AppContainer />,

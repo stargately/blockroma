@@ -59,8 +59,8 @@ export class Transaction {
   @Column("numeric", { precision: 100 })
   gasPrice: string;
 
-  @Column("numeric", { precision: 100 })
-  gasUsed: string;
+  @Column("numeric", { precision: 100, nullable: true })
+  gasUsed?: string;
 
   @Column("integer")
   index: number;

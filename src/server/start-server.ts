@@ -4,6 +4,7 @@ import { setModel } from "@/model";
 import { mountBlockRealtimeFetcher } from "@/indexer/block-realtime-fetcher";
 import { mountBlockCatchupFetcher } from "@/indexer/block-catchup-fetcher";
 import { logger } from "onefx/lib/integrated-gateways/logger";
+import { ChainConfig } from "@/shared/common/use-chain-config";
 import { Gateways, setGateways } from "./gateway/gateway";
 import { setMiddleware } from "./middleware";
 import { setServerRoutes } from "./server-routes";
@@ -12,9 +13,7 @@ import { Service, setService } from "./service";
 export type MyServer = Server & {
   gateways: Gateways;
   config: Config & {
-    chain: {
-      endpoint: string;
-    };
+    chain: ChainConfig;
     indexer: {
       catchup: {
         enabled?: boolean;
@@ -28,6 +27,7 @@ export type MyServer = Server & {
     gateways: {
       postgresql: {
         uri: string;
+        ssl: boolean;
       };
     };
   };
@@ -42,6 +42,7 @@ export async function startServer(): Promise<Server> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const server: MyServer = new Server(config as any as Config) as MyServer;
   server.app.proxy = Boolean(config.get("server.proxy"));
+  logger.info(`chain config: ${JSON.stringify(server.config.chain, null, 2)}`);
   await setGateways(server);
   setMiddleware(server);
   setModel(server);

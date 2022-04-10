@@ -201,7 +201,7 @@ export function BlockDetailsContainer(): JSX.Element {
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Validator
+                      Validator{" "}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <span>
@@ -230,7 +230,9 @@ export function BlockDetailsContainer(): JSX.Element {
                       </span>
                       Size
                     </dt>
-                    <dd className="col-sm-9 col-lg-10">{size} bytes</dd>
+                    <dd className="col-sm-9 col-lg-10">
+                      {Number(size).toLocaleString()} bytes
+                    </dd>
                   </dl>
                   <dl className="row">
                     <dt className="col-sm-3 col-lg-2 text-muted">
@@ -303,7 +305,9 @@ export function BlockDetailsContainer(): JSX.Element {
                       </span>
                       Difficulty
                     </dt>
-                    <dd className="col-sm-9 col-lg-10">{difficulty}</dd>
+                    <dd className="col-sm-9 col-lg-10">
+                      {Number(difficulty).toLocaleString()}
+                    </dd>
                   </dl>
                   <dl className="row">
                     <dt className="col-sm-3 col-lg-2 text-muted">
@@ -320,7 +324,9 @@ export function BlockDetailsContainer(): JSX.Element {
                       </span>
                       Total Difficulty
                     </dt>
-                    <dd className="col-sm-9 col-lg-10">{totalDifficulty}</dd>
+                    <dd className="col-sm-9 col-lg-10">
+                      {Number(totalDifficulty).toLocaleString()}
+                    </dd>
                   </dl>
                   <dl className="row">
                     <dt className="col-sm-3 col-lg-2 text-muted">

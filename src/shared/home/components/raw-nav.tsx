@@ -1,6 +1,8 @@
 import React, { FormEventHandler, useEffect, useRef, useState } from "react";
 import { assetURL } from "onefx/lib/asset-url";
 import OutsideClickHandler from "react-outside-click-handler";
+import { useChainConfig } from "@/shared/common/use-chain-config";
+import { CommonMargin } from "@/shared/common/common-margin";
 import { DarkModeToggle } from "./dark-mode-toggle";
 
 function DesktopSearch(): JSX.Element {
@@ -233,6 +235,7 @@ function MobileSearch(): JSX.Element {
 
 export const RawNav: React.FC = () => {
   const [barClapsed, setBarClapsed] = useState(true);
+  const chainConfig = useChainConfig();
 
   return (
     <OutsideClickHandler onOutsideClick={() => setBarClapsed(true)}>
@@ -247,9 +250,10 @@ export const RawNav: React.FC = () => {
               className="navbar-logo"
               id="navbar-logo"
               src={assetURL("favicon.svg")}
-              alt="BMO"
+              alt={chainConfig.symbol}
             />
-            BoomMo Chain
+            <CommonMargin />
+            {chainConfig.chainName}
           </a>
           <button
             onClick={() => setBarClapsed(!barClapsed)}
@@ -391,7 +395,7 @@ export const RawNav: React.FC = () => {
                       <circle cx={3} cy={3} r={3} fill="#80d6a1" />
                     </svg>
                   </span>
-                  BMO Testnet
+                  {chainConfig.chainName}
                 </a>
                 {/*
               TODO(dora): multi chain

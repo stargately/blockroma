@@ -29,13 +29,15 @@ type RawTransaction = {
   hash: Hex;
   input: Hex;
   nonce: Hex;
-  to: Hex;
+  to?: Hex;
   transactionIndex: Hex;
   value: Hex;
   type: Hex;
   v: Hex;
   r: Hex;
   s: Hex;
+  maxFeePerGas?: Hex;
+  maxPriorityFeePerGas?: Hex;
 };
 
 type RawBlock = {
@@ -125,48 +127,6 @@ export class RemoteChainService {
         const processingTime = new Date();
         let cumulativeGasUsed = BigNumber.from(0);
 
-        for (const tx of block.transactions) {
-          const gas = BigNumber.from(tx.gas);
-          cumulativeGasUsed = cumulativeGasUsed.add(gas);
-
-          if (!addressMap[tx.from] || addressMap[tx.from] < blockNumber) {
-            addressMap[tx.from] = blockNumber;
-          }
-          if (!addressMap[tx.to] || addressMap[tx.to] < blockNumber) {
-            addressMap[tx.to] = blockNumber;
-          }
-
-          transactions.push({
-            block: hexToBuffer(block.hash),
-            hash: hexToBuffer(tx.hash),
-            blockNumber,
-            cumulativeGasUsed: cumulativeGasUsed.toString(),
-            earliestProcessingStart: processingTime,
-            error: "", // TODO(dora): how to?
-            gas: gas.toString(),
-            gasPrice: hexToDecimal(tx.gasPrice),
-            gasUsed: "0", // TODO(dora): how to?
-            index: hexToNumber(tx.transactionIndex),
-            // createdContractCodeIndexedAt: "", // TODO(dora)
-            input: hexToBuffer(tx.input),
-            nonce: hexToNumber(tx.nonce),
-            r: hexToDecimal(tx.r),
-            s: hexToDecimal(tx.s),
-            status: 1, // TODO(dora)
-            v: hexToDecimal(tx.v),
-            value: hexToDecimal(tx.value),
-            // revertReason: "", // TODO(dora)
-            // maxPriorityFeePerGas: "", // TODO(dora)
-            // maxFeePerGas: "", // TODO(dora)
-            // type: "", // TODO(dora)
-            fromAddress: hexToBuffer(tx.from),
-            fromAddressHash: hexToBuffer(tx.from),
-            toAddress: hexToBuffer(tx.to),
-            toAddressHash: hexToBuffer(tx.to),
-            timestamp,
-          });
-        }
-
         const bBlock: Block = {
           hash: hexToBuffer(block.hash),
           consensus: true, // TODO(dora): ?
@@ -184,10 +144,65 @@ export class RemoteChainService {
           parentHash: hexToBuffer(block.parentHash),
           miner: hexToBuffer(block.miner),
         };
-
         blockBatch.push(bBlock);
+
+        for (const tx of block.transactions) {
+          const gas = BigNumber.from(tx.gas);
+          cumulativeGasUsed = cumulativeGasUsed.add(gas);
+
+          if (!addressMap[tx.from] || addressMap[tx.from] < blockNumber) {
+            addressMap[tx.from] = blockNumber;
+          }
+          if (
+            tx.to &&
+            (!addressMap[tx.to] || addressMap[tx.to] < blockNumber)
+          ) {
+            addressMap[tx.to] = blockNumber;
+          }
+
+          try {
+            transactions.push({
+              block: hexToBuffer(block.hash),
+              hash: hexToBuffer(tx.hash),
+              blockNumber,
+              cumulativeGasUsed: cumulativeGasUsed.toString(),
+              earliestProcessingStart: processingTime,
+              error: "", // TODO(dora): how to?
+              gas: gas.toString(),
+              gasPrice: hexToDecimal(tx.gasPrice),
+              index: hexToNumber(tx.transactionIndex),
+              // createdContractCodeIndexedAt: "", // TODO(dora)
+              input: hexToBuffer(tx.input),
+              nonce: hexToNumber(tx.nonce),
+              r: hexToDecimal(tx.r),
+              s: hexToDecimal(tx.s),
+              status: 1, // TODO(dora)
+              v: hexToDecimal(tx.v),
+              value: hexToDecimal(tx.value),
+              // revertReason: "", // TODO(dora)
+              maxPriorityFeePerGas:
+                tx.maxPriorityFeePerGas &&
+                hexToDecimal(tx.maxPriorityFeePerGas),
+              maxFeePerGas: tx.maxFeePerGas && hexToDecimal(tx.maxFeePerGas),
+              type: hexToNumber(tx.type),
+              fromAddress: hexToBuffer(tx.from),
+              fromAddressHash: hexToBuffer(tx.from),
+              // @ts-ignore
+              toAddress: tx.to && hexToBuffer(tx.to), // TODO(tian) is null processed well?
+              // @ts-ignore
+              toAddressHash: tx.to && hexToBuffer(tx.to), // is null processed well?
+              timestamp,
+            });
+          } catch (err) {
+            logger.error(
+              `failed to process the transaction: ${JSON.stringify(
+                tx
+              )}: ${err} ${err instanceof Error && err.stack}`
+            );
+          }
+        }
       } catch (err) {
-        logger.error(`failed to fetch block ${i}`);
+        logger.error(`failed to fetch block ${i} and its transactions: ${err}`);
       }
     }
 

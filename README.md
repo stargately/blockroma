@@ -8,6 +8,8 @@ Blockroma is a blockchain explorer for Ethereum web3 compatible blockchains. It 
 
 ![blockroma-v0.1-demo](https://tp-misc.b-cdn.net/blockroma-v0.1-2.gif)
 
+> The project is still in development with an unstable version 0.1.0. As a result, there might be breaking changes before 1.0.0.
+
 Feature List
 
 - [x] realtime + catchup indexer, based on web3 JSONRPC and WSS APIs, for blocks, txs, and addresses.

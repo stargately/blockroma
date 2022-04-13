@@ -16,7 +16,7 @@ Feature List
 - [x] GraphQL APIs and PostgreSQL Data models for blocks, txs, and addresses.
 - [x] basic web UI for home page, search bar, blocks, txs, and addresses.
 - [x] dark mode and light mode.
-- [ ] i18n
+- [x] i18n / internationalization / multi-language / English, Japanese, Chinese
 - [ ] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { assetURL } from "onefx/lib/asset-url";
 import { useChainConfig } from "@/shared/common/use-chain-config";
+import { t } from "onefx/lib/iso-i18n";
 import { TOP_BAR_HEIGHT } from "./top-bar";
 
 const addChainToMM = require("../blockscout-web-js-lib/add_chain_to_mm");
@@ -30,10 +31,7 @@ export function Footer(): JSX.Element {
         </div>
         <div className="row">
           <div className="col-xs-12 col-lg-3">
-            <p className="footer-info-text">
-              Blockroma is a tool for inspecting and analyzing EVM based
-              blockchains. Blockchain explorer for Ethereum Networks.
-            </p>
+            <p className="footer-info-text">{t("meta.description")}</p>
             <div className="footer-social-icons">
               <a
                 href="https://github.com/stargately/blockroma"

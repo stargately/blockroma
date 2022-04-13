@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { AddressTransactionsContainer } from "@/shared/address-details-container/address-transactions-container";
 import { useChainConfig } from "@/shared/common/use-chain-config";
+import { t } from "onefx/lib/iso-i18n";
 import { useGetAddr } from "./hooks/use-get-addr";
 import { QrModal } from "./components/qr-modal";
 import { CopyAddress } from "../explorer-components/copy-address";
@@ -212,7 +213,7 @@ export const AddressDetailsContainer: React.FC = () => {
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Transactions
+                      {t("nav.txs")}
                     </dt>
                     <dd
                       className="col-sm-8 col-md-8 col-lg-9"
@@ -223,7 +224,7 @@ export const AddressDetailsContainer: React.FC = () => {
                         className="page-link bs-label large btn-no-border-link-to-tems"
                         data-selector="transaction-count"
                       >
-                        {addr.numTxs ?? 0} Transactions
+                        {addr.numTxs ?? 0} {t("nav.txs")}
                       </a>
                     </dd>
                   </dl>

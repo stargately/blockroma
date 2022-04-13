@@ -6,6 +6,7 @@ import { getGasUsedPercent } from "@/shared/common/get-gas-used-percent";
 import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
+import { t } from "onefx/lib/iso-i18n";
 import { BlockTransactions } from "./block-transactions";
 
 export function BlockDetailsContainer(): JSX.Element {
@@ -63,7 +64,7 @@ export function BlockDetailsContainer(): JSX.Element {
                 <div className="card-body fs-14" style={{ lineHeight: "32px" }}>
                   <dl className="pagination-container">
                     <h1 className="card-title" data-test="detail_type">
-                      Block Details
+                      {t("bk.block_details")}
                     </h1>
                     <ul className="pagination">
                       <li className="page-item">
@@ -93,7 +94,7 @@ export function BlockDetailsContainer(): JSX.Element {
                           href="#"
                           data-page-number
                         >
-                          Block {blockNumber}
+                          {t("bk.block")} {blockNumber}
                         </a>
                       </li>
                       <li className="page-item">
@@ -128,11 +129,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The block height of a particular block is defined as the number of blocks preceding it in the blockchain."
+                        title={t("bk.block_height.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Block Height
+                      {t("bk.block_height")}
                     </dt>
                     <dd
                       className="col-sm-9 col-lg-10"
@@ -150,11 +151,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Date & time at which block was produced."
+                        title={t("bk.timestamp.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Timestamp
+                      {t("bk.timestamp")}
                     </dt>
                     <dd
                       className="col-sm-9 col-lg-10"
@@ -173,18 +174,18 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The number of transactions in the block."
+                        title={t("bk.txs.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Transactions
+                      {t("bk.txs")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <a
                         href="#txs"
                         className="page-link bs-label large btn-no-border-link-to-tems"
                       >
-                        {numTxs} Transactions
+                        {numTxs} {t("nav.txs")}
                       </a>
                     </dd>
                   </dl>
@@ -197,11 +198,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="A block producer who successfully included the block onto the blockchain."
+                        title={t("bk.validator.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Validator{" "}
+                      {t("bk.validator")}{" "}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <span>
@@ -212,7 +213,10 @@ export function BlockDetailsContainer(): JSX.Element {
                           {miner}
                         </a>
                       </span>
-                      <CopyToClipboard value={miner} reason="Copy Address" />
+                      <CopyToClipboard
+                        value={miner}
+                        reason={t("bk.copy_address")}
+                      />
                     </dd>
                   </dl>
                   <dl className="row">
@@ -224,11 +228,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Size of the block in bytes."
+                        title={t("bk.size.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Size
+                      {t("bk.size")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {Number(size).toLocaleString()} bytes
@@ -243,16 +247,19 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The SHA256 hash of the block."
+                        title={t("bk.hash.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Hash
+                      {t("bk.hash")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {hash}
 
-                      <CopyToClipboard value={hash} reason="Copy Hash" />
+                      <CopyToClipboard
+                        value={hash}
+                        reason={t("bk.copy_hash")}
+                      />
                     </dd>
                   </dl>
 
@@ -265,11 +272,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The hash of the block from which this block was generated."
+                        title={t("bk.parent_hash.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Parent Hash
+                      {t("bk.parent_hash")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {blockNumber > 0 ? (
@@ -285,7 +292,7 @@ export function BlockDetailsContainer(): JSX.Element {
 
                       <CopyToClipboard
                         value={parentHash}
-                        reason="Copy Parent Hash"
+                        reason={t("bk.copy_parent_hash")}
                       />
                     </dd>
                   </dl>
@@ -299,11 +306,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Block difficulty for miner, used to calibrate block generation time (Note: constant in BMO based networks)."
+                        title={t("bk.difficulty.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Difficulty
+                      {t("bk.difficulty")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {Number(difficulty).toLocaleString()}
@@ -318,11 +325,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Total difficulty of the chain until this block."
+                        title={t("bk.total_difficulty.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Total Difficulty
+                      {t("bk.total_difficulty")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {Number(totalDifficulty).toLocaleString()}
@@ -337,11 +344,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The total gas amount used in the block and its percentage of gas filled in the block."
+                        title={t("bk.gas_used.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Gas Used
+                      {t("bk.gas_used")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {Number(gasUsed).toLocaleString()} | {gasUsedPercent}%
@@ -356,11 +363,11 @@ export function BlockDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Total gas limit provided by all transactions in the block."
+                        title={t("bk.gas_limit.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Gas Limit
+                      {t("bk.gas_limit")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {Number(gasLimit).toLocaleString()}
@@ -379,7 +386,7 @@ export function BlockDetailsContainer(): JSX.Element {
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Nonce
+                      {t("bk.once")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">{nonce}</dd>
                   </dl>
@@ -503,9 +510,6 @@ export function BlockDetailsContainer(): JSX.Element {
             </div>
           </div>
         </section>
-        <div className="ad-container mb-2" style={{}}>
-          <div className="coinzilla" data-zone="C-26660bf627543e46851" />
-        </div>
         <BlockTransactions blockNumber={blockNumber} />
       </section>
     </main>

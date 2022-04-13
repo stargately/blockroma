@@ -1,8 +1,8 @@
-bk.block: Block
+bk.block: ブロック
 
-bk.block_details: Block Details
+bk.block_details: ブロック
 
-bk.block_height: Block Height
+bk.block_height: ブロック高
 
 bk.block_height.tip: The block height of a particular block is defined as the number of blocks preceding it in the blockchain.
 
@@ -12,7 +12,7 @@ bk.copy_hash: Copy hash
 
 bk.copy_parent_hash: Copy Parent Hash
 
-bk.difficulty: Difficulty
+bk.difficulty: 難易度
 
 bk.difficulty.tip: 'Block difficulty for miner, used to calibrate block generation time.'
 
@@ -22,15 +22,17 @@ bk.gas_limit: Gas Limit
 
 bk.gas_limit.tip: Total gas limit provided by all transactions in the block.
 
-bk.gas_used: Gas Used
+bk.gas_used: ガス使用量
 
 bk.gas_used.tip: The total gas amount used in the block and its percentage of gas filled in the block.
 
-bk.hash: Hash
+bk.hash: ハッシュ
 
 bk.hash.tip: The hash of the block from which this block was generated.
 
-bk.parent_hash: Parent Hash
+bk.nonce: ナンス
+
+bk.parent_hash: 親ハッシュ
 
 bk.parent_hash.tip: The hash of the block from which this block was generated.
 
@@ -38,19 +40,19 @@ bk.size: Size
 
 bk.size.tip: Size of the block in bytes.
 
-bk.timestamp: Timestamp
+bk.timestamp: タイムスタンプ
 
 bk.timestamp.tip: Date & time at which block was produced.
 
-bk.total_difficulty: Total Difficulty
+bk.total_difficulty: 合計難易度
 
 bk.total_difficulty.tip: Total difficulty of the chain until this block.
 
-bk.txs: Transactions
+bk.txs: トランザクション
 
 bk.txs.tip: The number of transactions in the block.
 
-bk.validator: Validator
+bk.validator: マイナー
 
 bk.validator.tip: A block producer who successfully included the block onto the blockchain.
 
@@ -60,11 +62,11 @@ meta.description: Blockroma is a tool for inspecting and analyzing EVM based blo
 
 meta.title: Blockroma
 
-nav.blocks: Blocks
+nav.blocks: ブロック
 
-nav.search: 'Search by address, token symbol name, transaction hash, or block number'
+nav.search: アドレス/トランザクションハッシュ/ブロック/トークン/ENSで検索する
 
-nav.txs: Transactions
+nav.txs: トランザクション
 
 not_found.bar: Not Found
 
@@ -74,17 +76,17 @@ not_found.title: Oops!
 
 page.noscript: 'We’re sorry, some parts of the website don’t work properly without JavaScript enabled.'
 
-tx.block: Block
+tx.block: ブロック
 
 tx.block.tip: Block number containing the transaction.
 
 tx.copy_tx_hash: Copy Transaction Hash
 
-tx.fee: Transaction Fee
+tx.fee: トランザクション手数料
 
 tx.fee.tip: Total transaction fee.
 
-tx.from: From
+tx.from: 送信元
 
 tx.from.tip: Address (external or contract) sending the transaction.
 
@@ -92,7 +94,7 @@ tx.gas_limit: Gas Limit
 
 tx.gas_limit.tip: Maximum gas amount approved for the transaction.
 
-tx.gas_price: Gas Price
+tx.gas_price: Gas価格
 
 tx.gas_price.tip: Price per unit of gas specified by the sender. Higher gas prices can prioritize transaction inclusion during times of high usage.
 
@@ -110,11 +112,11 @@ tx.nonce.tip: Transaction number from the sending address. Each transaction sent
 
 tx.pos: Position
 
-tx.raw_input: Raw Input
+tx.raw_input: 入力情報
 
 tx.raw_input.tip: Binary data included with the transaction. See input / logs below for additional info.
 
-tx.result: Result
+tx.result: ステータス
 
 tx.result.tip: 'Current transaction state - Success, Failed (Error), or Pending (In Process)'
 
@@ -126,11 +128,11 @@ tx.timestamp: Timestamp
 
 tx.timestamp.tip: 'Date & time of transaction inclusion, including length of time for confirmation.'
 
-tx.to: To
+tx.to: 送信先
 
 tx.to.tip: Address (external or contract) receiving the transaction.
 
-tx.tx_details: Transaction Details
+tx.tx_details: トランザクションハッシュ
 
 tx.tx_hash: Transaction Hash
 
@@ -140,7 +142,7 @@ tx.tx_type: Transaction Type
 
 tx.tx_type.tip: 'Transaction type, introduced in EIP-2718.'
 
-tx.value: Value
+tx.value: 価格
 
 tx.value.tip: Value sent in the native token (and USD) if applicable.
 

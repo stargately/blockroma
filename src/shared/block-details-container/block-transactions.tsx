@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import * as React from "react";
 import { BlockTransactionsListContainer } from "@/shared/block-details-container/block-transactions-list-container";
+import { t } from "onefx/lib/iso-i18n";
 
 export function BlockTransactions({
   blockNumber,
@@ -15,7 +16,7 @@ export function BlockTransactions({
             className="card-tab active noCaret"
             to={`/block/${blockNumber}/transactions`}
           >
-            Transactions
+            {t("nav.txs")}
           </Link>
         </div>
 

@@ -4,6 +4,7 @@ import { TxsList } from "@/shared/explorer-components/txs-list";
 import { useLocation } from "onefx/lib/react-router";
 import { useHistory } from "react-router-dom";
 import { Pagination } from "@/shared/explorer-components/pagination";
+import { t } from "onefx/lib/iso-i18n";
 
 export const TxsTableContainer: React.FC = () => {
   return (
@@ -82,9 +83,7 @@ const TableWithPagination = () => {
           data-error-message
           className="alert alert-danger col-12 text-left"
         >
-          <span className="alert-link">
-            Something went wrong, click to reload.
-          </span>
+          <span className="alert-link">{t("info.err")}</span>
         </button>
       )}
 

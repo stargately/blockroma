@@ -8,6 +8,7 @@ import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard"
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
 import { useChainConfig } from "@/shared/common/use-chain-config";
+import { t } from "onefx/lib/iso-i18n";
 import { DataInput } from "../explorer-components/data-input";
 
 export function TxDetailsContainer(): JSX.Element {
@@ -66,7 +67,7 @@ export function TxDetailsContainer(): JSX.Element {
                         lineHeight: "25px",
                       }}
                     >
-                      Transaction Details
+                      {t("tx.tx_details")}
                     </div>
                   </h1>
 
@@ -79,11 +80,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Unique character string (TxID) assigned to every verified transaction."
+                        title={t("tx.tx_hash.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Transaction Hash
+                      {t("tx.tx_hash")}
                     </dt>
                     <dd
                       className="col-sm-9 col-lg-10"
@@ -98,7 +99,7 @@ export function TxDetailsContainer(): JSX.Element {
 
                       <CopyToClipboard
                         value={tx?.hash}
-                        reason="Copy Transaction Hash"
+                        reason={t("tx.copy_tx_hash")}
                       />
                     </dd>
                   </dl>
@@ -111,11 +112,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Current transaction state: Success, Failed (Error), or Pending (In Process)"
+                        title={t("tx.result.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Result
+                      {t("tx.result")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <TxStatus status={tx?.status} />
@@ -130,11 +131,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="The status of the transaction: Confirmed or Unconfirmed."
+                        title={t("tx.status.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Status
+                      {t("tx.status")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <span className="mr-4">
@@ -165,11 +166,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Block number containing the transaction."
+                        title={t("tx.block.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Block
+                      {t("tx.block")}
                     </dt>
                     <dd
                       className="col-sm-9 col-lg-10"
@@ -192,11 +193,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Date & time of transaction inclusion, including length of time for confirmation."
+                        title={t("tx.timestamp.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Timestamp
+                      {t("tx.timestamp")}
                     </dt>
                     <dd
                       className="col-sm-9 col-lg-10"
@@ -223,11 +224,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Address (external or contract) sending the transaction."
+                        title={t("tx.from.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      From
+                      {t("tx.from")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <a href={`/address/${tx?.fromAddressHash}`}>
@@ -249,11 +250,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Address (external or contract) receiving the transaction."
+                        title={t("tx.to.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      To
+                      {t("tx.to")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <a href={`/address/${tx?.toAddressHash}`}>
@@ -275,11 +276,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Value sent in the native token (and USD) if applicable."
+                        title={t("tx.value.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Value
+                      {t("tx.value")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
@@ -307,11 +308,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Total transaction fee."
+                        title={t("tx.fee.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Transaction Fee
+                      {t("tx.fee")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {txFee} Gwei
@@ -338,11 +339,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Price per unit of gas specified by the sender. Higher gas prices can prioritize transaction inclusion during times of high usage."
+                        title={t("tx.gas_price.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Gas Price
+                      {t("tx.gas_price")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
@@ -358,11 +359,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Transaction type, introduced in EIP-2718."
+                        title={t("tx.tx_type.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Transaction Type
+                      {t("tx.tx_type")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10"> 0 </dd>
                   </dl>
@@ -376,11 +377,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Maximum gas amount approved for the transaction."
+                        title={t("tx.gas_limit.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Gas Limit
+                      {t("tx.gas_limit")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
@@ -396,11 +397,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Maximum total amount per unit of gas a user is willing to pay for a transaction, including base fee and priority fee."
+                        title={t("tx.max_fee_per_gas.tip")}
                       >
                         <i className="fa-solid fa-info-circle"></i>{" "}
                       </span>
-                      Max Fee per Gas
+                      {t("tx.max_fee_per_gas")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
@@ -439,11 +440,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Actual gas amount used by the transaction."
+                        title="tx.gas_used.tip"
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Gas Used by Transaction
+                      {t("tx.gas_used")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
@@ -459,17 +460,17 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title="Transaction number from the sending address. Each transaction sent from an address increments the nonce by 1."
+                        title={t("tx.nonce.tip")}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
-                      Nonce
+                      {t("tx.nonce")}
                       <span
                         className="index-label ml-2"
                         data-toggle="tooltip"
                         title="Index position of Transaction in the block."
                       >
-                        Position
+                        {t("tx.pos")}
                       </span>
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
@@ -489,11 +490,11 @@ export function TxDetailsContainer(): JSX.Element {
                         data-placement="top"
                         data-toggle="tooltip"
                         title=""
-                        data-original-title="Binary data included with the transaction. See input / logs below for additional info."
+                        data-original-title={t("tx.raw_input.tip")}
                       >
                         <i className="fa-solid fa-info-circle"></i>{" "}
                       </span>
-                      Raw Input
+                      {t("tx.raw_input")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       <DataInput input={tx?.input} />

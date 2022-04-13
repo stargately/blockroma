@@ -56,7 +56,7 @@ bk.validator: マイナー
 
 bk.validator.tip: A block producer who successfully included the block onto the blockchain.
 
-info.err: 'Something went wrong, click to reload.'
+info.err: 何か問題が発生しました。クリックして再読み込みしてください。
 
 meta.description: Blockroma is a tool for inspecting and analyzing EVM based blockchains. Blockchain explorer for Ethereum Networks.
 

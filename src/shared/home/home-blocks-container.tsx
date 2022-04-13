@@ -1,6 +1,7 @@
 import React from "react";
 import { useQueryBlocks } from "@/shared/blks-table-container/hooks/use-query-blocks";
 import { BlkTile } from "@/shared/home/components/blk-tile";
+import { t } from "onefx/lib/iso-i18n";
 
 export const HomeBlocksContainer: React.FC = () => {
   const { data, loading, error, refetch } = useQueryBlocks(
@@ -21,7 +22,7 @@ export const HomeBlocksContainer: React.FC = () => {
         <a className="btn-line float-right" href="/blocks">
           View All Blocks
         </a>
-        <h2 className="card-title">Blocks</h2>
+        <h2 className="card-title">{t("nav.blocks")}</h2>
 
         {error && (
           <button
@@ -29,9 +30,7 @@ export const HomeBlocksContainer: React.FC = () => {
             className="alert alert-danger col-12 text-left"
             onClick={refetch}
           >
-            <span className="alert-link">
-              Something went wrong, click to reload.
-            </span>
+            <span className="alert-link">{t("info.err")}</span>
           </button>
         )}
 

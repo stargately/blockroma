@@ -3,6 +3,7 @@ import { assetURL } from "onefx/lib/asset-url";
 import OutsideClickHandler from "react-outside-click-handler";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { CommonMargin } from "@/shared/common/common-margin";
+import { t } from "onefx/lib/iso-i18n";
 import { DarkModeToggle } from "./dark-mode-toggle";
 
 function DesktopSearch(): JSX.Element {
@@ -54,7 +55,7 @@ function DesktopSearch(): JSX.Element {
       <div
         className="input-group"
         style={{ width: "100%" }}
-        title="Search by address, token symbol name, transaction hash, or block number"
+        title={t("nav.search")}
       >
         <div
           className={`form-control search-control me auto mobile-search-hide${fieldLabel}`}
@@ -77,7 +78,7 @@ function DesktopSearch(): JSX.Element {
               tabIndex={1}
               aria-controls="autoComplete_list_1"
               aria-autocomplete="both"
-              placeholder="Search by address, token symbol, name, transaction hash, or block number"
+              placeholder={t("nav.search")}
             />
             <ul id="autoComplete_list_1" role="listbox" hidden />
           </div>
@@ -166,7 +167,7 @@ function MobileSearch(): JSX.Element {
       <div
         className="input-group"
         style={{ width: "100%" }}
-        title="Search by address, token symbol name, transaction hash, or block number"
+        title={t("nav.search")}
       >
         <div
           className={`form-control search-control me auto mobile-search-show${fieldLabel}`}
@@ -189,7 +190,7 @@ function MobileSearch(): JSX.Element {
               tabIndex={1}
               aria-controls="autoComplete_list_2"
               aria-autocomplete="both"
-              placeholder="Search by address, token symbol, name, transaction hash, or block number"
+              placeholder={t("nav.search")}
             />
             <ul id="autoComplete_list_2" role="listbox" hidden />
           </div>
@@ -305,7 +306,7 @@ export const RawNav: React.FC = () => {
                       />
                     </svg>
                   </span>
-                  Blocks
+                  {t("nav.blocks")}
                 </a>
               </li>
               <li className="nav-item dropdown" id="activeTransactions">
@@ -336,7 +337,7 @@ export const RawNav: React.FC = () => {
                       />
                     </svg>
                   </span>
-                  Transactions
+                  {t("nav.txs")}
                 </a>
               </li>
               <li className="nav-item dropdown">

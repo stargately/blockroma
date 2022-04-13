@@ -1,6 +1,7 @@
 import React from "react";
 import { useGetTxs } from "@/shared/block-details-container/hooks/use-get-txs";
 import { TxsList } from "@/shared/explorer-components/txs-list";
+import { t } from "onefx/lib/iso-i18n";
 
 type Props = {
   blockNumber: number;
@@ -37,9 +38,7 @@ export const BlockTransactionsListContainer: React.FC<Props> = ({
           className="alert alert-danger col-12 text-left"
           onClick={refetch}
         >
-          <span className="alert-link">
-            Something went wrong, click to reload.
-          </span>
+          <span className="alert-link">{t("info.err")}</span>
         </button>
       )}
 
@@ -49,7 +48,7 @@ export const BlockTransactionsListContainer: React.FC<Props> = ({
             className="tile tile-muted text-center"
             data-selector="empty-transactions-list"
           >
-            There are no transactions for this block.
+            {t("bk.empty_txs")}
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import React from "react";
 import { AdrTransactionItem } from "@/shared/explorer-components/adr-transaction.item";
 import { useGetAddr } from "@/shared/address-details-container/hooks/use-get-addr";
+import { t } from "onefx/lib/iso-i18n";
 
 type Props = {
   addressHash: string;
@@ -51,7 +52,7 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
             </div>
           </div>
           <div className="clearfix">
-            <h2 className="card-title float-left">Transactions</h2>
+            <h2 className="card-title float-left">{t("nav.txs")}</h2>
           </div>
           <div
             data-selector="channel-batching-message"
@@ -74,9 +75,7 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
               className="alert alert-danger col-12 text-left"
               onClick={refetch}
             >
-              <span className="alert-link">
-                Something went wrong, click to reload.
-              </span>
+              <span className="alert-link">{t("info.err")}</span>
             </button>
           )}
 

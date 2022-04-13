@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useGetTxs } from "@/shared/block-details-container/hooks/use-get-txs";
 import { TxTransactionItem } from "@/shared/explorer-components/tx-transaction-item";
+import { t } from "onefx/lib/iso-i18n";
 
 //         TODO(dora): more tx coming in
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,7 +41,7 @@ export function HomeTransactionsContainer(): JSX.Element {
         <a className="btn-line float-right" href="/txs">
           View All Transactions
         </a>
-        <h2 className="card-title lg-card-title">Transactions</h2>
+        <h2 className="card-title lg-card-title"> {t("nav.txs")}</h2>
         {/*
         TODO(dora): more tx coming in
         <MoreTxComingIn/>
@@ -52,9 +53,7 @@ export function HomeTransactionsContainer(): JSX.Element {
             className="alert alert-danger col-12 text-left"
             onClick={refetch}
           >
-            <span className="alert-link">
-              Something went wrong, click to reload.
-            </span>
+            <span className="alert-link">{t("info.err")}</span>
           </button>
         )}
 

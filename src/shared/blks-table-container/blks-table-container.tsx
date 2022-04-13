@@ -4,6 +4,7 @@ import { BlkList } from "@/shared/explorer-components/blk-list";
 import { Pagination } from "@/shared/explorer-components/pagination";
 import { useHistory } from "react-router-dom";
 import { useLocation } from "onefx/lib/react-router";
+import { t } from "onefx/lib/iso-i18n";
 
 export const BlksTableContainer: React.FC = () => {
   return (
@@ -40,7 +41,9 @@ export const BlksTableContainer: React.FC = () => {
                 </span>
               </div>
             </div>
-            <h1 className="card-title list-title-description">Blocks</h1>
+            <h1 className="card-title list-title-description">
+              {t("nav.blocks")}
+            </h1>
 
             <TableWithPagination />
           </div>
@@ -81,9 +84,7 @@ const TableWithPagination = () => {
           data-error-message
           className="alert alert-danger col-12 text-left"
         >
-          <span className="alert-link">
-            Something went wrong, click to reload.
-          </span>
+          <span className="alert-link">{t("info.err")}</span>
         </button>
       )}
 

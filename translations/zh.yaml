@@ -1,0 +1,148 @@
+bk.block: 区块
+
+bk.block_details: 区块
+
+bk.block_height: 区块高度
+
+bk.block_height.tip: 区块高度是指区块链中连接在一起的区块数量。当新区块的开采，区块高度就会增加。
+
+bk.copy_address: 复制地址
+
+bk.copy_hash: 复制哈希
+
+bk.copy_parent_hash: 复制父哈希
+
+bk.difficulty: 难度值
+
+bk.difficulty.tip: 开采一个区块平均所需要的运算次数。 难度算法可能根据时间进行调整。
+
+bk.empty_txs: 此区块为空，不包含交易
+
+bk.gas_limit: 燃料限制
+
+bk.gas_limit.tip: 该区块中所有交易提供的总燃料限额。
+
+bk.gas_used: 燃料费用
+
+bk.gas_used.tip: 该区块中使用的燃料和使用率百分比。
+
+bk.hash: 哈希
+
+bk.hash.tip: 该区块的块头的哈希值。
+
+bk.once: Nonce
+
+bk.parent_hash: 父区块哈希值
+
+bk.parent_hash.tip: 生成此区块的区块哈希，也称为父块。
+
+bk.size: 容量
+
+bk.size.tip: 区块容量取决于燃料限制。
+
+bk.timestamp: 时间戳
+
+bk.timestamp.tip: 开采该区块的日期和时间。
+
+bk.total_difficulty: 总难度值
+
+bk.total_difficulty.tip: 区块高度的总难度。
+
+bk.txs: 交易
+
+bk.txs.tip: 该区块中的交易数量。内部交易是由合约执行而产生和涉及以太价值的交易。
+
+bk.validator: 矿工
+
+bk.validator.tip: 成功将区块纳入区块链的矿工。
+
+info.err: 'Something went wrong, click to reload.'
+
+meta.description: Blockroma 是一款查看和分析 EVM 兼容的区块链工具，区块链浏览器
+
+meta.title: Blockroma
+
+nav.blocks: 区块
+
+nav.search: 搜索地址/代币/事务哈希/区块编号
+
+nav.txs: 交易
+
+not_found.bar: 查无此页
+
+not_found.info: 我们无法替你找到此页面...
+
+not_found.title: 悲剧!
+
+page.noscript: 抱歉如果你没有开启 JavaScript，那么此网站的某些内容无法正常运行
+
+tx.block: 区块
+
+tx.block.tip: 交易数据记录的区块高度。区块确认是此区块与最新区块之间的距离。
+
+tx.copy_tx_hash: 复制交易哈希
+
+tx.fee: 交易费用
+
+tx.fee.tip: 支付给矿工用于处理交易的费用。
+
+tx.from: 发送方
+
+tx.from.tip: 交易的发送方（可能来自合约地址）。
+
+tx.gas_limit: Gas Limit
+
+tx.gas_limit.tip: Maximum gas amount approved for the transaction.
+
+tx.gas_price: 燃料价格
+
+tx.gas_price.tip: 交易指定的每单位燃料成本。燃料费用越高，被写入区块的机会就越大。
+
+tx.gas_used: Gas Used by Transaction
+
+tx.gas_used.tip: Actual gas amount used by the transaction.
+
+tx.max_fee_per_gas: Max Fee per Gas
+
+tx.max_fee_per_gas.tip: 'Maximum total amount per unit of gas a user is willing to pay for a transaction, including base fee and priority fee.'
+
+tx.nonce: Nonce
+
+tx.nonce.tip: Transaction number from the sending address. Each transaction sent from an address increments the nonce by 1.
+
+tx.pos: Position
+
+tx.raw_input: 数据输入
+
+tx.raw_input.tip: 自定义数据，把您想要记录的数据写入该交易
+
+tx.result: Result
+
+tx.result.tip: 'Current transaction state - Success, Failed (Error), or Pending (In Process)'
+
+tx.status: 状态
+
+tx.status.tip: 交易状态。
+
+tx.timestamp: 时间戳
+
+tx.timestamp.tip: 交易数据记录的日期和时间。
+
+tx.to: 接收方
+
+tx.to.tip: 交易的接收方（可以是合约地址）。
+
+tx.tx_details: 交易明细
+
+tx.tx_hash: 交易哈希
+
+tx.tx_hash.tip: 交易哈希是一个唯一的66字符的标识符，该标识符在每次交易执行时都会生成。
+
+tx.tx_type: 交易类型
+
+tx.tx_type.tip: EIP-2718 定义的交易类型。
+
+tx.value: 价值
+
+tx.value.tip: 该交易价值是以以太币和法定价值显示。注意：您可以单击法定价值（如果有），以查看交易时的历史价值。
+

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
+import { t } from "onefx/lib/iso-i18n";
 
 export type Blk = {
   consensus: boolean | null;
@@ -42,7 +43,9 @@ export function BlkTile({ blk }: Props): JSX.Element {
         </a>
         <div className="tile-bottom-contents">
           <div className="tile-transactions">
-            <span className="mr-2">{blk.numTxs} Transactions</span>
+            <span className="mr-2">
+              {blk.numTxs} {t("nav.txs")}
+            </span>
             <TickingTs className="text-nowrap" timestamp={blk.timestamp} />
           </div>
           <div className="text-truncate">

@@ -32,6 +32,8 @@ bk.hash.tip: The hash of the block from which this block was generated.
 
 bk.nonce: ナンス
 
+bk.once: ナンス
+
 bk.parent_hash: 親ハッシュ
 
 bk.parent_hash.tip: The hash of the block from which this block was generated.

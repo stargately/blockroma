@@ -30,6 +30,8 @@ bk.hash: 哈希
 
 bk.hash.tip: 该区块的块头的哈希值。
 
+bk.once: Nonce
+
 bk.parent_hash: 父区块哈希值
 
 bk.parent_hash.tip: 生成此区块的区块哈希，也称为父块。

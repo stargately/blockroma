@@ -82,6 +82,12 @@ export class IndexedChainService {
       .execute();
   }
 
+  async updateTxGasUsed(txHash: Buffer, gasUsed: string): Promise<void> {
+    await this.server.gateways.dbCon
+      .getRepository(Transaction)
+      .update({ hash: txHash }, { gasUsed });
+  }
+
   async getTransactionByHash(hash: Buffer): Promise<Transaction | null> {
     const txs = await this.getTransactions(
       { txHash: hash },

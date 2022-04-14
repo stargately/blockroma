@@ -148,6 +148,7 @@ type Transaction {
   status: Status
   timestamp: DateTime
   toAddressHash: Buffer
+  type: Int
   v: String
   value: String
 }

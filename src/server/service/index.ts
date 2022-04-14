@@ -1,4 +1,4 @@
-import { RemoteChainService } from "@/server/service/remote-chain-service";
+import { RemoteChainService } from "@/server/service/remote-chain-service/remote-chain-service";
 import { MyServer } from "@/server/start-server";
 import { IndexedChainService } from "@/server/service/indexed-chain-service";
 import { ImporterService } from "@/server/service/importer-service";

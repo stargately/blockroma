@@ -59,6 +59,9 @@ export class Transaction {
   @Field(() => Int)
   nonce?: number;
 
+  @Field(() => Int)
+  type?: number;
+
   @Field(() => String)
   r?: string;
 

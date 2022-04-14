@@ -98,6 +98,7 @@ export class Transaction {
   @Column("numeric", { precision: 100, nullable: true })
   maxFeePerGas?: string;
 
+  // `type` - New transaction type identifier introduced in EIP 2718 (Berlin HF)
   @Column("integer", { nullable: true })
   type?: number;
 

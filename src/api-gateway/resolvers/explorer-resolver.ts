@@ -203,9 +203,11 @@ export class ExplorerResolver {
         const receipt = await ctx.gateways.chainProvider.getTransactionReceipt(
           `0x${tx.hash.toString("hex")}`
         );
+        const gasUsed = receipt.gasUsed.toString();
+        await ctx.service.indexedChainService.updateTxGasUsed(tx.hash, gasUsed);
         return {
           ...txWithId,
-          gasUsed: receipt.gasUsed.toString(),
+          gasUsed,
         };
       } catch (e) {
         logger.error(`failed to get receipt: ${e}`);

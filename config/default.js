@@ -56,7 +56,7 @@ module.exports = {
     },
     postgresql: {
       uri: process.env.DATABASE_URL,
-      ssl: false,
+      ssl: !String(process.env.DATABASE_URL).includes("localhost"),
     },
   },
   analytics: {

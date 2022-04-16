@@ -3,6 +3,7 @@ import { Block } from "@/model/block";
 import { Transaction } from "@/model/transaction";
 import { Address } from "@/model/address";
 import * as Relay from "graphql-relay";
+import { Token } from "@/model/token";
 
 export class IndexedChainService {
   server: MyServer;
@@ -51,6 +52,9 @@ export class IndexedChainService {
   }
 
   async insertTransactions(transactions: Array<Transaction>): Promise<void> {
+    if (!transactions.length) {
+      return;
+    }
     await this.server.gateways.dbCon
       .createQueryBuilder()
       .insert()
@@ -295,6 +299,14 @@ export class IndexedChainService {
       data: [],
       pageInfo: emptyPage,
     };
+  }
+
+  async getToken(
+    tokenContractAddressHash: Buffer | undefined
+  ): Promise<Token | null> {
+    return this.server.gateways.dbCon
+      .getRepository(Token)
+      .findOneBy({ contractAddress: tokenContractAddressHash });
   }
 }
 

@@ -101,6 +101,7 @@ type Query {
 
   # is the server healthy?
   health: String
+  token(tokenContractAddressHash: Buffer!): Token
   transaction(hash: Buffer!): Transaction
   transactions(
     # Paginate after opaque cursor
@@ -121,6 +122,16 @@ type Query {
 enum Status {
   ERROR
   OK
+}
+
+type Token {
+  contractAddress: Buffer
+  decimals: String
+  name: String
+  skipMetadata: Boolean
+  symbol: String
+  totalSupply: String
+  type: String
 }
 
 # Models a Web3 transaction.

@@ -13,6 +13,12 @@ import {
   hexToNumber,
 } from "@/server/service/remote-chain-service/hex-utils";
 import { parseTransaction } from "@/server/service/remote-chain-service/parse-transaction";
+import {
+  parseTokenTransfers,
+  RawToken,
+  transferFunctionSignature,
+} from "@/server/service/remote-chain-service/parse-token-transfer";
+import { TokenTransfer } from "@/model/token-transfer";
 
 function maybeAddToAddress(
   addressMap: Record<string, number>,
@@ -67,6 +73,8 @@ export class RemoteChainService {
     blocks: Array<Block>;
     transactions: Array<Transaction>;
     addresses: Array<Address>;
+    tokenTransfers: TokenTransfer[];
+    tokensByAddresses: Record<string, RawToken>;
   }> {
     const min = Math.min(start, end);
     const max = Math.max(start, end);
@@ -75,6 +83,8 @@ export class RemoteChainService {
     const addressMap: Record<string, number> = {};
     // TODO(dora): should optimize
     const blockBatch: Array<Block> = [];
+    const tokensByAddresses: Record<string, RawToken> = {};
+    let tokenTransfers: TokenTransfer[] = [];
 
     for (let i = max; i >= min; i -= 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -85,6 +95,8 @@ export class RemoteChainService {
 
       const processingTime = new Date();
       let cumulativeGasUsed = BigNumber.from(0);
+
+      console.log(JSON.stringify(rawBlock, null, 2));
 
       const block = parseBlock(rawBlock);
       if (block) {
@@ -110,6 +122,40 @@ export class RemoteChainService {
           if (transaction) {
             transactions.push(transaction);
           }
+
+          if (tx.input.startsWith(transferFunctionSignature)) {
+            const receipt =
+              // eslint-disable-next-line no-await-in-loop
+              await this.server.gateways.chainProvider.getTransactionReceipt(
+                tx.hash
+              );
+            const { tokens: rawTokens, tokenTransfers: tt } =
+              parseTokenTransfers(receipt.logs);
+            rawTokens.forEach((r) => {
+              tokensByAddresses[r.contractAddress.toString()] = r;
+            });
+            tokenTransfers = [...tokenTransfers, ...tt];
+            for (const t of tokenTransfers) {
+              t.toAddress &&
+                maybeAddToAddress(
+                  addressMap,
+                  blockNumber,
+                  `0x${t.toAddress.toString("hex")}`
+                );
+              t.fromAddress &&
+                maybeAddToAddress(
+                  addressMap,
+                  blockNumber,
+                  `0x${t.fromAddress.toString("hex")}`
+                );
+              t.tokenContractAddress &&
+                maybeAddToAddress(
+                  addressMap,
+                  blockNumber,
+                  `0x${t.tokenContractAddress.toString("hex")}`
+                );
+            }
+          }
         }
       }
     }
@@ -120,6 +166,8 @@ export class RemoteChainService {
       blocks: blockBatch,
       transactions,
       addresses,
+      tokensByAddresses,
+      tokenTransfers,
     };
   }
 
@@ -137,14 +185,21 @@ export class RemoteChainService {
       })
     );
 
-    const balances = await Promise.all(
+    // TODO(tian) should handle error
+    const toSettle = await Promise.allSettled(
       addresses.map((address) => address.coinBalancePromise)
     );
+    const balances = toSettle.map((t) => {
+      if (t.status !== "rejected") {
+        return t.value;
+      }
+      return undefined;
+    });
 
     return addresses.map((address, i) => ({
       hash: address.hash,
       fetchedCoinBalanceBlockNumber: address.fetchedCoinBalanceBlockNumber,
-      fetchedCoinBalance: balances[i].toString(),
+      fetchedCoinBalance: (balances[i] ?? 0).toString(),
       decompiled: false,
       verified: false,
     }));

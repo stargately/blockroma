@@ -15,6 +15,7 @@ import { logger } from "onefx/lib/integrated-gateways/logger";
 import { emptyPage } from "@/server/service/indexed-chain-service";
 import * as Relay from "graphql-relay";
 import QRCode from "qrcode";
+import { Token } from "@/api-gateway/resolvers/types/token-type";
 
 @ArgsType()
 class BlockRequest {
@@ -26,6 +27,12 @@ class BlockRequest {
 class AddressRequest {
   @Field(() => BufferScalar, { nullable: false })
   hash: Buffer;
+}
+
+@ArgsType()
+class TokenRequest {
+  @Field(() => BufferScalar, { nullable: false })
+  tokenContractAddressHash?: Buffer;
 }
 
 @ArgsType()
@@ -240,5 +247,22 @@ export class ExplorerResolver {
       hashQr: await QRCode.toDataURL(`0x${address.hash.toString("hex")}`),
       numTxs,
     };
+  }
+
+  @Query(() => Token)
+  async token(
+    @Args() request: TokenRequest,
+    @Ctx() ctx: ResolverContext
+  ): Promise<Token> {
+    const token = await ctx.service.indexedChainService.getToken(
+      request.tokenContractAddressHash
+    );
+    if (!token) {
+      throw new ApolloError(
+        `Token contract address hash 0x${request.tokenContractAddressHash} was not found.`,
+        "NOT_FOUND"
+      );
+    }
+    return token;
   }
 }

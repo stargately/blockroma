@@ -1,10 +1,7 @@
 module.exports = {
   indexer: {
     catchup: {
-      enabled: true,
-      blocksBatchSize: 1,
-
-      blockNumberRanges: [[221312, 221312]],
+      enabled: false,
     },
     realtime: {
       enabled: false,

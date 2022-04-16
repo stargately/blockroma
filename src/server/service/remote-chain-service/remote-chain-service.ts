@@ -96,8 +96,6 @@ export class RemoteChainService {
       const processingTime = new Date();
       let cumulativeGasUsed = BigNumber.from(0);
 
-      console.log(JSON.stringify(rawBlock, null, 2));
-
       const block = parseBlock(rawBlock);
       if (block) {
         blockBatch.push(block);

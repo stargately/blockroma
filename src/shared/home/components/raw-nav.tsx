@@ -4,6 +4,7 @@ import OutsideClickHandler from "react-outside-click-handler";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { CommonMargin } from "@/shared/common/common-margin";
 import { t } from "onefx/lib/iso-i18n";
+import { MultiChainDropdown } from "@/shared/home/components/multi-chain-dropdown";
 import { DarkModeToggle } from "./dark-mode-toggle";
 
 function DesktopSearch(): JSX.Element {
@@ -246,7 +247,11 @@ export const RawNav: React.FC = () => {
         id="top-navbar"
       >
         <div className="container-fluid navbar-container">
-          <a className="navbar-brand" data-test="header_logo" href="/">
+          <a
+            className="navbar-brand"
+            data-test="header_logo"
+            href={assetURL("")}
+          >
             <img
               className="navbar-logo"
               id="navbar-logo"
@@ -276,7 +281,7 @@ export const RawNav: React.FC = () => {
               <li className="nav-item dropdown">
                 <a
                   className="nav-link topnav-nav-link"
-                  href="/blocks"
+                  href={assetURL("blocks")}
                   id="navbarBlocksDropdown"
                   role="button"
                   data-toggle="dropdown"
@@ -311,7 +316,7 @@ export const RawNav: React.FC = () => {
               </li>
               <li className="nav-item dropdown" id="activeTransactions">
                 <a
-                  href="/txs"
+                  href={assetURL("txs")}
                   role="button"
                   id="navbarTransactionsDropdown"
                   className="nav-link topnav-nav-link"
@@ -342,7 +347,7 @@ export const RawNav: React.FC = () => {
               </li>
               <li className="nav-item dropdown">
                 <a
-                  href="/api-gateway/"
+                  href={assetURL("api-gateway/")}
                   role="button"
                   id="navbarAPIsDropdown"
                   className="nav-link topnav-nav-link"
@@ -376,100 +381,8 @@ export const RawNav: React.FC = () => {
                   API
                 </a>
               </li>
-              <li className="nav-item dropdown">
-                <a
-                  className="nav-link topnav-nav-link active-icon js-show-network-selector"
-                  href="#"
-                  id="navbarDropdown"
-                  role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  <span className="nav-link-icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width={6}
-                      height={6}
-                      className="active-dot-icon"
-                    >
-                      <circle cx={3} cy={3} r={3} fill="#80d6a1" />
-                    </svg>
-                  </span>
-                  {chainConfig.chainName}
-                </a>
-                {/*
-              TODO(dora): multi chain
-                            <div
-                className="dropdown-menu dropdown-menu-right"
-                aria-labelledby="navbarDropdown"
-              >
-                <a className="dropdown-item header division">Mainnets</a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/"
-                >
-                  Arbitrum on BMO
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/eth/mainnet/"
-                >
-                  Ethereum
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/etc/mainnet"
-                >
-                  Ethereum Classic
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/xdai/mainnet"
-                >
-                  Gnosis Chain
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/xdai/optimism"
-                >
-                  Optimism on Gnosis Chain
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/rsk/mainnet"
-                >
-                  RSK
-                </a>
-                <a className="dropdown-item header division">Testnets</a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/xdai/testnet"
-                >
-                  Gnosis Chain Testnet
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/poa/sokol"
-                >
-                  Sokol
-                </a>
-                <a className="dropdown-item header division">Other Networks</a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/artis/sigma1"
-                >
-                  ARTIS Σ
-                </a>
-                <a
-                  className="dropdown-item"
-                  href="https://blockroma.com/lukso/l14"
-                >
-                  LUKSO L14
-                </a>
-              </div>
-              */}
-              </li>
+
+              <MultiChainDropdown chainName={chainConfig.chainName} />
             </ul>
             <DarkModeToggle />
             <DesktopSearch />

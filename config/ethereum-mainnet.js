@@ -1,4 +1,7 @@
 module.exports = {
+  server: {
+    routePrefix: "/eth/mainnet",
+  },
   chain: {
     chainId: 1,
     chainName: "Ethereum",

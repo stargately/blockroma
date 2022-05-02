@@ -1,4 +1,5 @@
 import React from "react";
+import { assetURL } from "onefx/lib/asset-url";
 
 export const TxContractCallItem: React.FC = () => {
   const blockNumber = 123;
@@ -84,7 +85,7 @@ export const TxContractCallItem: React.FC = () => {
         {/* Block info */}
         <div className="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0 tile-bottom">
           <span className="mr-2 mr-md-0 order-1">
-            <a href={`/block/${blockNumber}`}>Block #26559654</a>
+            <a href={assetURL(`block/${blockNumber}`)}>Block #26559654</a>
           </span>
           <span
             className="mr-2 mr-md-0 order-2"

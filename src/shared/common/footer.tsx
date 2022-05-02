@@ -20,7 +20,7 @@ export function Footer(): JSX.Element {
       <div className="footer-body container">
         <div className="row footer-logo-row">
           <div className="col-md-12">
-            <a className="footer-brand" href="/">
+            <a className="footer-brand" href={assetURL("")}>
               <img
                 className="footer-logo"
                 src={assetURL("favicon.png")}

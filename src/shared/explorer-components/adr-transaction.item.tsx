@@ -3,6 +3,7 @@ import { shortenHash } from "@/shared/common/shorten-hash";
 import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import { useChainConfig } from "@/shared/common/use-chain-config";
+import { assetURL } from "onefx/lib/asset-url";
 import { Status } from "../../../__generated__/globalTypes";
 
 type AdrTx = {
@@ -72,7 +73,7 @@ export const AdrTransactionItem: React.FC<Props> = ({
             <a
               className="text-truncate"
               data-test="transaction_hash_link"
-              href={`/tx/${tx.hash}`}
+              href={assetURL(`tx/${tx.hash}`)}
             >
               {tx.hash}
             </a>
@@ -147,7 +148,7 @@ function MaybeClickableAddress({
   );
   if (hash !== self) {
     return (
-      <a data-test="address_hash_link" href={`/address/${hash}`}>
+      <a data-test="address_hash_link" href={assetURL(`address/${hash}`)}>
         {addr}
       </a>
     );

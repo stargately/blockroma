@@ -1,5 +1,6 @@
 import React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
+import { assetURL } from "onefx/lib/asset-url";
 import { TickingTs } from "./ticking-ts";
 
 export type Blk = {
@@ -67,7 +68,10 @@ export const BlkBlockItem: React.FC<Props> = ({ blk }) => {
           <div className="text-nowrap text-truncate mt-3 mt-md-0">
             {/* validator */}
             Validator{" "}
-            <a data-test="address_hash_link" href={`/address/${blk.miner}`}>
+            <a
+              data-test="address_hash_link"
+              href={assetURL(`address/${blk.miner}`)}
+            >
               <span data-address-hash={blk.miner}>
                 <span
                   data-toggle="tooltip"

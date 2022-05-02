@@ -1,3 +1,4 @@
+@import "./components/route_prefix";
 @import "./mixins";
 
 /* Phoenix flash messages */
@@ -8,7 +9,7 @@
 /* This file is for your main application css. */
 
 // Font Awesome
-$fa-font-path: "/webfonts";
+$fa-font-path: $route-prefix + "/webfonts";
 @import "../../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";
 @import "../../../node_modules/@fortawesome/fontawesome-free/scss/brands";
 @import "../../../node_modules/@fortawesome/fontawesome-free/scss/regular";

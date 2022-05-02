@@ -2,6 +2,7 @@ import * as React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import { t } from "onefx/lib/iso-i18n";
+import { assetURL } from "onefx/lib/asset-url";
 
 export type Blk = {
   consensus: boolean | null;
@@ -37,7 +38,7 @@ export function BlkTile({ blk }: Props): JSX.Element {
         <a
           className="tile-title"
           data-selector="block-number"
-          href={`/block/${blk.number}`}
+          href={assetURL(`block/${blk.number}`)}
         >
           {blk.number}
         </a>
@@ -50,7 +51,10 @@ export function BlkTile({ blk }: Props): JSX.Element {
           </div>
           <div className="text-truncate">
             Validator{" "}
-            <a data-test="address_hash_link" href={`/address/${blk.miner}`}>
+            <a
+              data-test="address_hash_link"
+              href={assetURL(`address/${blk.miner}`)}
+            >
               <span data-address-hash={blk.miner}>
                 <span
                   data-toggle="tooltip"

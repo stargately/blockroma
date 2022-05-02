@@ -2,6 +2,7 @@ import React from "react";
 import { AdrTransactionItem } from "@/shared/explorer-components/adr-transaction.item";
 import { useGetAddr } from "@/shared/address-details-container/hooks/use-get-addr";
 import { t } from "onefx/lib/iso-i18n";
+import { assetURL } from "onefx/lib/asset-url";
 
 type Props = {
   addressHash: string;
@@ -28,14 +29,14 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
         <div className="card-tabs js-card-tabs">
           <a
             className="card-tab active"
-            href="/address/0x11f3fb5677c84131377bd9762ee2ef451eef47db/transactions"
+            href={assetURL(`address/${addressHash}/transactions`)}
           >
             Transactions
           </a>
         </div>
         <div
           className="card-body"
-          data-async-listing="/address/0x11F3fb5677c84131377BD9762Ee2ef451eEF47DB/transactions"
+          data-async-listing={assetURL(`address/${addressHash}/transactions`)}
         >
           <div
             data-selector="channel-disconnected-message"

@@ -8,6 +8,7 @@ import { ExplorerResolver } from "@/api-gateway/resolvers/explorer-resolver";
 import { AddressResolver } from "@/api-gateway/resolvers/address-resolver";
 import { ResolverContext } from "@/api-gateway/resolver-context";
 import { ChainMetaResolver } from "@/api-gateway/resolvers/chain-meta.resolver";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { MetaResolver } from "./resolvers/meta-resolver";
 
 export async function setApiGateway(server: MyServer): Promise<void> {
@@ -33,16 +34,13 @@ export async function setApiGateway(server: MyServer): Promise<void> {
   const apollo = new ApolloServer({
     schema,
     introspection: true,
-    playground: {
-      settings: {
-        "request.credentials": "include",
-      },
-    },
+    plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
     context: async (): Promise<ResolverContext> => ({
       gateways: server.gateways,
       service: server.service,
     }),
   });
   const gPath = `${server.config.server.routePrefix || ""}/api-gateway/`;
+  await apollo.start();
   apollo.applyMiddleware({ app: server.app, path: gPath });
 }

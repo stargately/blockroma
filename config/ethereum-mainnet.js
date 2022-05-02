@@ -1,6 +1,16 @@
+const routePrefix = "/eth/mainnet";
+
 module.exports = {
   server: {
-    routePrefix: "/eth/mainnet",
+    routePrefix,
+    noSecurityHeadersRoutes: {
+      [`${routePrefix}/api-gateway/`]: true,
+      [`${routePrefix}/api/`]: true,
+    },
+    noCsrfRoutes: {
+      [`${routePrefix}/api-gateway/`]: true,
+      [`${routePrefix}/api/`]: true,
+    },
   },
   chain: {
     chainId: 1,

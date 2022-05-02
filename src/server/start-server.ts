@@ -30,6 +30,9 @@ export type MyServer = Server & {
         ssl: boolean;
       };
     };
+    server: {
+      siteOrigin: string;
+    };
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resolvers: any;

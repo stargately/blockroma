@@ -14,7 +14,9 @@ export function setServerRoutes(server: MyServer): void {
 
   setApiGateway(server);
 
-  const { routePrefix } = server.config.server;
+  const {
+    server: { routePrefix, siteOrigin },
+  } = server.config;
   server.get(
     "SPA",
     new RegExp(`^(?!${routePrefix}\\/?api-gateway\\/).+$`),
@@ -26,6 +28,7 @@ export function setServerRoutes(server: MyServer): void {
         VDom: <AppContainer />,
         reducer: noopReducer,
         clientScript: "/main.js",
+        siteOrigin: siteOrigin || ctx.origin,
       });
     }
   );

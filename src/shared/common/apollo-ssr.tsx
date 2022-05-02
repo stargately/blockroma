@@ -30,15 +30,16 @@ type Opts = {
   VDom: JSX.Element;
   reducer: Reducer;
   clientScript: string;
+  siteOrigin: string;
 };
 
 export async function apolloSSR(
   ctx: Context,
-  { VDom, reducer, clientScript }: Opts
+  { VDom, reducer, clientScript, siteOrigin }: Opts
 ): Promise<string> {
   ctx.setState(
     "base.apiGatewayUrl",
-    `${ctx.origin}${ROUTE_PREFIX}/api-gateway/`
+    `${siteOrigin}${ROUTE_PREFIX}/api-gateway/`
   );
   const httpLink = createHttpLink({
     uri: `http://localhost:${config.get(
@@ -57,7 +58,7 @@ export async function apolloSSR(
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state = (ctx.getState() as any) as ViewState;
+  const state = ctx.getState() as any as ViewState;
   initAssetURL(state.base.manifest, state.base.routePrefix, state.base.cdnBase);
   const store = configureStore(state, noopReducer);
   const styletron = new engine.Server({ prefix: "_" });

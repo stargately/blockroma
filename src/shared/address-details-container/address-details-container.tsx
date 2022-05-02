@@ -4,6 +4,7 @@ import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { AddressTransactionsContainer } from "@/shared/address-details-container/address-transactions-container";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
+import { assetURL } from "onefx/lib/asset-url";
 import { useGetAddr } from "./hooks/use-get-addr";
 import { QrModal } from "./components/qr-modal";
 import { CopyAddress } from "../explorer-components/copy-address";
@@ -248,7 +249,9 @@ export const AddressDetailsContainer: React.FC = () => {
                       data-test="address_transfer_count"
                     >
                       <a
-                        href={`/address/${addressHash}/token-transfers#transfers`}
+                        href={assetURL(
+                          `address/${addressHash}/token-transfers#transfers`
+                        )}
                         className="page-link bs-label large btn-no-border-link-to-tems"
                         data-selector="transfer-count"
                       >
@@ -324,7 +327,9 @@ export const AddressDetailsContainer: React.FC = () => {
                     >
                       <a
                         className="tile-title-lg"
-                        href={`/block/${addr.fetchedCoinBalanceBlockNumber}`}
+                        href={assetURL(
+                          `block/${addr.fetchedCoinBalanceBlockNumber}`
+                        )}
                       >
                         {addr.fetchedCoinBalanceBlockNumber ?? 0}
                       </a>

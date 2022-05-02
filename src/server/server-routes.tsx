@@ -3,7 +3,7 @@ import { Context } from "onefx/lib/types";
 import * as React from "react";
 import { AppContainer } from "@/shared/app-container";
 import { apolloSSR } from "@/shared/common/apollo-ssr";
-import { setApiGateway } from "../api-gateway/api-gateway";
+import { setApiGateway } from "@/api-gateway/api-gateway";
 import { MyServer } from "./start-server";
 
 export function setServerRoutes(server: MyServer): void {
@@ -14,14 +14,19 @@ export function setServerRoutes(server: MyServer): void {
 
   setApiGateway(server);
 
-  server.get("SPA", /^(?!\/?api-gateway\/).+$/, async (ctx: Context) => {
-    ctx.setState("base.nonce", ctx.state.nonce);
-    ctx.setState("base.chain", server.config.chain);
+  const { routePrefix } = server.config.server;
+  server.get(
+    "SPA",
+    new RegExp(`^(?!${routePrefix}\\/?api-gateway\\/).+$`),
+    async (ctx: Context) => {
+      ctx.setState("base.nonce", ctx.state.nonce);
+      ctx.setState("base.chain", server.config.chain);
 
-    ctx.body = await apolloSSR(ctx, {
-      VDom: <AppContainer />,
-      reducer: noopReducer,
-      clientScript: "/main.js",
-    });
-  });
+      ctx.body = await apolloSSR(ctx, {
+        VDom: <AppContainer />,
+        reducer: noopReducer,
+        clientScript: "/main.js",
+      });
+    }
+  );
 }

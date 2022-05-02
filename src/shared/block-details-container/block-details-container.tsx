@@ -7,6 +7,7 @@ import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard"
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
 import { t } from "onefx/lib/iso-i18n";
+import { assetURL } from "onefx/lib/asset-url";
 import { BlockTransactions } from "./block-transactions";
 
 export function BlockDetailsContainer(): JSX.Element {
@@ -208,7 +209,7 @@ export function BlockDetailsContainer(): JSX.Element {
                       <span>
                         <a
                           data-test="address_hash_link"
-                          href={`/address/${miner}`}
+                          href={assetURL(`address/${miner}`)}
                         >
                           {miner}
                         </a>
@@ -282,7 +283,7 @@ export function BlockDetailsContainer(): JSX.Element {
                       {blockNumber > 0 ? (
                         <a
                           className="transaction__link"
-                          href={`/block/${blockNumber - 1}`}
+                          href={assetURL(`block/${blockNumber - 1}`)}
                         >
                           {parentHash}
                         </a>

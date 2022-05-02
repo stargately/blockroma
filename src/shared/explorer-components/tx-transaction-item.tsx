@@ -3,6 +3,7 @@ import { shortenHash } from "@/shared/common/shorten-hash";
 import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import { useChainConfig } from "@/shared/common/use-chain-config";
+import { assetURL } from "onefx/lib/asset-url";
 
 export type Tx = {
   id: string;
@@ -67,7 +68,7 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
               <a
                 className="text-truncate"
                 data-test="transaction_hash_link"
-                href={`/tx/${tx.hash}`}
+                href={assetURL(`tx/${tx.hash}`)}
               >
                 {tx.hash}
               </a>
@@ -77,7 +78,7 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
           <span>
             <a
               data-test="address_hash_link"
-              href={`/address/${tx.fromAddressHash}`}
+              href={assetURL(`address/${tx.fromAddressHash}`)}
             >
               <span data-address-hash={tx.fromAddressHash}>
                 <span className="d-none d-md-none d-xl-inline">
@@ -91,7 +92,7 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
             →
             <a
               data-test="address_hash_link"
-              href={`/address/${tx.toAddressHash}`}
+              href={assetURL(`/address/${tx.toAddressHash}`)}
             >
               <span data-address-hash={tx.toAddressHash}>
                 <span className="d-none d-md-none d-xl-inline">
@@ -116,7 +117,9 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
         {/* Block info */}
         <div className="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0 tile-bottom">
           <span className="mr-2 mr-md-0 order-1">
-            <a href={`/block/${tx.blockNumber}`}>Block #{tx.blockNumber}</a>
+            <a href={assetURL(`block/${tx.blockNumber}`)}>
+              Block #{tx.blockNumber}
+            </a>
           </span>
           <TickingTs
             className="mr-2 mr-md-0 order-2"

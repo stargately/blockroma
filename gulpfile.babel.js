@@ -8,6 +8,8 @@ const PluginError = require("plugin-error");
 const log = require("fancy-log");
 const webpackConfig = require("./webpack");
 const sass = require("gulp-sass")(require("sass"));
+const Vinyl = require("vinyl");
+const config = require("config");
 
 const clean = () => {
   return del(["dist"]);
@@ -23,12 +25,40 @@ const watchServer = (done) => {
   done();
 };
 
-const compileStylesheets = (done) => {
-  gulp
-    .src("src/client/stylesheets/*.scss")
-    .pipe(sass({}).on("error", sass.logError))
-    .pipe(gulp.dest("dist/stylesheets"));
+function writeFile(filename, content) {
+  var src = require("stream").Readable({ objectMode: true });
+  src._read = function () {
+    this.push(
+      new Vinyl({
+        cwd: __dirname,
+        base: "./",
+        path: filename,
+        contents: Buffer.from(content, "utf-8"),
+      })
+    );
+    this.push(null);
+  };
+  return src;
+}
+
+const writeRoutePrefix = (done) => {
+  const routePrefix = config.get("server.routePrefix") || "";
+  writeFile(
+    "route_prefix.scss",
+    `// DO NOT EDIT; use routePrefix in config/\n$route-prefix: "${routePrefix}";\n`
+  ).pipe(gulp.dest("src/client/stylesheets/components"));
+
   done();
+};
+
+const compileStylesheets = (done) => {
+  writeRoutePrefix(() => {
+    gulp
+      .src("src/client/stylesheets/*.scss")
+      .pipe(sass({}).on("error", sass.logError))
+      .pipe(gulp.dest("dist/stylesheets"));
+    done();
+  });
 };
 
 const watchStylesheets = (done) => {

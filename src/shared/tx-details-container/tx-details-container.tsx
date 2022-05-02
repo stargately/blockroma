@@ -9,6 +9,7 @@ import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
+import { assetURL } from "onefx/lib/asset-url";
 import { DataInput } from "../explorer-components/data-input";
 
 export function TxDetailsContainer(): JSX.Element {
@@ -178,7 +179,7 @@ export function TxDetailsContainer(): JSX.Element {
                     >
                       <a
                         className="transaction__link"
-                        href={`/block/${tx?.blockNumber}`}
+                        href={assetURL(`block/${tx?.blockNumber}`)}
                       >
                         {tx?.blockNumber}
                       </a>
@@ -231,7 +232,7 @@ export function TxDetailsContainer(): JSX.Element {
                       {t("tx.from")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
-                      <a href={`/address/${tx?.fromAddressHash}`}>
+                      <a href={assetURL(`address/${tx?.fromAddressHash}`)}>
                         {tx?.fromAddressHash}
                       </a>
 
@@ -257,7 +258,7 @@ export function TxDetailsContainer(): JSX.Element {
                       {t("tx.to")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
-                      <a href={`/address/${tx?.toAddressHash}`}>
+                      <a href={assetURL(`address/${tx?.toAddressHash}`)}>
                         {tx?.toAddressHash}
                       </a>
 

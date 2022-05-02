@@ -1,8 +1,8 @@
 const routePrefix = "/eth/mainnet";
 
 module.exports = {
-  siteOrigin: process.env.SITE_ORIGIN,
   server: {
+    siteOrigin: process.env.SITE_ORIGIN,
     routePrefix,
     noSecurityHeadersRoutes: {
       [`${routePrefix}/api-gateway/`]: true,

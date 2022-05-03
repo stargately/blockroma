@@ -19,6 +19,7 @@ import {
   transferFunctionSignature,
 } from "@/server/service/remote-chain-service/parse-token-transfer";
 import { TokenTransfer } from "@/model/token-transfer";
+import {logger} from "onefx/lib/integrated-gateways/logger";
 
 function maybeAddToAddress(
   addressMap: Record<string, number>,
@@ -122,36 +123,40 @@ export class RemoteChainService {
           }
 
           if (tx.input.startsWith(transferFunctionSignature)) {
-            const receipt =
-              // eslint-disable-next-line no-await-in-loop
-              await this.server.gateways.chainProvider.getTransactionReceipt(
-                tx.hash
-              );
-            const { tokens: rawTokens, tokenTransfers: tt } =
-              parseTokenTransfers(receipt.logs);
-            rawTokens.forEach((r) => {
-              tokensByAddresses[r.contractAddress.toString()] = r;
-            });
-            tokenTransfers = [...tokenTransfers, ...tt];
-            for (const t of tokenTransfers) {
-              t.toAddress &&
+            try {
+              const receipt =
+                // eslint-disable-next-line no-await-in-loop
+                await this.server.gateways.chainProvider.getTransactionReceipt(
+                  tx.hash
+                );
+              const {tokens: rawTokens, tokenTransfers: tt} =
+                parseTokenTransfers(receipt.logs);
+              rawTokens.forEach((r) => {
+                tokensByAddresses[r.contractAddress.toString()] = r;
+              });
+              tokenTransfers = [...tokenTransfers, ...tt];
+              for (const t of tokenTransfers) {
+                t.toAddress &&
                 maybeAddToAddress(
                   addressMap,
                   blockNumber,
                   `0x${t.toAddress.toString("hex")}`
                 );
-              t.fromAddress &&
+                t.fromAddress &&
                 maybeAddToAddress(
                   addressMap,
                   blockNumber,
                   `0x${t.fromAddress.toString("hex")}`
                 );
-              t.tokenContractAddress &&
+                t.tokenContractAddress &&
                 maybeAddToAddress(
                   addressMap,
                   blockNumber,
                   `0x${t.tokenContractAddress.toString("hex")}`
                 );
+              }
+            } catch (err) {
+              logger.error(`failed to parse transfer: ${err}`);
             }
           }
         }

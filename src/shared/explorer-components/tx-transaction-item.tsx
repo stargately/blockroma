@@ -92,7 +92,7 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
             →
             <a
               data-test="address_hash_link"
-              href={assetURL(`/address/${tx.toAddressHash}`)}
+              href={assetURL(`address/${tx.toAddressHash}`)}
             >
               <span data-address-hash={tx.toAddressHash}>
                 <span className="d-none d-md-none d-xl-inline">

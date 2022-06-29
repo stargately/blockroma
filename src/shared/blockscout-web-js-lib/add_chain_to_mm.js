@@ -15,7 +15,7 @@ module.exports = async function addChainToMM (mmCfg) {
             symbol: mmCfg.symbol,
             decimals: mmCfg.decimals,
           },
-          rpcUrls: [mmCfg.rpcUrl],
+          rpcUrls: mmCfg.rpcUrls,
           blockExplorerUrls: [blockscoutURL]
         }]
       })

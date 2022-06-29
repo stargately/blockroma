@@ -19,7 +19,7 @@ import {
   transferFunctionSignature,
 } from "@/server/service/remote-chain-service/parse-token-transfer";
 import { TokenTransfer } from "@/model/token-transfer";
-import {logger} from "onefx/lib/integrated-gateways/logger";
+import { logger } from "onefx/lib/integrated-gateways/logger";
 
 function maybeAddToAddress(
   addressMap: Record<string, number>,
@@ -59,10 +59,9 @@ export class RemoteChainService {
   }
 
   async getRawBlock(i: number): Promise<RawBlock> {
-    const rawBlock = await this.server.gateways.chainProvider.send(
-      "eth_getBlockByNumber",
-      [ethers.utils.hexValue(i), true]
-    );
+    const rawBlock = await this.server.gateways.chainProvider
+      .get()
+      .send("eth_getBlockByNumber", [ethers.utils.hexValue(i), true]);
 
     return rawBlock;
   }
@@ -126,10 +125,10 @@ export class RemoteChainService {
             try {
               const receipt =
                 // eslint-disable-next-line no-await-in-loop
-                await this.server.gateways.chainProvider.getTransactionReceipt(
-                  tx.hash
-                );
-              const {tokens: rawTokens, tokenTransfers: tt} =
+                await this.server.gateways.chainProvider
+                  .get()
+                  .getTransactionReceipt(tx.hash);
+              const { tokens: rawTokens, tokenTransfers: tt } =
                 parseTokenTransfers(receipt.logs);
               rawTokens.forEach((r) => {
                 tokensByAddresses[r.contractAddress.toString()] = r;
@@ -137,23 +136,23 @@ export class RemoteChainService {
               tokenTransfers = [...tokenTransfers, ...tt];
               for (const t of tokenTransfers) {
                 t.toAddress &&
-                maybeAddToAddress(
-                  addressMap,
-                  blockNumber,
-                  `0x${t.toAddress.toString("hex")}`
-                );
+                  maybeAddToAddress(
+                    addressMap,
+                    blockNumber,
+                    `0x${t.toAddress.toString("hex")}`
+                  );
                 t.fromAddress &&
-                maybeAddToAddress(
-                  addressMap,
-                  blockNumber,
-                  `0x${t.fromAddress.toString("hex")}`
-                );
+                  maybeAddToAddress(
+                    addressMap,
+                    blockNumber,
+                    `0x${t.fromAddress.toString("hex")}`
+                  );
                 t.tokenContractAddress &&
-                maybeAddToAddress(
-                  addressMap,
-                  blockNumber,
-                  `0x${t.tokenContractAddress.toString("hex")}`
-                );
+                  maybeAddToAddress(
+                    addressMap,
+                    blockNumber,
+                    `0x${t.tokenContractAddress.toString("hex")}`
+                  );
               }
             } catch (err) {
               logger.error(`failed to parse transfer: ${err}`);
@@ -181,10 +180,9 @@ export class RemoteChainService {
       (addressHash: string) => ({
         hash: hexToBuffer(addressHash),
         fetchedCoinBalanceBlockNumber: addressToBlockNumber[addressHash],
-        coinBalancePromise: this.server.gateways.chainProvider.getBalance(
-          addressHash,
-          addressToBlockNumber[addressHash]
-        ),
+        coinBalancePromise: this.server.gateways.chainProvider
+          .get()
+          .getBalance(addressHash, addressToBlockNumber[addressHash]),
       })
     );
 

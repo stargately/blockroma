@@ -86,7 +86,7 @@ export class ImporterService {
         const contract = new ethers.Contract(
           `0x${address.toString("hex")}`,
           tokenMetadataAbi,
-          this.server.gateways.chainProvider
+          this.server.gateways.chainProvider.get()
         );
         // eslint-disable-next-line no-await-in-loop
         const [name, decimals, totalSupply, symbol] = await Promise.all([

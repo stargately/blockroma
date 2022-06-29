@@ -9,7 +9,7 @@ module.exports = {
     chainId: 7778,
     chainName: "BoomMo Chain",
     symbol: "BMO",
-    rpcUrl: "https://api-testnet.boommo.com",
+    rpcUrls: ["https://api-testnet.boommo.com"],
     decimals: 18,
     networkPath: "",
   },

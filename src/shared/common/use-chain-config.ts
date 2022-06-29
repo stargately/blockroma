@@ -4,7 +4,7 @@ export type ChainConfig = {
   chainId: number;
   chainName: string;
   symbol: string;
-  rpcUrl: string;
+  rpcUrls: string[];
   decimals: number;
   networkPath: string;
 };

@@ -17,18 +17,18 @@ export class ImporterService {
   }
 
   async importRange(range: [number, number]): Promise<void> {
-    const {
-      transactions,
-      blocks,
-      addresses,
-      tokensByAddresses,
-      tokenTransfers,
-    } = await this.server.service.remoteChainService.fetchBlockByRange(
-      range[0],
-      range[1]
-    );
-
     try {
+      const {
+        transactions,
+        blocks,
+        addresses,
+        tokensByAddresses,
+        tokenTransfers,
+      } = await this.server.service.remoteChainService.fetchBlockByRange(
+        range[0],
+        range[1]
+      );
+
       await this.upsertAddresses(addresses);
       await this.server.service.indexedChainService.insertBlocks(blocks);
       await this.server.service.indexedChainService.insertTransactions(

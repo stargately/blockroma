@@ -9,11 +9,13 @@ export function mountBlockRealtimeFetcher(server: MyServer) {
     return;
   }
 
-  server.gateways.chainProvider.on("block", async (blockNumber: number) => {
-    logger.info(`listening on block ${blockNumber}`);
-    await server.service.importerService.importRange([
-      blockNumber,
-      blockNumber,
-    ]);
-  });
+  server.gateways.chainProvider
+    .get()
+    .on("block", async (blockNumber: number) => {
+      logger.info(`listening on block ${blockNumber}`);
+      await server.service.importerService.importRange([
+        blockNumber,
+        blockNumber,
+      ]);
+    });
 }

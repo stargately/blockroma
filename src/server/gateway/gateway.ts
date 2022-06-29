@@ -1,9 +1,9 @@
 import { MyServer } from "@/server/start-server";
 import { createConnection, DataSource } from "typeorm";
-import { ethers, providers } from "ethers";
+import { ChainProviderPool } from "@/server/gateway/chain-provider-pool";
 
 export type Gateways = {
-  chainProvider: providers.JsonRpcProvider;
+  chainProvider: ChainProviderPool;
   dbCon: DataSource;
 };
 
@@ -20,14 +20,8 @@ export async function setGateways(server: MyServer): Promise<void> {
   }
 
   const chainConfig = server.config.chain;
-  server.gateways.chainProvider = new ethers.providers.JsonRpcProvider(
-    {
-      url: chainConfig.rpcUrl,
-      timeout: 5000,
-    },
-    {
-      name: chainConfig.chainName,
-      chainId: chainConfig.chainId,
-    }
-  );
+  server.gateways.chainProvider = new ChainProviderPool(chainConfig.rpcUrls, {
+    name: chainConfig.chainName,
+    chainId: chainConfig.chainId,
+  });
 }

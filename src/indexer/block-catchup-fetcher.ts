@@ -22,13 +22,13 @@ export async function mountBlockCatchupFetcher(opts: TaskOpts): Promise<void> {
   for (const rootRange of blockNumberRanges) {
     const lastBlockNumber = (
       rootRange[1] === "latest"
-        ? await opts.server.gateways.chainProvider.getBlockNumber()
+        ? await opts.server.gateways.chainProvider.get().getBlockNumber()
         : rootRange[1]
     ) as number;
 
     const firstBlockNumber = (
       rootRange[0] === "latest"
-        ? await opts.server.gateways.chainProvider.getBlockNumber()
+        ? await opts.server.gateways.chainProvider.get().getBlockNumber()
         : rootRange[0]
     ) as number;
 

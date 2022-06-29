@@ -207,9 +207,9 @@ export class ExplorerResolver {
     };
     if (txWithId.gasUsed === null) {
       try {
-        const receipt = await ctx.gateways.chainProvider.getTransactionReceipt(
-          `0x${tx.hash.toString("hex")}`
-        );
+        const receipt = await ctx.gateways.chainProvider
+          .get()
+          .getTransactionReceipt(`0x${tx.hash.toString("hex")}`);
         const gasUsed = receipt.gasUsed.toString();
         await ctx.service.indexedChainService.updateTxGasUsed(tx.hash, gasUsed);
         return {

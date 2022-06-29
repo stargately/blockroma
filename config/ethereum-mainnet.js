@@ -17,7 +17,7 @@ module.exports = {
     chainId: 1,
     chainName: "Ethereum",
     symbol: "ETH",
-    rpcUrl: process.env.ETHEREUM_MAINNET_RPC_URL,
+    rpcUrls: JSON.parse(process.env.ETHEREUM_MAINNET_RPC_URLS),
     decimals: 18,
     networkPath: "",
   },

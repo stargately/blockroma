@@ -230,6 +230,7 @@ export class IndexedChainService {
       .select()
       .from(Transaction, "tx");
 
+    let count;
     if (orFilters.addressHash) {
       query
         .where("tx.fromAddressHash = :fromAddress", {
@@ -238,17 +239,24 @@ export class IndexedChainService {
         .orWhere("tx.toAddressHash = :toAddress", {
           toAddress: orFilters.addressHash,
         });
+      count = await query.getCount();
     } else if (orFilters.blockNumber) {
       query.where("tx.blockNumber = :blockNumber", {
         blockNumber: orFilters.blockNumber,
       });
+      count = await query.getCount();
     } else if (orFilters.txHash) {
       query.where("tx.hash = :hash", {
         hash: orFilters.txHash,
       });
+      count = await query.getCount();
+    } else {
+      // avoid full transaction table query
+      const result = await this.server.gateways.dbCon.query(
+        `SELECT n_live_tup AS estimate FROM pg_stat_all_tables WHERE relname = 'transaction';`
+      );
+      count = Number(result[0]?.estimate);
     }
-
-    const count = await query.getCount();
 
     // Forward pagination
     if (args.first !== undefined) {

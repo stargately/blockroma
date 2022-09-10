@@ -17,11 +17,11 @@ Feature List
 - [x] basic web UI for home page, search bar, blocks, txs, and addresses.
 - [x] dark mode and light mode.
 - [x] i18n / internationalization / multi-language / English, Japanese, Chinese
-- [ ] customizable for other blockchains.
+- [x] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.
-- [ ] ERC20 parser.
-- [ ] ERC721 parser.
+- [x] ERC20 parser.
+- [x] ERC721 parser.
 - [ ] more accurate gas fee calculation.
 - [ ] better error handling and loading state.
 - [ ] onboard more blockchains.

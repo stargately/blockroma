@@ -132,13 +132,19 @@ export class IndexedChainService {
       ])
       .from(Block, "b");
 
+    let count;
     if (orFilters.minerHash) {
       query.where("b.minerHash = :minerHash", {
         fromAddress: orFilters.minerHash,
       });
+      count = await query.getCount();
+    } else {
+      // avoid full block table query
+      const result = await this.server.gateways.dbCon.query(
+        `SELECT n_live_tup AS estimate FROM pg_stat_all_tables WHERE relname = 'block';`
+      );
+      count = Number(result[0]?.estimate);
     }
-
-    const count = await query.getCount();
 
     // Forward pagination
     if (args.first !== undefined) {

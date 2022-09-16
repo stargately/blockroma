@@ -19,7 +19,7 @@ module.exports = {
     symbol: "ETH",
     rpcUrls: JSON.parse(process.env.ETHEREUM_MAINNET_RPC_URLS),
     decimals: 18,
-    networkPath: "",
+    networkPath: routePrefix,
   },
   indexer: {
     catchup: {

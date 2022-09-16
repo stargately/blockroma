@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { assetURL } from "onefx/lib/asset-url";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
+import { chainSwitchOpts } from "@/shared/home/components/multi-chain-dropdown";
 import { TOP_BAR_HEIGHT } from "./top-bar";
 
 const addChainToMM = require("../blockscout-web-js-lib/add_chain_to_mm");
@@ -101,7 +102,9 @@ export function Footer(): JSX.Element {
                   className="footer-link js-btn-add-chain-to-mm btn-add-chain-to-mm in-footer"
                   style={{ cursor: "pointer" }}
                 >
-                  {mmAdded ? "BMO Added" : "Add BMO"}
+                  {mmAdded
+                    ? `${chainConfig.symbol} Added to MetaMask`
+                    : `Add ${chainConfig.symbol} to MetaMask`}
                 </a>
               </li>
             </ul>
@@ -109,41 +112,27 @@ export function Footer(): JSX.Element {
           <div className="col-xs-12 col-md-4 col-lg-3 footer-list">
             <h3>Main Networks</h3>
             <ul>
-              <li>
-                <a
-                  href="https://blockroma.com/eth/mainnet/"
-                  rel="norefferer"
-                  className="footer-link"
-                >
-                  {" "}
-                  Ethereum{" "}
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://blockroma.com/etc/mainnet"
-                  rel="norefferer"
-                  className="footer-link"
-                >
-                  {" "}
-                  Ethereum Classic{" "}
-                </a>
-              </li>
+              {chainSwitchOpts.mainnets.map((it) => (
+                <li key={it[0]}>
+                  <a href={it[0]} rel="norefferer" className="footer-link">
+                    {" "}
+                    {it[1]}{" "}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
           <div className="col-xs-12 col-md-4 col-lg-3 footer-list">
             <h3>Test Networks</h3>
             <ul>
-              <li>
-                <a
-                  href="https://blockroma.com/poa/sokol"
-                  rel="noreferrer"
-                  className="footer-link"
-                >
-                  {" "}
-                  Sokol{" "}
-                </a>
-              </li>
+              {chainSwitchOpts.testnets.map((it) => (
+                <li key={it[0]}>
+                  <a href={it[0]} rel="norefferer" className="footer-link">
+                    {" "}
+                    {it[1]}{" "}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

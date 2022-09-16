@@ -11,7 +11,7 @@ module.exports = {
     symbol: "BMO",
     rpcUrls: ["https://api-testnet.boommo.com"],
     decimals: 18,
-    networkPath: "",
+    networkPath: routePrefix,
   },
   server: {
     routePrefix,

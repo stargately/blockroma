@@ -5,9 +5,10 @@ import { useChainConfig } from "@/shared/common/use-chain-config";
 import { CommonMargin } from "@/shared/common/common-margin";
 import { t } from "onefx/lib/iso-i18n";
 import { MultiChainDropdown } from "@/shared/home/components/multi-chain-dropdown";
+import { useParams } from "react-router";
 import { DarkModeToggle } from "./dark-mode-toggle";
 
-function DesktopSearch(): JSX.Element {
+function DesktopSearch({ searchVal }: { searchVal: string }): JSX.Element {
   const desktopTextInput = useRef<HTMLInputElement>(null);
   const [focusedField, setFocusedField] = useState(false);
   const [dangerField, setDangerField] = useState(false);
@@ -25,7 +26,10 @@ function DesktopSearch(): JSX.Element {
         desktopTextInput?.current?.focus();
       }
     });
-  }, [desktopTextInput]);
+    if (desktopTextInput.current) {
+      desktopTextInput.current.value = searchVal;
+    }
+  }, [desktopTextInput, searchVal]);
 
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     setDangerField(false);
@@ -33,11 +37,11 @@ function DesktopSearch(): JSX.Element {
     // @ts-ignore
     const val = String(event?.target[0].value).trim();
     if (val.length === 66) {
-      window.location.replace(`/tx/${val}`);
+      window.location.replace(assetURL(`tx/${val}`));
     } else if (val.length === 42) {
-      window.location.replace(`/address/${val}`);
+      window.location.replace(assetURL(`address/${val}`));
     } else if (parseInt(val, 10) > 0) {
-      window.location.replace(`/block/${val}`);
+      window.location.replace(assetURL(`block/${val}`));
     } else {
       setDangerField(true);
     }
@@ -124,7 +128,7 @@ function DesktopSearch(): JSX.Element {
   );
 }
 
-function MobileSearch(): JSX.Element {
+function MobileSearch({ searchVal }: { searchVal: string }): JSX.Element {
   const textInput = useRef<HTMLInputElement>(null);
   const [focusedField, setFocusedField] = useState(false);
   const [dangerField, setDangerField] = useState(false);
@@ -137,7 +141,10 @@ function MobileSearch(): JSX.Element {
       setFocusedField(false);
       setDangerField(false);
     });
-  }, [textInput]);
+    if (textInput.current) {
+      textInput.current.value = searchVal;
+    }
+  }, [textInput, searchVal]);
 
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     setDangerField(false);
@@ -145,11 +152,11 @@ function MobileSearch(): JSX.Element {
     // @ts-ignore
     const val = event?.target[0].value;
     if (val.length === 66) {
-      window.location.replace(`/tx/${val}`);
+      window.location.replace(assetURL(`tx/${val}`));
     } else if (val.length === 42) {
-      window.location.replace(`/address/${val}`);
+      window.location.replace(assetURL(`address/${val}`));
     } else if (parseInt(val, 10) > 0) {
-      window.location.replace(`/block/${val}`);
+      window.location.replace(assetURL(`block/${val}`));
     } else {
       setDangerField(true);
     }
@@ -238,6 +245,12 @@ function MobileSearch(): JSX.Element {
 export const RawNav: React.FC = () => {
   const [barClapsed, setBarClapsed] = useState(true);
   const chainConfig = useChainConfig();
+  const { blockNumber, addressHash, txHash } = useParams<{
+    blockNumber?: string;
+    addressHash?: string;
+    txHash?: string;
+  }>();
+  const searchVal = blockNumber ?? addressHash ?? txHash ?? "";
 
   return (
     <OutsideClickHandler onOutsideClick={() => setBarClapsed(true)}>
@@ -385,10 +398,10 @@ export const RawNav: React.FC = () => {
               <MultiChainDropdown chainName={chainConfig.chainName} />
             </ul>
             <DarkModeToggle />
-            <DesktopSearch />
+            <DesktopSearch searchVal={searchVal} />
           </div>
         </div>
-        <MobileSearch />
+        <MobileSearch searchVal={searchVal} />
       </nav>
     </OutsideClickHandler>
   );

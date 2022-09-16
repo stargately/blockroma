@@ -26,7 +26,7 @@ module.exports = {
       enabled: false,
     },
     realtime: {
-      enabled: true,
+      enabled: false,
     },
   },
 };

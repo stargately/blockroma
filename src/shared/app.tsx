@@ -17,46 +17,68 @@ import { TxsTableContainer } from "./txs-table-container/txs-table-container";
 import { AddressDetailsContainer } from "./address-details-container/address-details-container";
 import { TxDetailsContainer } from "./tx-details-container/tx-details-container";
 
+const routes = [
+  {
+    path: "/",
+    style: "stylesheets/main-page.css",
+    component: <Home />,
+    exact: true,
+  },
+  {
+    path: "/block/:blockNumber",
+    style: "stylesheets/app.css",
+    component: <BlockDetailsContainer />,
+    exact: true,
+  },
+  {
+    path: "/txs",
+    style: "stylesheets/app.css",
+    component: <TxsTableContainer />,
+    exact: true,
+  },
+  {
+    path: "/blocks",
+    style: "stylesheets/app.css",
+    component: <BlksTableContainer />,
+    exact: true,
+  },
+  {
+    path: "/address/:addressHash*",
+    style: "stylesheets/app.css",
+    component: <AddressDetailsContainer />,
+    exact: true,
+  },
+  {
+    path: "/tx/:txHash*",
+    style: "stylesheets/app.css",
+    component: <TxDetailsContainer />,
+    exact: true,
+  },
+  {
+    path: "*",
+    style: "stylesheets/app.css",
+    component: <NotFound />,
+  },
+];
+
 export function App(): JSX.Element {
   useGtag();
   return (
     <RootStyle>
       <Head />
-      <RawNav />
-      <div style={FOOTER_ABOVE}>
-        <ScrollToTop>
-          <Switch>
-            <Route exact path="/">
-              <Home />
-              <PageStyles stylePath="stylesheets/main-page.css" />
+      <ScrollToTop>
+        <Switch>
+          {routes.map((r) => (
+            <Route key={r.path} exact={r.exact} path={r.path}>
+              <RawNav />
+              <div style={FOOTER_ABOVE}>
+                {r.component}
+                <PageStyles stylePath={r.style} />
+              </div>
             </Route>
-            <Route exact path="/block/:blockNumber">
-              <BlockDetailsContainer />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-            <Route exact path="/txs">
-              <TxsTableContainer />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-            <Route exact path="/blocks">
-              <BlksTableContainer />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-            <Route exact path="/address/:addressHash*">
-              <AddressDetailsContainer />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-            <Route exact path="/tx/:txHash*">
-              <TxDetailsContainer />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-            <Route path="*">
-              <NotFound />
-              <PageStyles stylePath="stylesheets/app.css" />
-            </Route>
-          </Switch>
-        </ScrollToTop>
-      </div>
+          ))}
+        </Switch>
+      </ScrollToTop>
       <Footer />
     </RootStyle>
   );

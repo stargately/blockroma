@@ -1,4 +1,4 @@
-const routePrefix = "/ethw/iceberg";
+const routePrefix = "/ethw/mainnet";
 
 module.exports = {
   server: {
@@ -14,10 +14,10 @@ module.exports = {
     },
   },
   chain: {
-    chainId: 10002,
-    chainName: "ethw-iceberg-testnet",
+    chainId: 10001,
+    chainName: "ETHW-mainnet",
     symbol: "ETHW",
-    rpcUrls: ["https://iceberg.ethereumpow.org"],
+    rpcUrls: ["https://mainnet.ethereumpow.org"],
     decimals: 18,
     networkPath: routePrefix,
   },

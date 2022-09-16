@@ -5,6 +5,17 @@ type Props = {
   chainName: string;
 };
 
+export const chainSwitchOpts = {
+  mainnets: [
+    ["/eth/mainnet/", "Ethereum"],
+    ["/ethw/mainnet/", "ETHW-mainnet"],
+  ],
+  testnets: [
+    ["/", "BoomMo Chain"],
+    ["/ethw/iceberg/", "ETHW-iceberg-testnet"],
+  ],
+};
+
 export function MultiChainDropdown({ chainName }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -42,13 +53,18 @@ export function MultiChainDropdown({ chainName }: Props) {
         >
           <a className="dropdown-item header division">Mainnets</a>
 
-          <a className="dropdown-item" href="/eth/mainnet/">
-            Ethereum
-          </a>
+          {chainSwitchOpts.mainnets.map((it) => (
+            <a className="dropdown-item" key={it[0]} href={it[0]}>
+              {it[1]}
+            </a>
+          ))}
+
           <a className="dropdown-item header division">Testnets</a>
-          <a className="dropdown-item" href="/">
-            BoomMo Chain
-          </a>
+          {chainSwitchOpts.testnets.map((it) => (
+            <a className="dropdown-item" key={it[0]} href={it[0]}>
+              {it[1]}
+            </a>
+          ))}
         </div>
       </OutsideClickHandler>
     </li>

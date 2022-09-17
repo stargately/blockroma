@@ -23,7 +23,7 @@ const Image = styled("img", {
 const ErrorPageInner = ({ bar, title, info }: Props): JSX.Element => {
   return (
     <ContentPadding style={{ backgroundColor: colors.black10 }}>
-      <Helmet title={`${bar} - ${t("topbar.brand")}`} />
+      <Helmet title={`${bar} - ${t("meta.title")}`} />
       <Flex {...FOOTER_ABOVE} center>
         <Image src={assetURL("favicon.svg")} />
         <Flex column margin="8px">

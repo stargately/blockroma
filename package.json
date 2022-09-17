@@ -201,7 +201,7 @@
     "validator": "13.6.0"
   },
   "engines": {
-    "node": "16.14.2"
+    "node": "16"
   },
   "private": true
 }

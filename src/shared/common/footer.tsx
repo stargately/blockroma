@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { assetURL } from "onefx/lib/asset-url";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
 import { chainSwitchOpts } from "@/shared/home/components/multi-chain-dropdown";
+import { getGithubTmplUrl } from "@/shared/common/github-tmpl-url";
 import { TOP_BAR_HEIGHT } from "./top-bar";
 
 const addChainToMM = require("../blockscout-web-js-lib/add_chain_to_mm");
@@ -16,6 +17,10 @@ export const FOOTER_ABOVE = {
 export function Footer(): JSX.Element {
   const [mmAdded, setMmAdded] = useState(false);
   const chainConfig = useChainConfig();
+  const [githubTmplUrl, setGithubTmplUrl] = useState("");
+  useEffect(() => {
+    setGithubTmplUrl(getGithubTmplUrl({ symbol: chainConfig.symbol }));
+  }, [chainConfig.symbol]);
   return (
     <footer className="footer">
       <div className="footer-body container">
@@ -68,7 +73,7 @@ export function Footer(): JSX.Element {
             <ul>
               <li>
                 <a
-                  href="https://github.com/stargately/blockroma/issues/new?labels=Blockroma&body=%2ADescribe+your+issue+here.%2A%0A%0A%23%23%23+Environment%0A%2A+Elixir+Version%3A+1.12.3%0A%2A+Erlang+Version%3A+24%0A%2A+Blockroma+Version%3A+v4.1.2-beta%0A%0A%2A+User+Agent%3A+%60Mozilla%2F5.0+%28Macintosh%3B+Intel+Mac+OS+X+10_15_7%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Chrome%2F99.0.4844.84+Safari%2F537.36%60%0A%0A%23%23%23+Steps+to+reproduce%0A%0A%2ATell+us+how+to+reproduce+this+issue.+If+possible%2C+push+up+a+branch+to+your+fork+with+a+regression+test+we+can+run+to+reproduce+locally.%2A%0A%0A%23%23%23+Expected+Behaviour%0A%0A%2ATell+us+what+should+happen.%2A%0A%0A%23%23%23+Actual+Behaviour%0A%0A%2ATell+us+what+happens+instead.%2A%0A&title=BMO%3A+%3CIssue+Title%3E"
+                  href={githubTmplUrl}
                   rel="noreferrer"
                   className="footer-link"
                   target="_blank"

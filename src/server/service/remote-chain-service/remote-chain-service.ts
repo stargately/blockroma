@@ -131,7 +131,7 @@ export class RemoteChainService {
               const { tokens: rawTokens, tokenTransfers: tt } =
                 parseTokenTransfers(receipt.logs);
               rawTokens.forEach((r) => {
-                tokensByAddresses[r.contractAddress.toString()] = r;
+                tokensByAddresses[r.contractAddress.toString("hex")] = r;
               });
               tokenTransfers = [...tokenTransfers, ...tt];
               for (const t of tokenTransfers) {

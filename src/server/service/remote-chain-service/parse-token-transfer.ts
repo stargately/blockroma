@@ -213,7 +213,7 @@ const parsers: Parser[] = [
 function getUniqueTokens(tokens: RawToken[]): RawToken[] {
   const dedupTokens: Record<string, RawToken> = {};
   for (const t of tokens) {
-    dedupTokens[t.contractAddress.toString()] = t;
+    dedupTokens[t.contractAddress.toString("hex")] = t;
   }
   return Object.values(dedupTokens);
 }

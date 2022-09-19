@@ -6,6 +6,7 @@ const BundleAnalyzerPlugin =
   require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 const process = require("global/process");
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const CompressionPlugin = require("compression-webpack-plugin");
 
 const ANALYZE = false;
 const PROD = process.env.NODE_ENV === "production";
@@ -69,6 +70,7 @@ module.exports = {
               NODE_ENV: JSON.stringify("production"),
             },
           }),
+        new CompressionPlugin(),
         ]
       : []),
   ],

@@ -22,7 +22,8 @@ export interface Addr {
 export const AddressDetailsContainer: React.FC = () => {
   const chainConfig = useChainConfig();
   const params = useParams<{ addressHash: string }>();
-  const { addressHash } = params;
+  const { addressHash: rawAddressHash } = params;
+  const addressHash = rawAddressHash.toLowerCase();
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const { data, loading, error, refetch } = useGetAddr({

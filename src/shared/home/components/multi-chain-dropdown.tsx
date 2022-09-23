@@ -11,7 +11,7 @@ export const chainSwitchOpts = {
     ["/ethw/mainnet/", "ETHW-mainnet"],
   ],
   testnets: [
-    ["/", "BoomMo Chain"],
+    ["/bmo/testnet/", "BoomMo Chain"],
     ["/ethw/iceberg/", "ETHW-iceberg-testnet"],
   ],
 };

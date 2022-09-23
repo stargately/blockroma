@@ -1,7 +1,7 @@
 const { config } = require("dotenv");
 config();
 
-const routePrefix = "/boommo/testnet";
+const routePrefix = "/bmo/testnet";
 
 module.exports = {
   project: "blockroma",

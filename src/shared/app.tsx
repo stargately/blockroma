@@ -20,7 +20,7 @@ import { TxDetailsContainer } from "./tx-details-container/tx-details-container"
 const routes = [
   {
     path: "/",
-    style: "stylesheets/main-page.css",
+    style: "stylesheets/app.css",
     component: <Home />,
     exact: true,
   },

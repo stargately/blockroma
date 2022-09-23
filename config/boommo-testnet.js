@@ -14,6 +14,7 @@ module.exports = {
     networkPath: routePrefix,
   },
   server: {
+    siteOrigin: process.env.SITE_ORIGIN,
     routePrefix,
     port: process.env.PORT || 4134,
     proxy: false,

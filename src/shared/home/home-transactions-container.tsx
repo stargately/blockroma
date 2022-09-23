@@ -2,6 +2,7 @@ import * as React from "react";
 import { useGetTxs } from "@/shared/block-details-container/hooks/use-get-txs";
 import { TxTransactionItem } from "@/shared/explorer-components/tx-transaction-item";
 import { t } from "onefx/lib/iso-i18n";
+import {assetURL} from "onefx/lib/asset-url";
 
 //         TODO(dora): more tx coming in
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,7 +39,7 @@ export function HomeTransactionsContainer(): JSX.Element {
   return (
     <div className="card card-chain-transactions">
       <div className="card-body">
-        <a className="btn-line float-right" href="/txs">
+        <a className="btn-line float-right" href={assetURL("txs")}>
           View All Transactions
         </a>
         <h2 className="card-title lg-card-title"> {t("nav.txs")}</h2>

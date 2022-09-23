@@ -2,6 +2,7 @@ import React from "react";
 import { useQueryBlocks } from "@/shared/blks-table-container/hooks/use-query-blocks";
 import { BlkTile } from "@/shared/home/components/blk-tile";
 import { t } from "onefx/lib/iso-i18n";
+import {assetURL} from "onefx/lib/asset-url";
 
 export const HomeBlocksContainer: React.FC = () => {
   const { data, loading, error, refetch } = useQueryBlocks(
@@ -19,7 +20,7 @@ export const HomeBlocksContainer: React.FC = () => {
   return (
     <div className="card card-chain-blocks js-ad-dependant-mb-3 mb-3">
       <div className="card-body">
-        <a className="btn-line float-right" href="/blocks">
+        <a className="btn-line float-right" href={assetURL("blocks")}>
           View All Blocks
         </a>
         <h2 className="card-title">{t("nav.blocks")}</h2>

@@ -17,6 +17,11 @@ export const useGetTxs = (
       after: String(filters.after),
     },
     pollInterval,
+    ...(pollInterval
+      ? {
+          fetchPolicy: "no-cache",
+        }
+      : {}),
   });
   return { loading, data, error, refetch };
 };

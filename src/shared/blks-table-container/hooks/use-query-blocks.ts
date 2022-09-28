@@ -19,6 +19,11 @@ export const useQueryBlocks = (
       after: String(after),
     },
     pollInterval,
+    ...(pollInterval
+      ? {
+          fetchPolicy: "no-cache",
+        }
+      : {}),
   });
   return { loading, data, error, refetch };
 };

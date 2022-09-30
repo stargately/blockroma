@@ -103,7 +103,7 @@ export const AdrTransactionItem: React.FC<Props> = ({
         {/* Block info */}
         <div className="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0 tile-bottom">
           <span className="mr-2 mr-md-0 order-1">
-            <a href={`/block/${tx.blockNumber}`}>Block #{tx.blockNumber}</a>
+            <a href={assetURL(`block/${tx.blockNumber}`)}>Block #{tx.blockNumber}</a>
           </span>
           <TickingTs
             className="mr-2 mr-md-0 order-2"

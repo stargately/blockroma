@@ -42,7 +42,7 @@ export const BlkBlockItem: React.FC<Props> = ({ blk }) => {
           <a
             className="tile-label"
             data-selector="block-number"
-            href={`/block/${blk.number}`}
+            href={assetURL(`block/${blk.number}`)}
           >
             #{blk.number}
           </a>

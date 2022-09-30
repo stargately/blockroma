@@ -1,5 +1,6 @@
 ---
 name: <Issue Title>
+about: Open an issue
 assignees: puncsky
 ---
 

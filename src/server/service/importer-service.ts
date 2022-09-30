@@ -4,8 +4,8 @@ import { Address } from "@/model/address";
 import { TokenTransfer } from "@/model/token-transfer";
 import { Token } from "@/model/token";
 import { ethers } from "ethers";
-import { tokenMetadataAbi } from "@/server/service/remote-chain-service/parse-token";
-import { RawToken } from "@/server/service/remote-chain-service/parse-token-transfer";
+import { tokenMetadataAbi } from "@/server/service/remote-chain-service/token-metadata-abi";
+import { RawToken } from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
 
 const burnAddress = "0000000000000000000000000000000000000000";
 
@@ -34,7 +34,7 @@ export class ImporterService {
       await this.server.service.indexedChainService.insertTransactions(
         transactions
       );
-      await this.updateTokens(tokenTransfers, tokensByAddresses);
+      await this.updateTokensFromContracts(tokenTransfers, tokensByAddresses);
       await this.server.gateways.dbCon
         .getRepository(TokenTransfer)
         .insert(tokenTransfers);
@@ -64,7 +64,7 @@ export class ImporterService {
     );
   }
 
-  private async updateTokens(
+  private async updateTokensFromContracts(
     tokenTransfers: TokenTransfer[],
     tokensByAddresses: Record<string, RawToken>
   ): Promise<void> {
@@ -72,7 +72,7 @@ export class ImporterService {
     for (const tt of tokenTransfers) {
       if (
         tt.toAddress.toString("hex") === burnAddress ||
-        tt.fromAddress.toString("hex")
+        tt.fromAddress.toString("hex") === burnAddress
       ) {
         contractAddresses.add(tt.tokenContractAddress);
       }

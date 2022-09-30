@@ -35,12 +35,14 @@ module.exports = {
     catchup: {
       enabled: true,
       blocksBatchSize: 200,
-      blockNumberRanges: [
-        [
-          2293028,
 
-          2293028,
-        ],
+      blockNumberRanges: [
+        [1039, 1039],
+        [225791, 225791],
+        [1044, 1044],
+        [255055, 255055],
+        [276263, 276263],
+        // [0, "latest"],
       ],
     },
     realtime: {

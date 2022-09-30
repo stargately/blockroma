@@ -14,10 +14,10 @@ import {
 } from "@/server/service/remote-chain-service/hex-utils";
 import { parseTransaction } from "@/server/service/remote-chain-service/parse-transaction";
 import {
+  matchTokenTransferInput,
   parseTokenTransfers,
   RawToken,
-  transferFunctionSignature,
-} from "@/server/service/remote-chain-service/parse-token-transfer";
+} from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
 import { TokenTransfer } from "@/model/token-transfer";
 import { logger } from "onefx/lib/integrated-gateways/logger";
 
@@ -121,7 +121,8 @@ export class RemoteChainService {
             transactions.push(transaction);
           }
 
-          if (tx.input.startsWith(transferFunctionSignature)) {
+          // reduce remote calls by checking input signature. only potential transfer call is worth fetching receipt.
+          if (matchTokenTransferInput(tx.input)) {
             try {
               const receipt =
                 // eslint-disable-next-line no-await-in-loop

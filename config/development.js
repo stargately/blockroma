@@ -1,7 +1,7 @@
 module.exports = {
   indexer: {
     catchup: {
-      enabled: false,
+      enabled: true,
     },
     realtime: {
       enabled: false,

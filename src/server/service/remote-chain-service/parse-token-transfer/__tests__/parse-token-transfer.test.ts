@@ -1,10 +1,8 @@
 import test from "ava";
-import {
-  ParsedTokenTransfers,
-  parseTokenTransfers,
-} from "@/server/service/remote-chain-service/parse-token-transfer";
+import { parseTokenTransfers } from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
 import { Log } from "@ethersproject/abstract-provider";
 import { hexToBuffer } from "@/server/service/remote-chain-service/hex-utils";
+import { ParsedTokenTransfers } from "@/server/service/remote-chain-service/parse-token-transfer/token-transfer-parser-utils";
 
 test("parse/1 parses logs for tokens and token transfers", async (t) => {
   const parsed = parseTokenTransfers([

@@ -5,6 +5,7 @@ import { useLocation } from "onefx/lib/react-router";
 import { useHistory } from "react-router-dom";
 import { Pagination } from "@/shared/explorer-components/pagination";
 import { t } from "onefx/lib/iso-i18n";
+import { paginationProcessTotalNumPage } from "@/shared/common/functions/paginations";
 
 export const TxsTableContainer: React.FC = () => {
   return (
@@ -75,6 +76,8 @@ const TableWithPagination = () => {
 
   const txs = data?.transactions?.edges?.map((e) => e?.node);
 
+  const numPage = paginationProcessTotalNumPage(data, 'transactions');
+
   return (
     <>
       {error && (
@@ -97,23 +100,33 @@ const TableWithPagination = () => {
         </div>
       )}
 
-      <Pagination
-        setCurPage={setCurPageWithSideEffect}
-        curPage={curPage}
-        numPages={200}
-        position="top"
-      />
+      { txs && txs?.length > 0 ? <>
+        <Pagination
+          setCurPage={setCurPageWithSideEffect}
+          curPage={curPage}
+          numPages={numPage}
+          position="top"
+        />
 
-      <div data-selector="transactions-list">
-        {!!txs?.length && <TxsList txs={txs} />}
-      </div>
+        <div data-selector="transactions-list">
+          <TxsList txs={txs} />
+        </div>
 
-      <Pagination
+        <Pagination
         setCurPage={setCurPageWithSideEffect}
         position="bottom"
         curPage={curPage}
-        numPages={200}
-      />
+        numPages={numPage}
+        />
+      </> : <>
+        <div data-empty-response-message style={{ display: "none" }}>
+          <div className="tile tile-muted text-center">
+              <span data-selector="empty-internal-transactions-list">
+                There are no transactions.
+              </span>
+          </div>
+        </div>
+      </>}
     </>
   );
 };

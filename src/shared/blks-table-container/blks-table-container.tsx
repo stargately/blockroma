@@ -5,6 +5,7 @@ import { Pagination } from "@/shared/explorer-components/pagination";
 import { useHistory } from "react-router-dom";
 import { useLocation } from "onefx/lib/react-router";
 import { t } from "onefx/lib/iso-i18n";
+import { paginationProcessTotalNumPage } from "@/shared/common/functions/paginations";
 
 export const BlksTableContainer: React.FC = () => {
   return (
@@ -76,6 +77,8 @@ const TableWithPagination = () => {
 
   const blks = data?.blocks?.edges?.map((e) => e?.node);
 
+  const numPage = paginationProcessTotalNumPage(data, 'blocks');
+
   return (
     <>
       {error && (
@@ -88,31 +91,29 @@ const TableWithPagination = () => {
         </button>
       )}
 
-      <div className="list-top-pagination-container-wrapper">
-        <Pagination
-          setCurPage={setCurPageWithSideEffect}
-          curPage={curPage}
-          numPages={200}
-          position="top"
-        />
-      </div>
-
-      {!!blks?.length && <BlkList blks={blks} />}
-
-      <div className="pagination-container mlm17 mrm18  position-bottom">
-        <Pagination
-          position="bottom"
-          setCurPage={setCurPageWithSideEffect}
-          curPage={curPage}
-          numPages={200}
-        />
-      </div>
-
-      {!blks?.length && (
+      { blks && blks?.length > 0 ? <>
+        <div className="list-top-pagination-container-wrapper">
+          <Pagination
+            setCurPage={setCurPageWithSideEffect}
+            curPage={curPage}
+            numPages={numPage}
+            position="top"
+          />
+        </div>
+        <BlkList blks={blks} />
+        <div className="list-bottom-pagination-container-wrapper">
+          <Pagination
+            position="bottom"
+            setCurPage={setCurPageWithSideEffect}
+            curPage={curPage}
+            numPages={numPage}
+          />
+        </div>
+      </> : <>
         <div data-empty-response-message>
           <span>There are no blocks.</span>
         </div>
-      )}
+      </>}
     </>
   );
 };

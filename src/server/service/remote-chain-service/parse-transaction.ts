@@ -36,7 +36,7 @@ export function parseTransaction(
       maxPriorityFeePerGas:
         tx.maxPriorityFeePerGas && hexToDecimal(tx.maxPriorityFeePerGas),
       maxFeePerGas: tx.maxFeePerGas && hexToDecimal(tx.maxFeePerGas),
-      type: hexToNumber(tx.type),
+      type: tx.type ? hexToNumber(tx.type) : undefined,
       fromAddress: hexToBuffer(tx.from),
       fromAddressHash: hexToBuffer(tx.from),
       // @ts-ignore

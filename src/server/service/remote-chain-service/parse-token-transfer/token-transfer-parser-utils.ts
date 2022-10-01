@@ -1,15 +1,12 @@
 import { TokenTransfer } from "@/model/token-transfer";
-import { RawToken } from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
 import { Log } from "@ethersproject/abstract-provider";
 
 export type ParsedTokenTransfers = {
   tokenTransfers: TokenTransfer[];
-  tokens: RawToken[];
 };
 
 export type ParsedTokenTransfer = {
   tokenTransfer: TokenTransfer & { type: string };
-  token: RawToken;
 };
 
 export const erc20AndErc721TokenTransferFirstTopic =

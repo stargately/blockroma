@@ -40,10 +40,6 @@ export const erc1155SingleTransfer: Parser = {
         type: "ERC-1155",
         tokenId: tokenId.toString() ?? "0",
       },
-      token: {
-        contractAddress: hexToBuffer(log.address),
-        type: "ERC-1155",
-      },
     };
   },
 };

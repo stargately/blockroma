@@ -46,10 +46,6 @@ export const erc1155BatchTransfer: Parser = {
         amounts: values?.map((val: BigNumber) => val.toString()),
         type: "ERC-1155",
       },
-      token: {
-        contractAddress: hexToBuffer(log.address),
-        type: "ERC-1155",
-      },
     };
   },
 };

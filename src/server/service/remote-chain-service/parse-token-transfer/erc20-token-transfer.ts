@@ -48,10 +48,6 @@ export const erc20TokenTransfer: Parser = {
         tokenId: undefined,
         type: "ERC-20",
       },
-      token: {
-        contractAddress: hexToBuffer(log.address),
-        type: "ERC-20",
-      },
     };
   },
 };

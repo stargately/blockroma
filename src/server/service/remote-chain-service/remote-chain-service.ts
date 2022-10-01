@@ -16,7 +16,6 @@ import { parseTransaction } from "@/server/service/remote-chain-service/parse-tr
 import {
   matchTokenTransferInput,
   parseTokenTransfers,
-  RawToken,
 } from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
 import { TokenTransfer } from "@/model/token-transfer";
 import { logger } from "onefx/lib/integrated-gateways/logger";
@@ -74,7 +73,6 @@ export class RemoteChainService {
     transactions: Array<Transaction>;
     addresses: Array<Address>;
     tokenTransfers: TokenTransfer[];
-    tokensByAddresses: Record<string, RawToken>;
   }> {
     const min = Math.min(start, end);
     const max = Math.max(start, end);
@@ -83,7 +81,6 @@ export class RemoteChainService {
     const addressMap: Record<string, number> = {};
     // TODO(dora): should optimize
     const blockBatch: Array<Block> = [];
-    const tokensByAddresses: Record<string, RawToken> = {};
     let tokenTransfers: TokenTransfer[] = [];
 
     for (let i = max; i >= min; i -= 1) {
@@ -129,11 +126,7 @@ export class RemoteChainService {
                 await this.server.gateways.chainProvider
                   .get()
                   .getTransactionReceipt(tx.hash);
-              const { tokens: rawTokens, tokenTransfers: tt } =
-                parseTokenTransfers(receipt.logs);
-              rawTokens.forEach((r) => {
-                tokensByAddresses[r.contractAddress.toString("hex")] = r;
-              });
+              const { tokenTransfers: tt } = parseTokenTransfers(receipt.logs);
               tokenTransfers = [...tokenTransfers, ...tt];
               for (const t of tokenTransfers) {
                 t.toAddress &&
@@ -169,7 +162,6 @@ export class RemoteChainService {
       blocks: blockBatch,
       transactions,
       addresses,
-      tokensByAddresses,
       tokenTransfers,
     };
   }

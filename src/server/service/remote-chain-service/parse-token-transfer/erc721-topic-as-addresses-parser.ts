@@ -7,9 +7,7 @@ import {
   trancate,
 } from "@/server/service/remote-chain-service/parse-token-transfer/token-transfer-parser-utils";
 import { ethers } from "ethers";
-import {
-  erc721InfoInDataParser
-} from "@/server/service/remote-chain-service/parse-token-transfer/erc721-info-in-data-parser";
+import { erc721InfoInDataParser } from "@/server/service/remote-chain-service/parse-token-transfer/erc721-info-in-data-parser";
 
 const decoder = ethers.utils.defaultAbiCoder;
 
@@ -39,10 +37,6 @@ export const erc721TopicAsAddressesParser: Parser = {
         tokenContractAddress: hexToBuffer(log.address),
         tokenId: tokenId.toString() ?? "0",
         transaction: hexToBuffer(log.transactionHash),
-        type: "ERC-721",
-      },
-      token: {
-        contractAddress: hexToBuffer(log.address),
         type: "ERC-721",
       },
     };

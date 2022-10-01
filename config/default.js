@@ -36,14 +36,7 @@ module.exports = {
       enabled: true,
       blocksBatchSize: 200,
 
-      blockNumberRanges: [
-        [1039, 1039],
-        [225791, 225791],
-        [1044, 1044],
-        [255055, 255055],
-        [276263, 276263],
-        // [0, "latest"],
-      ],
+      blockNumberRanges: [[2324586, 2324586]],
     },
     realtime: {
       enabled: true,

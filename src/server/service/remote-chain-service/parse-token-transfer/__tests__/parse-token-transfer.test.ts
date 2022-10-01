@@ -60,10 +60,7 @@ test("parse/1 parses logs for tokens and token transfers", async (t) => {
       removed: false,
     },
   ]);
-  t.deepEqual(parsed.tokens.length, 2);
   t.deepEqual(parsed.tokenTransfers.length, 2);
-  t.truthy(parsed.tokens.filter((it) => it.type === "ERC-20").length);
-  t.truthy(parsed.tokens.filter((it) => it.type === "ERC-721").length);
   t.truthy(parsed.tokenTransfers.filter((it) => it.type === "ERC-20").length);
   t.truthy(parsed.tokenTransfers.filter((it) => it.type === "ERC-721").length);
 });
@@ -86,15 +83,6 @@ test("parses ERC-721 transfer with addresses in data field", async (t) => {
   };
 
   const expected: ParsedTokenTransfers = {
-    tokens: [
-      {
-        contractAddress: Buffer.from(
-          "58Ab73CB79c8275628E0213742a85B163fE0A9Fb",
-          "hex"
-        ),
-        type: "ERC-721",
-      },
-    ],
     tokenTransfers: [
       {
         blockNumber: log.blockNumber,
@@ -163,14 +151,6 @@ test("parses erc1155 token transfer", (t) => {
         ),
       },
     ],
-    tokens: [
-      {
-        contractAddress: hexToBuffer(
-          "0x58Ab73CB79c8275628E0213742a85B163fE0A9Fb"
-        ),
-        type: "ERC-1155",
-      },
-    ],
   };
   t.deepEqual(parseTokenTransfers([log]), expected);
 });
@@ -216,14 +196,6 @@ test("parses erc1155 batch token transfer", async (t) => {
         amounts: ["5000"],
       },
     ],
-    tokens: [
-      {
-        contractAddress: hexToBuffer(
-          "0x58Ab73CB79c8275628E0213742a85B163fE0A9Fb"
-        ),
-        type: "ERC-1155",
-      },
-    ],
   };
   t.deepEqual(parseTokenTransfers([log]), expected);
 });
@@ -245,7 +217,6 @@ test("logs error with unrecognized token transfer format", async (t) => {
     transactionIndex: 999,
   };
   t.deepEqual(parseTokenTransfers([log]), {
-    tokens: [],
     tokenTransfers: [],
   });
 });

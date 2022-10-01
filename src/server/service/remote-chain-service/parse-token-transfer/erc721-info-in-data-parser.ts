@@ -49,10 +49,6 @@ export const erc721InfoInDataParser: Parser = {
         transaction: hexToBuffer(log.transactionHash),
         type: "ERC-721",
       },
-      token: {
-        contractAddress: hexToBuffer(log.address),
-        type: "ERC-721",
-      },
     };
   },
 };

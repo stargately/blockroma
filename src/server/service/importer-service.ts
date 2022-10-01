@@ -5,9 +5,6 @@ import { TokenTransfer } from "@/model/token-transfer";
 import { Token } from "@/model/token";
 import { ethers } from "ethers";
 import { tokenMetadataAbi } from "@/server/service/remote-chain-service/token-metadata-abi";
-import { RawToken } from "@/server/service/remote-chain-service/parse-token-transfer/parse-token-transfer";
-
-const burnAddress = "0000000000000000000000000000000000000000";
 
 export class ImporterService {
   server: MyServer;
@@ -18,23 +15,18 @@ export class ImporterService {
 
   async importRange(range: [number, number]): Promise<void> {
     try {
-      const {
-        transactions,
-        blocks,
-        addresses,
-        tokensByAddresses,
-        tokenTransfers,
-      } = await this.server.service.remoteChainService.fetchBlockByRange(
-        range[0],
-        range[1]
-      );
+      const { transactions, blocks, addresses, tokenTransfers } =
+        await this.server.service.remoteChainService.fetchBlockByRange(
+          range[0],
+          range[1]
+        );
 
       await this.upsertAddresses(addresses);
       await this.server.service.indexedChainService.insertBlocks(blocks);
       await this.server.service.indexedChainService.insertTransactions(
         transactions
       );
-      await this.updateTokensFromContracts(tokenTransfers, tokensByAddresses);
+      await this.trackErc20ByTokenTransfers(tokenTransfers);
       await this.server.gateways.dbCon
         .getRepository(TokenTransfer)
         .insert(tokenTransfers);
@@ -64,20 +56,17 @@ export class ImporterService {
     );
   }
 
-  private async updateTokensFromContracts(
-    tokenTransfers: TokenTransfer[],
-    tokensByAddresses: Record<string, RawToken>
+  private async trackErc20ByTokenTransfers(
+    tokenTransfers: TokenTransfer[]
   ): Promise<void> {
-    const contractAddresses = new Set<Buffer>();
-    for (const tt of tokenTransfers) {
-      if (
-        tt.toAddress.toString("hex") === burnAddress ||
-        tt.fromAddress.toString("hex") === burnAddress
-      ) {
-        contractAddresses.add(tt.tokenContractAddress);
-      }
-    }
-    for (const address of contractAddresses) {
+    // deduplicate token contract addresses
+    const dedupErc20Address = new Set<Buffer>();
+    tokenTransfers.filter(tt => tt.type === "ERC-20").forEach(tt => {
+      dedupErc20Address.add(tt.tokenContractAddress);
+    })
+
+    // update token table with contracts by their addresses
+    for (const address of dedupErc20Address) {
       // eslint-disable-next-line no-await-in-loop
       const storedToken = await this.server.gateways.dbCon
         .getRepository(Token)
@@ -101,7 +90,7 @@ export class ImporterService {
           decimals,
           totalSupply: totalSupply.toString(),
           symbol,
-          type: tokensByAddresses[address.toString("hex")]?.type ?? "",
+          type: "ERC-20",
         };
         // eslint-disable-next-line no-await-in-loop
         await this.server.gateways.dbCon

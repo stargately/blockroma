@@ -20,8 +20,8 @@ Feature List
 - [x] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.
-- [x] ERC20 parser.
-- [x] ERC721 parser.
+- [ ] ERC20.
+- [ ] ERC721.
 - [ ] more accurate gas fee calculation.
 - [ ] better error handling and loading state.
 - [ ] onboard more blockchains.

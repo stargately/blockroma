@@ -77,7 +77,7 @@ const TableWithPagination = () => {
 
   const blks = data?.blocks?.edges?.map((e) => e?.node);
 
-  const numPage = paginationProcessTotalNumPage(data, 'blocks');
+  const numPage = paginationProcessTotalNumPage(data?.blocks);
 
   return (
     <>
@@ -91,29 +91,33 @@ const TableWithPagination = () => {
         </button>
       )}
 
-      { blks && blks?.length > 0 ? <>
-        <div className="list-top-pagination-container-wrapper">
-          <Pagination
-            setCurPage={setCurPageWithSideEffect}
-            curPage={curPage}
-            numPages={numPage}
-            position="top"
-          />
-        </div>
-        <BlkList blks={blks} />
-        <div className="list-bottom-pagination-container-wrapper">
-          <Pagination
-            position="bottom"
-            setCurPage={setCurPageWithSideEffect}
-            curPage={curPage}
-            numPages={numPage}
-          />
-        </div>
-      </> : <>
-        <div data-empty-response-message>
-          <span>There are no blocks.</span>
-        </div>
-      </>}
+      {blks && blks?.length > 0 ? (
+        <>
+          <div className="list-top-pagination-container-wrapper">
+            <Pagination
+              setCurPage={setCurPageWithSideEffect}
+              curPage={curPage}
+              numPages={numPage}
+              position="top"
+            />
+          </div>
+          <BlkList blks={blks} />
+          <div className="list-bottom-pagination-container-wrapper">
+            <Pagination
+              position="bottom"
+              setCurPage={setCurPageWithSideEffect}
+              curPage={curPage}
+              numPages={numPage}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div data-empty-response-message>
+            <span>There are no blocks.</span>
+          </div>
+        </>
+      )}
     </>
   );
 };

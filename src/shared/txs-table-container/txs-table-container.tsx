@@ -76,7 +76,7 @@ const TableWithPagination = () => {
 
   const txs = data?.transactions?.edges?.map((e) => e?.node);
 
-  const numPage = paginationProcessTotalNumPage(data, 'transactions');
+  const numPage = paginationProcessTotalNumPage(data?.transactions);
 
   return (
     <>
@@ -100,33 +100,37 @@ const TableWithPagination = () => {
         </div>
       )}
 
-      { txs && txs?.length > 0 ? <>
-        <Pagination
-          setCurPage={setCurPageWithSideEffect}
-          curPage={curPage}
-          numPages={numPage}
-          position="top"
-        />
+      {txs && txs?.length > 0 ? (
+        <>
+          <Pagination
+            setCurPage={setCurPageWithSideEffect}
+            curPage={curPage}
+            numPages={numPage}
+            position="top"
+          />
 
-        <div data-selector="transactions-list">
-          <TxsList txs={txs} />
-        </div>
+          <div data-selector="transactions-list">
+            <TxsList txs={txs} />
+          </div>
 
-        <Pagination
-        setCurPage={setCurPageWithSideEffect}
-        position="bottom"
-        curPage={curPage}
-        numPages={numPage}
-        />
-      </> : <>
-        <div data-empty-response-message style={{ display: "none" }}>
-          <div className="tile tile-muted text-center">
+          <Pagination
+            setCurPage={setCurPageWithSideEffect}
+            position="bottom"
+            curPage={curPage}
+            numPages={numPage}
+          />
+        </>
+      ) : (
+        <>
+          <div data-empty-response-message style={{ display: "none" }}>
+            <div className="tile tile-muted text-center">
               <span data-selector="empty-internal-transactions-list">
                 There are no transactions.
               </span>
+            </div>
           </div>
-        </div>
-      </>}
+        </>
+      )}
     </>
   );
 };

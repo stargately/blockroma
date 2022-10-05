@@ -20,7 +20,7 @@ Feature List
 - [x] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.
-- [ ] ERC20.
+- [ ] ERC20. [Design](./src/server/service/remote-chain-service/parse-token-transfer/README.md)
 - [ ] ERC721.
 - [ ] more accurate gas fee calculation.
 - [ ] better error handling and loading state.

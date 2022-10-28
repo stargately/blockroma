@@ -1,5 +1,7 @@
 # Blockroma
 
+![Discord](https://img.shields.io/discord/817917152467222529?label=Discord&logo=discord&style=flat~~~~)
+
 ![Blockroma](https://tp-misc.b-cdn.net/blockroma-v0.1.png)
 
 ## Getting Started

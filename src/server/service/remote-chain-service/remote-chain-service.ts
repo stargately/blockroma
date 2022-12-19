@@ -57,10 +57,18 @@ export class RemoteChainService {
     return getRanges(numberList);
   }
 
-  async getRawBlock(i: number): Promise<RawBlock> {
-    const rawBlock = await this.server.gateways.chainProvider
-      .get()
-      .send("eth_getBlockByNumber", [ethers.utils.hexValue(i), true]);
+  async getRawBlock(i: number): Promise<RawBlock | null> {
+    let rawBlock: RawBlock | null = null;
+    for (let t = 0; t < 3; t += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      rawBlock = await this.server.gateways.chainProvider
+        .get()
+        .send("eth_getBlockByNumber", [ethers.utils.hexValue(i), true]);
+      if (rawBlock) {
+        break;
+      }
+      logger.warn(`failed to fetch raw block ${i} for sequence ${t}`);
+    }
 
     return rawBlock;
   }
@@ -86,6 +94,12 @@ export class RemoteChainService {
     for (let i = max; i >= min; i -= 1) {
       // eslint-disable-next-line no-await-in-loop
       const rawBlock = await this.getRawBlock(i);
+      if (!rawBlock) {
+        logger.warn(`failed to fetch raw block ${i}; skipping...`);
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
       const blockNumber = hexToNumber(rawBlock.number);
 
       maybeAddToAddress(addressMap, blockNumber, rawBlock.miner);

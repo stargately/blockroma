@@ -16,6 +16,7 @@ import { BlksTableContainer } from "@/shared/blks-table-container/blks-table-con
 import { TxsTableContainer } from "./txs-table-container/txs-table-container";
 import { AddressDetailsContainer } from "./address-details-container/address-details-container";
 import { TxDetailsContainer } from "./tx-details-container/tx-details-container";
+import { TokensContainer } from "./token-container/tokens-container";
 
 const routes = [
   {
@@ -52,6 +53,12 @@ const routes = [
     path: "/tx/:txHash*",
     style: "stylesheets/app.css",
     component: <TxDetailsContainer />,
+    exact: true,
+  },
+  {
+    path: "/tokens",
+    style: "stylesheets/app.css",
+    component: <TokensContainer />,
     exact: true,
   },
   {

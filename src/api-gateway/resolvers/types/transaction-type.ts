@@ -1,6 +1,10 @@
 import { Status } from "@/model/transaction";
 import { Field, ID, Int, ObjectType, registerEnumType } from "type-graphql";
 import { BufferScalar } from "@/api-gateway/resolvers/types/buffer-scalar";
+import {
+  ConnectionType,
+  EdgeType,
+} from "@/api-gateway/resolvers/types/connection-type";
 import { Decimal } from "./decimal-scalar";
 
 registerEnumType(Status, {
@@ -89,3 +93,12 @@ export class Transaction {
   @Field(() => String)
   maxFeePerGas?: Decimal;
 }
+
+@ObjectType()
+export class TransactionEdge extends EdgeType("transaction", Transaction) {}
+
+@ObjectType()
+export class TransactionConnection extends ConnectionType<TransactionEdge>(
+  "transaction",
+  TransactionEdge
+) {}

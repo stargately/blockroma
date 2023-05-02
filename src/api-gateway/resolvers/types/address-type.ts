@@ -1,20 +1,7 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import {
-  ConnectionType,
-  EdgeType,
-} from "@/api-gateway/resolvers/types/connection-type";
-import { Transaction } from "@/api-gateway/resolvers/types/transaction-type";
+import { TransactionConnection } from "@/api-gateway/resolvers/types/transaction-type";
 import { BufferScalar } from "@/api-gateway/resolvers/types/buffer-scalar";
 import { Decimal } from "./decimal-scalar";
-
-@ObjectType()
-export class TransactionEdge extends EdgeType("transaction", Transaction) {}
-
-@ObjectType()
-export class TransactionConnection extends ConnectionType<TransactionEdge>(
-  "transaction",
-  TransactionEdge
-) {}
 
 @ObjectType({ description: "A stored representation of a Web3 address." })
 export class Address {

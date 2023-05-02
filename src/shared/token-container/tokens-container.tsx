@@ -1,0 +1,277 @@
+import React from "react";
+import { useQueryTokens } from "@/shared/token-container/hooks/use-query-tokens";
+import { selectTokens } from "@/shared/token-container/selectors/select-tokens";
+import { assetURL } from "onefx/lib/asset-url";
+import { shortenHash } from "@/shared/common/shorten-hash";
+
+export const TokensContainer = () => {
+  const { tokensData } = useQueryTokens();
+  const tokens = selectTokens(tokensData);
+
+  return (
+    <main className="pt-4">
+      <p className="alert alert-info" role="alert"></p>
+      <p className="alert alert-danger" role="alert"></p>
+      <section
+        className="container"
+        data-page="tokens"
+        data-chain-id={10}
+        data-display-token-icons="false"
+      >
+        <div className="ad mb-3" style={{ display: "none" }}>
+          <span className="ad-prefix" />:{" "}
+          <img className="ad-img-url" width={20} height={20} />{" "}
+          <b>
+            <span className="ad-name" />
+          </b>{" "}
+          - <span className="ad-short-description" />{" "}
+          <a className="ad-url">
+            <b>
+              <span className="ad-cta-button" />
+            </b>
+          </a>
+        </div>
+        <div className="card">
+          <div
+            className="card-body"
+            data-async-load=""
+            data-async-listing="/optimism/mainnet/tokens"
+            data-no-self-calls=""
+          >
+            <h1 className="card-title list-title-description">Tokens</h1>
+            <div
+              className="list-top-pagination-container-wrapper tokens-list-search-input-outer-container d-flex"
+              style={{ float: "right" }}
+            >
+              <label className="tokens-list-search-input-container tokens mr-3">
+                <input
+                  data-search-field=""
+                  className="form-control tokens-list-search-input search-input"
+                  type="text"
+                  name="filter"
+                  placeholder="Token name or symbol"
+                  id="search-text-input"
+                />
+              </label>
+              <div
+                className="pagination-container position-top "
+                data-pagination-container=""
+              >
+                <ul className="pagination">
+                  <li className="page-item">
+                    <a
+                      className="page-link"
+                      href=""
+                      data-first-page-button=""
+                      style={{ display: "none" }}
+                    >
+                      First
+                    </a>
+                  </li>
+                  <li className="page-item">
+                    <a className="page-link" href="" data-prev-page-button="">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={6}
+                        height={10}
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2.358 5l3.357 3.358a.959.959 0 1 1-1.357 1.357L.502 5.859c-.076-.042-.153-.08-.217-.144A.949.949 0 0 1 .011 5a.949.949 0 0 1 .274-.715c.064-.064.142-.102.217-.145L4.358.285a.959.959 0 1 1 1.357 1.357L2.358 5z"
+                        />
+                      </svg>
+                    </a>
+                  </li>
+                  <li className="page-item">
+                    <a
+                      className="page-link no-hover"
+                      href=""
+                      data-page-number=""
+                    >
+                      Page 1
+                    </a>
+                  </li>
+                  <li className="page-item">
+                    <a
+                      className="page-link"
+                      href="/optimism/mainnet/tokens?holder_count=20636&items_count=50&market_cap=&name=Aave+Optimism+USDT"
+                      data-next-page-button=""
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={6}
+                        height={10}
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
+                        />
+                      </svg>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="addresses-table-container">
+              <div className="stakes-table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="stakes-table-th">
+                        <div className="stakes-table-th-content">&nbsp;</div>
+                      </th>
+                      <th className="stakes-table-th">
+                        <div>&nbsp;</div>
+                      </th>
+                      <th className="stakes-table-th">
+                        <div className="stakes-table-th-content">Token</div>
+                      </th>
+                      <th className="stakes-table-th">
+                        <div className="stakes-table-th-content">Address</div>
+                      </th>
+                      {/* <th className="stakes-table-th"> */}
+                      {/*  <div className="stakes-table-th-content"> */}
+                      {/*    Circulating Market Cap */}
+                      {/*  </div> */}
+                      {/* </th> */}
+                      <th className="stakes-table-th">
+                        <div className="stakes-table-th-content">
+                          Total Supply
+                        </div>
+                      </th>
+                      {/* <th className="stakes-table-th"> */}
+                      {/*  <div className="stakes-table-th-content"> */}
+                      {/*    Holders Count */}
+                      {/*  </div> */}
+                      {/* </th> */}
+                    </tr>
+                  </thead>
+                  <tbody data-items="" data-selector="top-tokens-list">
+                    {tokens?.map((t) => (
+                      <tr key={t?.contractAddress}>
+                        <td className="stakes-td">
+                          <span className="color-lighten"></span>
+                        </td>
+
+                        <td className="token-icon"></td>
+
+                        <td className="stakes-td">
+                          <a
+                            className="text-truncate"
+                            data-test="token_link"
+                            href={assetURL(`address/${t?.contractAddress}`)}
+                          >
+                            {t?.name} ({t?.symbol})
+                          </a>
+                        </td>
+
+                        <td className="stakes-td">
+                          <a
+                            data-test="address_hash_link"
+                            href={assetURL(`address/${t?.contractAddress}`)}
+                          >
+                            <span className="contract-address">
+                              <span
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                title=""
+                                data-custom-class=""
+                              >
+                                <span className="d-none d-md-none d-lg-inline d-xl-inline">
+                                  {t?.name}
+                                </span>
+                                <span className="d-inline d-md-inline d-lg-none d-xl-none">
+                                  {t?.name}
+                                </span>
+                                <span>
+                                  {" "}
+                                  ({shortenHash(t?.contractAddress)})
+                                </span>
+                              </span>
+                            </span>
+                          </a>
+                        </td>
+
+                        {/* <td className="stakes-td"> */}
+                        {/*  <span data-selector="circulating-market-cap-usd"> */}
+                        {/*    N/A */}
+                        {/*  </span> */}
+                        {/* </td> */}
+                        <td className="stakes-td">
+                          <span data-test="token_supply">
+                            {Number(t?.totalSupply).toLocaleString()}
+                          </span>{" "}
+                          {t?.symbol}
+                        </td>
+                        {/* <td className="stakes-td"> */}
+                        {/*  <span className="mr-4"> */}
+                        {/*    <span data-test="transaction_count">??</span> */}
+                        {/*  </span> */}
+                        {/* </td> */}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* <div */}
+            {/*  className="pagination-container  position-bottom" */}
+            {/*  data-pagination-container="" */}
+            {/* > */}
+            {/*  <ul className="pagination"> */}
+            {/*    <li className="page-item"> */}
+            {/*      <a */}
+            {/*        className="page-link" */}
+            {/*        href="" */}
+            {/*        data-first-page-button="" */}
+            {/*        style={{ display: "none" }} */}
+            {/*      > */}
+            {/*        First */}
+            {/*      </a> */}
+            {/*    </li> */}
+            {/*    <li className="page-item"> */}
+            {/*      <a className="page-link" href="" data-prev-page-button=""> */}
+            {/*        <svg */}
+            {/*          xmlns="http://www.w3.org/2000/svg" */}
+            {/*          width={6} */}
+            {/*          height={10} */}
+            {/*        > */}
+            {/*          <path */}
+            {/*            fillRule="evenodd" */}
+            {/*            d="M2.358 5l3.357 3.358a.959.959 0 1 1-1.357 1.357L.502 5.859c-.076-.042-.153-.08-.217-.144A.949.949 0 0 1 .011 5a.949.949 0 0 1 .274-.715c.064-.064.142-.102.217-.145L4.358.285a.959.959 0 1 1 1.357 1.357L2.358 5z" */}
+            {/*          /> */}
+            {/*        </svg> */}
+            {/*      </a> */}
+            {/*    </li> */}
+            {/*    <li className="page-item"> */}
+            {/*      <a className="page-link no-hover" href="" data-page-number=""> */}
+            {/*        Page 1 */}
+            {/*      </a> */}
+            {/*    </li> */}
+            {/*    <li className="page-item"> */}
+            {/*      <a */}
+            {/*        className="page-link" */}
+            {/*        href="/optimism/mainnet/tokens?holder_count=20636&items_count=50&market_cap=&name=Aave+Optimism+USDT" */}
+            {/*        data-next-page-button="" */}
+            {/*      > */}
+            {/*        <svg */}
+            {/*          xmlns="http://www.w3.org/2000/svg" */}
+            {/*          width={6} */}
+            {/*          height={10} */}
+            {/*        > */}
+            {/*          <path */}
+            {/*            fillRule="evenodd" */}
+            {/*            d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z" */}
+            {/*          /> */}
+            {/*        </svg> */}
+            {/*      </a> */}
+            {/*    </li> */}
+            {/*  </ul> */}
+            {/* </div> */}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+};

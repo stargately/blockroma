@@ -102,6 +102,19 @@ type Query {
   # is the server healthy?
   health: String
   token(tokenContractAddressHash: Buffer!): Token
+  tokens(
+    # Paginate after opaque cursor
+    after: String
+
+    # Paginate before opaque cursor
+    before: String
+
+    # Paginate first
+    first: Float
+
+    # Paginate last
+    last: Float
+  ): TokenConnection
   transaction(hash: Buffer!): Transaction
   transactions(
     # Paginate after opaque cursor
@@ -132,6 +145,17 @@ type Token {
   symbol: String
   totalSupply: String
   type: String
+}
+
+type TokenConnection {
+  edges: [TokenEdge]
+  pageInfo: PageInfo
+}
+
+type TokenEdge {
+  # Used in `before` and `after` args
+  cursor: String
+  node: Token
 }
 
 # Models a Web3 transaction.

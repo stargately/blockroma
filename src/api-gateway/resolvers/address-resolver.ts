@@ -1,13 +1,11 @@
 import { Args, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
-import {
-  Address,
-  TransactionConnection,
-} from "@/api-gateway/resolvers/types/address-type";
+import { Address } from "@/api-gateway/resolvers/types/address-type";
 import { ConnectionArgs } from "@/api-gateway/resolvers/types/connection-type";
 import { ResolverContext } from "@/api-gateway/resolver-context";
 import { logger } from "onefx/lib/integrated-gateways/logger";
 import { UserInputError } from "apollo-server-koa";
 import { emptyPage } from "@/server/service/indexed-chain-service";
+import { TransactionConnection } from "@/api-gateway/resolvers/types/transaction-type";
 
 @Resolver(() => Address)
 export class AddressResolver {

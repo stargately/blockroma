@@ -322,6 +322,82 @@ export class IndexedChainService {
       .getRepository(Token)
       .findOneBy({ contractAddress: tokenContractAddressHash });
   }
+
+  // TODO(dora): not sure how to achieve https://github.com/benjamin658/typeorm-cursor-pagination, it seems broken
+  // use numbered pagination for now
+  async getTokens(
+    orFilters: { type?: string },
+    args: ConnectionArgs
+  ): Promise<WithPageInfo<Token>> {
+    const query = this.server.gateways.dbCon
+      .createQueryBuilder()
+      .select()
+      .from(Token, "tk");
+
+    let count;
+    if (orFilters.type) {
+      query.where("tk.type = :type", {
+        type: orFilters.type,
+      });
+      count = await query.getCount();
+    } else {
+      // avoid full transaction table query
+      const result = await this.server.gateways.dbCon.query(
+        `SELECT n_live_tup AS estimate FROM pg_stat_all_tables WHERE relname = 'token';`
+      );
+      count = Number(result[0]?.estimate);
+    }
+
+    // Forward pagination
+    if (args.first !== undefined) {
+      const offset = Number(args.after ?? 10);
+      const data = await query
+        .orderBy({
+          "tk.updatedAt": "DESC",
+        })
+        .limit(args.first)
+        .offset(offset)
+        .execute();
+
+      const next = offset + args.first;
+      const prev = count - offset;
+
+      return {
+        data,
+        pageInfo: {
+          hasNextPage: next < count,
+          startCursor: String(offset + args.first),
+          hasPreviousPage: prev < count,
+          endCursor: String(prev),
+        },
+      };
+    }
+    // Backward pagination
+    if (args.last !== undefined) {
+      const offset = Number(args.after ?? 0);
+      const data = await query
+        .orderBy({ "tk.updatedAt": "ASC" })
+        .limit(args.last)
+        .offset(offset)
+        .execute();
+      const next = offset + args.last;
+      const prev = count - offset;
+      return {
+        data,
+        pageInfo: {
+          hasNextPage: next < count,
+          startCursor: String(offset + args.last),
+          hasPreviousPage: prev < count,
+          endCursor: String(prev),
+        },
+      };
+    }
+
+    return {
+      data: [],
+      pageInfo: emptyPage,
+    };
+  }
 }
 
 export const emptyPage = {

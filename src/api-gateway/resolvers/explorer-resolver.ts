@@ -3,11 +3,11 @@ import {
   Block,
   BlockConnection,
 } from "@/api-gateway/resolvers/types/block-type";
-import { Transaction } from "@/api-gateway/resolvers/types/transaction-type";
 import {
-  Address,
+  Transaction,
   TransactionConnection,
-} from "@/api-gateway/resolvers/types/address-type";
+} from "@/api-gateway/resolvers/types/transaction-type";
+import { Address } from "@/api-gateway/resolvers/types/address-type";
 import { ResolverContext } from "@/api-gateway/resolver-context";
 import { ApolloError, UserInputError } from "apollo-server-koa";
 import { BufferScalar } from "@/api-gateway/resolvers/types/buffer-scalar";
@@ -15,7 +15,11 @@ import { logger } from "onefx/lib/integrated-gateways/logger";
 import { emptyPage } from "@/server/service/indexed-chain-service";
 import * as Relay from "graphql-relay";
 import QRCode from "qrcode";
-import { Token } from "@/api-gateway/resolvers/types/token-type";
+import {
+  Token,
+  TokenConnection,
+  TokensArgs,
+} from "@/api-gateway/resolvers/types/token-type";
 
 @ArgsType()
 class BlockRequest {
@@ -264,5 +268,49 @@ export class ExplorerResolver {
       );
     }
     return token;
+  }
+
+  @Query(() => TokenConnection)
+  async tokens(
+    @Args() args: TokensArgs,
+    @Ctx() ctx: ResolverContext
+  ): Promise<TokenConnection> {
+    // https://relay.dev/graphql/connections.htm check params
+    if (args.first && args.last) {
+      throw new UserInputError(
+        "Including a value for both first and last is strongly discouraged"
+      );
+    }
+
+    try {
+      const tksWithPageInfo = await ctx.service.indexedChainService.getTokens(
+        {},
+        args
+      );
+
+      const txs = tksWithPageInfo.data.map((tk) => ({
+        node: {
+          ...tk,
+          // @ts-ignore
+          contractAddress: tk.contractAddressHash,
+        },
+        cursor: (args.first ? args.after : args.before) ?? "",
+      }));
+
+      return {
+        edges: txs,
+        pageInfo: tksWithPageInfo.pageInfo,
+      };
+    } catch (err) {
+      logger.error(
+        `failed to get transactions: ${err}: ${
+          err instanceof Error && err.stack
+        }`
+      );
+      return {
+        edges: [],
+        pageInfo: emptyPage,
+      };
+    }
   }
 }

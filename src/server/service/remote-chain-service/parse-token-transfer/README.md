@@ -1,6 +1,6 @@
 # Parse token transfer
 
-There are t``wo places we could track token contracts
+There are two places we could track token contracts
 
 1. Token contract deployment
 2. Token transfer

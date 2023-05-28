@@ -18,5 +18,18 @@ export const apolloClient = new ApolloClient({
     credentials: "same-origin",
     headers: { "x-csrf-token": csrfToken },
   }),
-  cache: new InMemoryCache().restore(apolloState),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          tokens: {
+            keyArgs: false,
+            merge(_existing: {} = {}, incoming) {
+              return incoming;
+            },
+          },
+        },
+      },
+    },
+  }).restore(apolloState),
 });

@@ -350,45 +350,45 @@ export class IndexedChainService {
 
     // Forward pagination
     if (args.first !== undefined) {
-      const offset = Number(args.after ?? 10);
+      const after = Number(args.after ?? 10);
       const data = await query
         .orderBy({
           "tk.updatedAt": "DESC",
         })
         .limit(args.first)
-        .offset(offset)
+        .offset(after)
         .execute();
 
-      const next = offset + args.first;
-      const prev = count - offset;
+      const next = after + args.first;
+      const prev = count - after;
 
       return {
         data,
         pageInfo: {
           hasNextPage: next < count,
-          startCursor: String(offset + args.first),
+          startCursor: String(after),
           hasPreviousPage: prev < count,
-          endCursor: String(prev),
+          endCursor: String(next),
         },
       };
     }
     // Backward pagination
     if (args.last !== undefined) {
-      const offset = Number(args.after ?? 0);
+      const before = Number(args.before ?? 0);
       const data = await query
         .orderBy({ "tk.updatedAt": "ASC" })
         .limit(args.last)
-        .offset(offset)
+        .offset(before)
         .execute();
-      const next = offset + args.last;
-      const prev = count - offset;
+      const next = before + args.last;
+      const prev = count - before;
       return {
         data,
         pageInfo: {
           hasNextPage: next < count,
-          startCursor: String(offset + args.last),
+          startCursor: String(before),
           hasPreviousPage: prev < count,
-          endCursor: String(prev),
+          endCursor: String(next),
         },
       };
     }

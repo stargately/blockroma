@@ -5,8 +5,8 @@ import { assetURL } from "onefx/lib/asset-url";
 import { shortenHash } from "@/shared/common/shorten-hash";
 
 export const TokensContainer = () => {
-  const { tokensData } = useQueryTokens();
-  const tokens = selectTokens(tokensData);
+  const { tokensData, tokensFetchMore } = useQueryTokens();
+  const { tokens, currentCursor } = selectTokens(tokensData);
 
   return (
     <main className="pt-4">
@@ -60,42 +60,23 @@ export const TokensContainer = () => {
                 <ul className="pagination">
                   <li className="page-item">
                     <a
-                      className="page-link"
-                      href=""
-                      data-first-page-button=""
-                      style={{ display: "none" }}
-                    >
-                      First
-                    </a>
-                  </li>
-                  <li className="page-item">
-                    <a className="page-link" href="" data-prev-page-button="">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width={6}
-                        height={10}
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M2.358 5l3.357 3.358a.959.959 0 1 1-1.357 1.357L.502 5.859c-.076-.042-.153-.08-.217-.144A.949.949 0 0 1 .011 5a.949.949 0 0 1 .274-.715c.064-.064.142-.102.217-.145L4.358.285a.959.959 0 1 1 1.357 1.357L2.358 5z"
-                        />
-                      </svg>
-                    </a>
-                  </li>
-                  <li className="page-item">
-                    <a
                       className="page-link no-hover"
                       href=""
                       data-page-number=""
                     >
-                      Page 1
+                      Page {currentCursor}
                     </a>
                   </li>
                   <li className="page-item">
                     <a
                       className="page-link"
-                      href="/optimism/mainnet/tokens?holder_count=20636&items_count=50&market_cap=&name=Aave+Optimism+USDT"
+                      href="#"
                       data-next-page-button=""
+                      onClick={() => {
+                        return tokensFetchMore(
+                          tokensData?.tokens?.pageInfo?.endCursor
+                        );
+                      }}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -215,60 +196,41 @@ export const TokensContainer = () => {
               </div>
             </div>
 
-            {/* <div */}
-            {/*  className="pagination-container  position-bottom" */}
-            {/*  data-pagination-container="" */}
-            {/* > */}
-            {/*  <ul className="pagination"> */}
-            {/*    <li className="page-item"> */}
-            {/*      <a */}
-            {/*        className="page-link" */}
-            {/*        href="" */}
-            {/*        data-first-page-button="" */}
-            {/*        style={{ display: "none" }} */}
-            {/*      > */}
-            {/*        First */}
-            {/*      </a> */}
-            {/*    </li> */}
-            {/*    <li className="page-item"> */}
-            {/*      <a className="page-link" href="" data-prev-page-button=""> */}
-            {/*        <svg */}
-            {/*          xmlns="http://www.w3.org/2000/svg" */}
-            {/*          width={6} */}
-            {/*          height={10} */}
-            {/*        > */}
-            {/*          <path */}
-            {/*            fillRule="evenodd" */}
-            {/*            d="M2.358 5l3.357 3.358a.959.959 0 1 1-1.357 1.357L.502 5.859c-.076-.042-.153-.08-.217-.144A.949.949 0 0 1 .011 5a.949.949 0 0 1 .274-.715c.064-.064.142-.102.217-.145L4.358.285a.959.959 0 1 1 1.357 1.357L2.358 5z" */}
-            {/*          /> */}
-            {/*        </svg> */}
-            {/*      </a> */}
-            {/*    </li> */}
-            {/*    <li className="page-item"> */}
-            {/*      <a className="page-link no-hover" href="" data-page-number=""> */}
-            {/*        Page 1 */}
-            {/*      </a> */}
-            {/*    </li> */}
-            {/*    <li className="page-item"> */}
-            {/*      <a */}
-            {/*        className="page-link" */}
-            {/*        href="/optimism/mainnet/tokens?holder_count=20636&items_count=50&market_cap=&name=Aave+Optimism+USDT" */}
-            {/*        data-next-page-button="" */}
-            {/*      > */}
-            {/*        <svg */}
-            {/*          xmlns="http://www.w3.org/2000/svg" */}
-            {/*          width={6} */}
-            {/*          height={10} */}
-            {/*        > */}
-            {/*          <path */}
-            {/*            fillRule="evenodd" */}
-            {/*            d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z" */}
-            {/*          /> */}
-            {/*        </svg> */}
-            {/*      </a> */}
-            {/*    </li> */}
-            {/*  </ul> */}
-            {/* </div> */}
+            <div
+              className="pagination-container  position-bottom"
+              data-pagination-container=""
+            >
+              <ul className="pagination">
+                <li className="page-item">
+                  <a className="page-link no-hover" href="" data-page-number="">
+                    Page {currentCursor}
+                  </a>
+                </li>
+                <li className="page-item">
+                  <a
+                    className="page-link"
+                    href="#"
+                    onClick={() => {
+                      return tokensFetchMore(
+                        tokensData?.tokens?.pageInfo?.endCursor
+                      );
+                    }}
+                    data-next-page-button=""
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={6}
+                      height={10}
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
+                      />
+                    </svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>

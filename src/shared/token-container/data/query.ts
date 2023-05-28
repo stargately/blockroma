@@ -15,6 +15,10 @@ export const queryTokens = gql`
           skipMetadata
         }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
 `;

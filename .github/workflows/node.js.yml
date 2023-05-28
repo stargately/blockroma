@@ -33,4 +33,7 @@ jobs:
             ${{ runner.os }}-
       - run: npm install
       - run: npm run build --if-present
-      - run: npm test
+      - name: "test"
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: npm test

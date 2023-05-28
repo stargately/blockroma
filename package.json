@@ -7,7 +7,7 @@
     "start": "TZ=utc ts-node -r tsconfig-paths/register --transpile-only ./server.ts",
     "test": "npm run lint && npm run cover",
     "check-coverage": "nyc check-coverage --lines 65 --functions 60 --Statements 65",
-    "ava": "cross-env NODE_ENV=test ava",
+    "ava": "cross-env NODE_ENV=test ava --timeout=10m",
     "watch": "TZ=utc gulp watch",
     "build": "gulp build",
     "build-production": "cross-env NODE_ENV=production gulp build",

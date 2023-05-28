@@ -284,7 +284,7 @@ export class ExplorerResolver {
 
     try {
       const tksWithPageInfo = await ctx.service.indexedChainService.getTokens(
-        {},
+        args,
         args
       );
 

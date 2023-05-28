@@ -43,6 +43,12 @@ export class TokenConnection extends ConnectionType<TokenEdge>(
 export class TokensArgs implements Relay.ConnectionArguments {
   @Field(() => String, {
     nullable: true,
+    description: "token symbol",
+  })
+  symbol?: string;
+
+  @Field(() => String, {
+    nullable: true,
     description: "Paginate before opaque cursor",
   })
   before?: Relay.ConnectionCursor;

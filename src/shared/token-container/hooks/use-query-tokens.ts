@@ -4,16 +4,17 @@ import { Tokens } from "@/shared/token-container/data/__generated__/Tokens";
 
 const pageSize = 50;
 
-export const useQueryTokens = () => {
+export const useQueryTokens = (querySymbol: string) => {
   const { data, loading, fetchMore } = useQuery<Tokens>(queryTokens, {
     ssr: false,
     variables: {
       after: "0",
       first: pageSize,
+      symbol: querySymbol,
     },
   });
   return {
-    tokensFetchMore: async (cursor?: string | null) => {
+    tokensFetchMore: async (cursor?: string | null, symbol?: string) => {
       if (!cursor) {
         return;
       }
@@ -21,6 +22,7 @@ export const useQueryTokens = () => {
         variables: {
           after: cursor,
           first: pageSize,
+          symbol,
         },
       });
     },

@@ -326,7 +326,7 @@ export class IndexedChainService {
   // TODO(dora): not sure how to achieve https://github.com/benjamin658/typeorm-cursor-pagination, it seems broken
   // use numbered pagination for now
   async getTokens(
-    orFilters: { type?: string },
+    orFilters: { type?: string; symbol?: string },
     args: ConnectionArgs
   ): Promise<WithPageInfo<Token>> {
     const query = this.server.gateways.dbCon
@@ -338,6 +338,11 @@ export class IndexedChainService {
     if (orFilters.type) {
       query.where("tk.type = :type", {
         type: orFilters.type,
+      });
+      count = await query.getCount();
+    } else if (orFilters.symbol) {
+      query.where("tk.symbol = :symbol", {
+        symbol: orFilters.symbol,
       });
       count = await query.getCount();
     } else {

@@ -114,6 +114,9 @@ type Query {
 
     # Paginate last
     last: Float
+
+    # token symbol
+    symbol: String
   ): TokenConnection
   transaction(hash: Buffer!): Transaction
   transactions(

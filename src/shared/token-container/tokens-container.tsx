@@ -1,12 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQueryTokens } from "@/shared/token-container/hooks/use-query-tokens";
 import { selectTokens } from "@/shared/token-container/selectors/select-tokens";
 import { assetURL } from "onefx/lib/asset-url";
 import { shortenHash } from "@/shared/common/shorten-hash";
+import { useHistory } from "react-router-dom";
+import { useLocation } from "onefx/lib/react-router";
 
 export const TokensContainer = () => {
-  const { tokensData, tokensFetchMore } = useQueryTokens();
-  const { tokens, currentCursor } = selectTokens(tokensData);
+  const history = useHistory();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const querySymbol = searchParams.get("symbol");
+
+  const [symbol, setSymbol] = useState(String(querySymbol ?? "").toUpperCase());
+
+  const updateSymbol = (s: string) => {
+    // Create a new URLSearchParams object
+    const p = new URLSearchParams(location.search);
+    // Set the new query value
+    p.set("symbol", s);
+    // Update the URL with the new query string
+    history.push({ search: p.toString() });
+    setSymbol(s);
+  };
+
+  const { tokensData, tokensFetchMore } = useQueryTokens(symbol);
+  const { tokens, currentCursor, hasNextPage } = selectTokens(tokensData);
+
+  const handleKeyUp = async (event: any) => {
+    if (event.key === "Enter") {
+      const uppercase = String(event.target.value).toUpperCase();
+      updateSymbol(uppercase);
+      await tokensFetchMore("0", uppercase);
+    }
+  };
 
   return (
     <main className="pt-4">
@@ -49,8 +76,10 @@ export const TokensContainer = () => {
                   className="form-control tokens-list-search-input search-input"
                   type="text"
                   name="filter"
-                  placeholder="Token name or symbol"
+                  defaultValue={symbol}
+                  placeholder="Token symbol"
                   id="search-text-input"
+                  onKeyUp={handleKeyUp}
                 />
               </label>
               <div
@@ -67,29 +96,33 @@ export const TokensContainer = () => {
                       Page {currentCursor}
                     </a>
                   </li>
-                  <li className="page-item">
-                    <a
-                      className="page-link"
-                      href="#"
-                      data-next-page-button=""
-                      onClick={() => {
-                        return tokensFetchMore(
-                          tokensData?.tokens?.pageInfo?.endCursor
-                        );
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width={6}
-                        height={10}
+
+                  {hasNextPage && (
+                    <li className="page-item">
+                      <a
+                        className="page-link"
+                        href="#"
+                        data-next-page-button=""
+                        onClick={() => {
+                          return tokensFetchMore(
+                            tokensData?.tokens?.pageInfo?.endCursor,
+                            symbol
+                          );
+                        }}
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
-                        />
-                      </svg>
-                    </a>
-                  </li>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width={6}
+                          height={10}
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
+                          />
+                        </svg>
+                      </a>
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -206,29 +239,33 @@ export const TokensContainer = () => {
                     Page {currentCursor}
                   </a>
                 </li>
-                <li className="page-item">
-                  <a
-                    className="page-link"
-                    href="#"
-                    onClick={() => {
-                      return tokensFetchMore(
-                        tokensData?.tokens?.pageInfo?.endCursor
-                      );
-                    }}
-                    data-next-page-button=""
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width={6}
-                      height={10}
+
+                {hasNextPage && (
+                  <li className="page-item">
+                    <a
+                      className="page-link"
+                      href="#"
+                      onClick={() => {
+                        return tokensFetchMore(
+                          tokensData?.tokens?.pageInfo?.endCursor,
+                          symbol
+                        );
+                      }}
+                      data-next-page-button=""
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
-                      />
-                    </svg>
-                  </a>
-                </li>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={6}
+                        height={10}
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.715 5.715c-.064.064-.141.102-.217.144L1.642 9.715A.959.959 0 1 1 .285 8.358L3.642 5 .285 1.642A.959.959 0 1 1 1.642.285L5.498 4.14c.075.043.153.081.217.145A.949.949 0 0 1 5.989 5a.949.949 0 0 1-.274.715z"
+                        />
+                      </svg>
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

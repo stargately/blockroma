@@ -146,7 +146,7 @@ export const CompetitiveAnalysis: React.FC = () => {
 
         <div className="row justify-content-center mt-6">
           <div className="col-xl-7 col-lg-8 col-md-10">
-            <div data-flickity='{ "imagesLoaded": true, "wrapAround": true }'>
+            <div>
               {meta.recommendations.map((r) => (
                 <div className="carousel-cell mx-md-4" key={r.name}>
                   <div className="card card-body flex-row py-4">

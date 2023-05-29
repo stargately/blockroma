@@ -102,7 +102,7 @@ export const Birdview: React.FC = () => {
           <div className="col-xl-11" data-aos="fade-up">
             <div className="tab-content">
               <div
-                className="tab-pane fade show active"
+                className="tab-pane show active"
                 id="saas-tab-1"
                 role="tabpanel"
                 aria-labelledby="saas-tab-1"

@@ -1,3 +1,8 @@
+---
+authors: [mike]
+tags: [engineering]
+---
+
 # Understanding Blockchain Explorers
 
 As we explore the world of blockchain, it's crucial to have the right tools at our disposal. One such tool, often mentioned but rarely unpacked, is the Blockchain Explorer. This post provides an in-depth look at Blockchain Explorers, how they function, and their potential applications.

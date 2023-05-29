@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import classNames from "classnames";
 
 export const Birdview: React.FC = () => {
   const opts = {
@@ -22,6 +23,7 @@ export const Birdview: React.FC = () => {
     birdViewTile3Screenshot:
       "https://tp-misc.b-cdn.net/blockroma-screenshot-dark-mode.png",
   };
+  const [activeIdx, setActiveIdx] = useState(0);
   return (
     <section>
       <div className="container">
@@ -36,12 +38,18 @@ export const Birdview: React.FC = () => {
             <ul className="nav justify-content-center" role="tablist">
               <li className="nav-item mx-1">
                 <a
-                  className="nav-link active"
+                  className={classNames("nav-link", {
+                    active: activeIdx === 0,
+                  })}
                   href="#saas-tab-1"
                   data-toggle="tab"
                   role="tab"
                   aria-controls="saas-tab-1"
                   aria-selected="true"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveIdx(0);
+                  }}
                 >
                   <div className="icon-round icon-round-sm bg-primary">
                     <img
@@ -56,12 +64,18 @@ export const Birdview: React.FC = () => {
               </li>
               <li className="nav-item mx-1">
                 <a
-                  className="nav-link"
+                  className={classNames("nav-link", {
+                    active: activeIdx === 1,
+                  })}
                   href="#saas-tab-2"
                   data-toggle="tab"
                   role="tab"
                   aria-controls="saas-tab-2"
                   aria-selected="false"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveIdx(1);
+                  }}
                 >
                   <div className="icon-round icon-round-sm bg-primary">
                     <img
@@ -76,12 +90,18 @@ export const Birdview: React.FC = () => {
               </li>
               <li className="nav-item mx-1">
                 <a
-                  className="nav-link"
+                  className={classNames("nav-link", {
+                    active: activeIdx === 2,
+                  })}
                   href="#saas-tab-3"
                   data-toggle="tab"
                   role="tab"
                   aria-controls="saas-tab-3"
                   aria-selected="false"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveIdx(2);
+                  }}
                 >
                   <div className="icon-round icon-round-sm bg-primary">
                     <img
@@ -102,7 +122,9 @@ export const Birdview: React.FC = () => {
           <div className="col-xl-11" data-aos="fade-up">
             <div className="tab-content">
               <div
-                className="tab-pane show active"
+                className={classNames("tab-pane fade", {
+                  "show active": activeIdx === 0,
+                })}
                 id="saas-tab-1"
                 role="tabpanel"
                 aria-labelledby="saas-tab-1"
@@ -137,7 +159,9 @@ export const Birdview: React.FC = () => {
                 </div>
               </div>
               <div
-                className="tab-pane fade"
+                className={classNames("tab-pane fade", {
+                  "show active": activeIdx === 1,
+                })}
                 id="saas-tab-2"
                 role="tabpanel"
                 aria-labelledby="saas-tab-2"
@@ -172,7 +196,9 @@ export const Birdview: React.FC = () => {
                 </div>
               </div>
               <div
-                className="tab-pane fade"
+                className={classNames("tab-pane fade", {
+                  "show active": activeIdx === 2,
+                })}
                 id="saas-tab-3"
                 role="tabpanel"
                 aria-labelledby="saas-tab-3"

@@ -36,30 +36,6 @@ export const SeoHead: React.FC = () => {
         type="font/woff2"
         crossOrigin="anonymous"
       />
-
-      <script type="text/javascript" src="assets/js/jquery.min.js"></script>
-      <script defer type="text/javascript" src="assets/js/bootstrap.js"></script>
-      <script
-        defer
-        type="text/javascript"
-        src="assets/js/flickity.pkgd.min.js"
-      ></script>
-      <script
-        type="text/javascript"
-        defer
-        src="assets/js/jquery.fancybox.min.js"
-      ></script>
-      <script
-        type="text/javascript"
-        defer
-        src="assets/js/jquery.countdown.min.js"
-      ></script>
-      <script
-        type="text/javascript"
-        defer
-        src="assets/js/jquery.smartWizard.min.js"
-      ></script>
-
     </Head>
   );
 };

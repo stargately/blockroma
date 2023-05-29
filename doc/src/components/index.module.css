@@ -1,0 +1,21 @@
+.cardTitle {
+  margin-bottom: 1rem;
+  font-family: inherit;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #212529;
+  display: block;
+}
+
+.label {
+  text-transform: capitalize;
+}
+
+.desc {
+  color: var(--ifm-font-color-base);
+}
+
+.desc:hover {
+  color: var(--ifm-link-hover-color);
+}

@@ -122,7 +122,7 @@ export const Birdview: React.FC = () => {
           <div className="col-xl-11" data-aos="fade-up">
             <div className="tab-content">
               <div
-                className={classNames("tab-pane fade", {
+                className={classNames("fade", {
                   "show active": activeIdx === 0,
                 })}
                 id="saas-tab-1"
@@ -159,7 +159,7 @@ export const Birdview: React.FC = () => {
                 </div>
               </div>
               <div
-                className={classNames("tab-pane fade", {
+                className={classNames("fade", {
                   "show active": activeIdx === 1,
                 })}
                 id="saas-tab-2"
@@ -196,7 +196,7 @@ export const Birdview: React.FC = () => {
                 </div>
               </div>
               <div
-                className={classNames("tab-pane fade", {
+                className={classNames("fade", {
                   "show active": activeIdx === 2,
                 })}
                 id="saas-tab-3"

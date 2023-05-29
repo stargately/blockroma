@@ -4334,7 +4334,7 @@ input[type="button"].btn-block {
 }
 
 .tab-content > .active {
-  display: block;
+  display: block!important;
 }
 
 .navbar1 {

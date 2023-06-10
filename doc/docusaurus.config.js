@@ -53,8 +53,7 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          editUrl:
-            "https://github.com/BlockEdenHQ/web-blockeden-home/edit/main",
+          editUrl: "https://github.com/stargately/blockroma/edit/main",
           sidebarCollapsed: false,
           sidebarPath: require.resolve("./sidebars.js"),
         },
@@ -99,6 +98,12 @@ const config = {
           src: "img/blockroma-favicon.png",
         },
         items: [
+          {
+            to: "docs/intro",
+            activeBasePath: "docs",
+            label: "Docs",
+            position: "left",
+          },
           {
             to: "/blog/",
             label: "Blog",

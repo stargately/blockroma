@@ -102,6 +102,7 @@ type Query {
   # is the server healthy?
   health: String
   token(tokenContractAddressHash: Buffer!): Token
+  tokenTransfer(transactionHash: Buffer): TokenTransferConnection
   tokens(
     # Paginate after opaque cursor
     after: String
@@ -159,6 +160,36 @@ type TokenEdge {
   # Used in `before` and `after` args
   cursor: String
   node: Token
+}
+
+# Models a token transfer.
+type TokenTransfer {
+  amount: String
+  amounts: [String]
+  block: Buffer
+  blockNumber: Int
+  createdAt: DateTime
+  fromAddress: Buffer
+  id: ID
+  logIndex: Int
+  toAddress: Buffer
+  tokenContractAddress: Buffer
+  tokenId: String
+  tokenIds: [String]
+  transactionHash: Buffer
+  type: String
+  updatedAt: DateTime
+}
+
+type TokenTransferConnection {
+  edges: [TokenTransferEdge]
+  pageInfo: PageInfo
+}
+
+type TokenTransferEdge {
+  # Used in `before` and `after` args
+  cursor: String
+  node: TokenTransfer
 }
 
 # Models a Web3 transaction.

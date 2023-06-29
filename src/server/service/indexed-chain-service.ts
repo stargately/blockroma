@@ -4,6 +4,7 @@ import { Transaction } from "@/model/transaction";
 import { Address } from "@/model/address";
 import * as Relay from "graphql-relay";
 import { Token } from "@/model/token";
+import { TokenTransfer } from "@/model/token-transfer";
 
 export class IndexedChainService {
   server: MyServer;
@@ -400,6 +401,24 @@ export class IndexedChainService {
 
     return {
       data: [],
+      pageInfo: emptyPage,
+    };
+  }
+
+  async getTransferByTxHash(
+    transactionHash: Buffer
+  ): Promise<WithPageInfo<TokenTransfer>> {
+    const query = await this.server.gateways.dbCon
+      .createQueryBuilder()
+      .select()
+      .from(TokenTransfer, "txTransfer")
+      .where("txTransfer.transactionHash = :transactionHash", {
+        transactionHash,
+      })
+      .execute();
+
+    return {
+      data: query,
       pageInfo: emptyPage,
     };
   }

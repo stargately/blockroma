@@ -11,18 +11,13 @@ import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
 import { assetURL } from "onefx/lib/asset-url";
 import { DataInput } from "../explorer-components/data-input";
+import { TokenTransferContainer } from "../token-transfer-container/token-transfer-container";
+import { divDecimals } from "../common/div-decimals";
 
 export function TxDetailsContainer(): JSX.Element {
   const params = useParams<{ txHash: string }>();
   const chainConfig = useChainConfig();
-  function divDecimals(num?: string | null): string {
-    if (!num) {
-      return "0";
-    }
-    return (Number(num) / 10 ** chainConfig.decimals)
-      .toFixed(20)
-      .replace(/\.?0*$/, "");
-  }
+
   const { data, loading, error, refetch } = useQueryTx({ hash: params.txHash });
   if (loading) {
     // TODO(dora):
@@ -348,7 +343,8 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {divDecimals(tx?.gasPrice)} {chainConfig.symbol}{" "}
+                      {divDecimals(tx?.gasPrice, chainConfig.decimals)}{" "}
+                      {chainConfig.symbol}{" "}
                     </dd>
                   </dl>
                   <dl className="row">
@@ -366,7 +362,7 @@ export function TxDetailsContainer(): JSX.Element {
                       </span>
                       {t("tx.tx_type")}
                     </dt>
-                    <dd className="col-sm-9 col-lg-10"> 0 </dd>
+                    <dd className="col-sm-9 col-lg-10"> 0</dd>
                   </dl>
                   <hr />
                   <dl className="row">
@@ -508,6 +504,21 @@ export function TxDetailsContainer(): JSX.Element {
         </section>
 
         {/* TODO(dora): more tx info */}
+
+        <div className="card">
+          <div id="transaction-tabs" className="card-tabs js-card-tabs">
+            <a
+              className="card-tab active"
+              href="/xdai/mainnet/tx/0x5a2ee4a79e55a0bc0c7f5c187fcc83ba8deaaa69614d9da2df3c6a42ada7d87c/token-transfers"
+            >
+              Token Transfers
+            </a>
+          </div>
+
+          <div className="card-body">
+            <TokenTransferContainer transactionHash={tx?.hash} />
+          </div>
+        </div>
       </section>
     </main>
   );

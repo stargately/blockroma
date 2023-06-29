@@ -20,6 +20,7 @@ import {
   TokenConnection,
   TokensArgs,
 } from "@/api-gateway/resolvers/types/token-type";
+import { TokenTransferConnection } from "@/api-gateway/resolvers/types/token-transfer-type";
 
 @ArgsType()
 class BlockRequest {
@@ -73,6 +74,12 @@ export class TransactionsArgs implements Relay.ConnectionArguments {
 
   @Field(() => Number, { nullable: true, description: "Paginate last" })
   last?: number;
+}
+
+@ArgsType()
+export class TokenTransfersArgs {
+  @Field(() => BufferScalar)
+  transactionHash: Buffer;
 }
 
 @ArgsType()
@@ -144,6 +151,29 @@ export class ExplorerResolver {
     return {
       edges: blks,
       pageInfo: blksWithPageInfo.pageInfo,
+    };
+  }
+
+  @Query(() => TokenTransferConnection)
+  async tokenTransfer(
+    @Args() args: TokenTransfersArgs,
+    @Ctx() ctx: ResolverContext
+  ): Promise<TokenTransferConnection> {
+    const resp = await ctx.service.indexedChainService.getTransferByTxHash(
+      args.transactionHash
+    );
+    return {
+      edges: resp.data.map((ed) => ({
+        cursor: "",
+        node: {
+          ...ed,
+          id: txHashId("Transaction", ed!.transactionHash!),
+          fromAddress: ed!.fromAddressHash,
+          toAddress: ed!.toAddressHash,
+          tokenContractAddress: ed!.tokenContractAddressHash,
+        },
+      })),
+      pageInfo: resp.pageInfo,
     };
   }
 

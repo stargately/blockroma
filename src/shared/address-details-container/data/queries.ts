@@ -3,14 +3,6 @@ import { gql } from "@apollo/client";
 export const queryAddressByHash = gql`
   query QueryAddressByHash($hash: Buffer!, $first: Float, $after: String) {
     address(hash: $hash) {
-      fetchedCoinBalance
-      fetchedCoinBalanceBlockNumber
-      nonce
-      hash
-      gasUsed
-      hashQr
-      numTxs
-
       transactions(first: $first, after: $after) {
         pageInfo {
           hasNextPage
@@ -44,6 +36,20 @@ export const queryAddressByHash = gql`
           cursor
         }
       }
+    }
+  }
+`;
+
+export const queryAddressDetailsByHash = gql`
+  query QueryAddressDetailsByHash($hash: Buffer!) {
+    address(hash: $hash) {
+      fetchedCoinBalance
+      fetchedCoinBalanceBlockNumber
+      nonce
+      hash
+      gasUsed
+      hashQr
+      numTxs
     }
   }
 `;

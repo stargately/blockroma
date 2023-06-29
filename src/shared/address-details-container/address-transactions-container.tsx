@@ -13,7 +13,7 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
 }) => {
   const { data, loading, error, refetch } = useGetAddr({
     hash: addressHash,
-    first: 100,
+    first: 20,
     after: 0,
   });
   if (loading) {

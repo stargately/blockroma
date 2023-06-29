@@ -107,7 +107,7 @@ export const TokenTransferContainer: React.FC<Props> = ({
                     {divDecimals(tf.amount, tokenDetails?.decimals)}
                     <a
                       data-test="token_link"
-                      href={assetURL(`token/${tf.tokenContractAddress}`)}
+                      href={assetURL(`address/${tf.tokenContractAddress}`)}
                     >
                       {" "}
                       {tokenDetails?.symbol}

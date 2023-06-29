@@ -5,7 +5,7 @@ import { AddressTransactionsContainer } from "@/shared/address-details-container
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
 import { assetURL } from "onefx/lib/asset-url";
-import { useGetAddr } from "./hooks/use-get-addr";
+import { useGetAddrDetails } from "@/shared/address-details-container/hooks/use-get-addr-details";
 import { QrModal } from "./components/qr-modal";
 import { CopyAddress } from "../explorer-components/copy-address";
 
@@ -26,10 +26,8 @@ export const AddressDetailsContainer: React.FC = () => {
   const addressHash = rawAddressHash.toLowerCase();
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
-  const { data, loading, error, refetch } = useGetAddr({
+  const { data, loading, error, refetch } = useGetAddrDetails({
     hash: addressHash,
-    first: 0,
-    after: 0,
   });
   if (loading) {
     return <></>;
@@ -38,7 +36,11 @@ export const AddressDetailsContainer: React.FC = () => {
     // TODO(dora):
     return <button onClick={refetch}>error</button>;
   }
-  const addr: Addr = data?.address ?? {};
+  const addr = data?.address;
+
+  if (!addr) {
+    return <></>;
+  }
 
   return (
     <main className="js-ad-dependant-pt pt-5">

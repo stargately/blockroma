@@ -34,20 +34,10 @@ module.exports = {
   },
   indexer: {
     catchup: {
-      enabled: true,
-      blocksBatchSize: 200,
-
-      blockNumberRanges: [
-        [1039, 1039],
-        [225791, 225791],
-        [1044, 1044],
-        [255055, 255055],
-        [276263, 276263],
-        // [0, "latest"],
-      ],
+      enabled: false,
     },
     realtime: {
-      enabled: true,
+      enabled: false,
     },
   },
   gateways: {
@@ -63,22 +53,4 @@ module.exports = {
   analytics: {
     gaMeasurementId: "G-VKPSYZ2K22",
   },
-  // csp: {
-  //   enabled:false,
-  //   "default-src": ["none"],
-  //   "manifest-src": ["self"],
-  //   "style-src": ["self", "unsafe-inline", "https://fonts.googleapis.com/css"],
-  //   "frame-src": [],
-  //   "connect-src": [
-  //     "self",
-  //     "https://www.google-analytics.com/",
-  //     ...(process.env.API_GATEWAY_URL ? [process.env.API_GATEWAY_URL] : []),
-  //   ],
-  //   "child-src": ["self"],
-  //   "font-src": ["self", "data:", "https://fonts.gstatic.com/"],
-  //   "img-src": ["*", "data:"],
-  //   "media-src": ["self"],
-  //   "object-src": ["self"],
-  //   "script-src": ["self", "https://www.googletagmanager.com/"],
-  // },
 };

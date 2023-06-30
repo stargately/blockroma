@@ -64,6 +64,17 @@ export const TokenTransferContainer: React.FC<Props> = ({
         </div>
       </div>
       <div data-items="">
+        {!(transferLoading || tokenDetailsLoading) && !transfers?.length && (
+          <div data-empty-response-message>
+            <div
+              className="tile tile-muted text-center"
+              data-selector="empty-transactions-list"
+            >
+              No token transfers in this transaction.
+            </div>
+          </div>
+        )}
+
         {!(transferLoading || tokenDetailsLoading) &&
           transfers?.map((tf) => (
             <div

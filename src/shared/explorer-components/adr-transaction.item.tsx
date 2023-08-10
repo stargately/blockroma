@@ -1,6 +1,5 @@
 import React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
-import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { assetURL } from "onefx/lib/asset-url";
@@ -12,6 +11,7 @@ type AdrTx = {
   hash: any | null;
   blockNumber: number | null;
   value: string | null;
+  valueWithDecimal: string | null;
   gasUsed: string | null;
   cumulativeGasUsed: string | null;
   error: string | null;
@@ -83,8 +83,8 @@ export const AdrTransactionItem: React.FC<Props> = ({
             <MaybeClickableAddress
               hash={tx.fromAddressHash}
               self={selfAddressHash}
-            />
-            →
+            />{" "}
+            →{" "}
             <MaybeClickableAddress
               hash={tx.toAddressHash}
               self={selfAddressHash}
@@ -92,7 +92,7 @@ export const AdrTransactionItem: React.FC<Props> = ({
           </span>
           <span className="d-flex flex-md-row flex-column mt-3 mt-md-0">
             <span className="tile-title">
-              {normalizeTokenValue(tx.value)} {chainConfig.symbol}
+              {tx.valueWithDecimal} {chainConfig.symbol}
             </span>
             <span className="ml-0 ml-md-1 text-nowrap">
               {tx.gasUsed} TX Fee
@@ -103,7 +103,9 @@ export const AdrTransactionItem: React.FC<Props> = ({
         {/* Block info */}
         <div className="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0 tile-bottom">
           <span className="mr-2 mr-md-0 order-1">
-            <a href={assetURL(`block/${tx.blockNumber}`)}>Block #{tx.blockNumber}</a>
+            <a href={assetURL(`block/${tx.blockNumber}`)}>
+              Block #{tx.blockNumber}
+            </a>
           </span>
           <TickingTs
             className="mr-2 mr-md-0 order-2"

@@ -8,6 +8,9 @@ export class Address {
   @Field(() => String)
   fetchedCoinBalance?: Decimal;
 
+  @Field(() => String)
+  fetchedCoinBalanceWithDecimal?: Decimal;
+
   @Field(() => Int)
   fetchedCoinBalanceBlockNumber?: number;
 

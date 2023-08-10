@@ -11,6 +11,7 @@ export const queryTokenTransfer = gql`
           fromAddress
           toAddress
           amount
+          amountWithDecimals
           tokenId
           tokenContractAddress
           block

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { AddressTransactionsContainer } from "@/shared/address-details-container/address-transactions-container";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { t } from "onefx/lib/iso-i18n";
@@ -114,8 +113,7 @@ export const AddressDetailsContainer: React.FC = () => {
                       className="col-sm-8 col-md-8 col-lg-9"
                       data-test="address_balance"
                     >
-                      {normalizeTokenValue(addr.fetchedCoinBalance)}{" "}
-                      {chainConfig.symbol}
+                      {addr.fetchedCoinBalanceWithDecimal} {chainConfig.symbol}
                       {/*
 
                       // TODO(dora) coin balance

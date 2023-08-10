@@ -4,7 +4,6 @@ import { selectTokenTransfer } from "@/shared/token-transfer-container/selectors
 import { assetURL } from "onefx/lib/asset-url";
 import { useTokenDetails } from "@/shared/token-transfer-container/hooks/use-token-details";
 import { selectTokenDetails } from "@/shared/token-transfer-container/selectors/select-token-details";
-import { divDecimals } from "@/shared/common/div-decimals";
 import { t } from "onefx/lib/iso-i18n";
 import { useCallback } from "react";
 
@@ -115,7 +114,7 @@ export const TokenTransferContainer: React.FC<Props> = ({
                   </span>
 
                   <span className="tile-title">
-                    {divDecimals(tf.amount, tokenDetails?.decimals)}
+                    {tf.amountWithDecimals}
                     <a
                       data-test="token_link"
                       href={assetURL(`address/${tf.tokenContractAddress}`)}

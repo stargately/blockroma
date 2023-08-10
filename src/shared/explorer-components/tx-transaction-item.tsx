@@ -1,6 +1,5 @@
 import React from "react";
 import { shortenHash } from "@/shared/common/shorten-hash";
-import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import { useChainConfig } from "@/shared/common/use-chain-config";
 import { assetURL } from "onefx/lib/asset-url";
@@ -11,6 +10,7 @@ export type Tx = {
   hash: any | null;
   blockNumber: number | null;
   value: string | null;
+  valueWithDecimal: string | null;
   gasUsed: string | null;
   cumulativeGasUsed: string | null;
   error: string | null;
@@ -88,8 +88,8 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
                   {shortenHash(tx.fromAddressHash)}
                 </span>
               </span>
-            </a>
-            →
+            </a>{" "}
+            →{" "}
             <a
               data-test="address_hash_link"
               href={assetURL(`address/${tx.toAddressHash}`)}
@@ -106,7 +106,7 @@ export const TxTransactionItem: React.FC<Props> = ({ tx }) => {
           </span>
           <span className="d-flex flex-md-row flex-column mt-3 mt-md-0">
             <span className="tile-title">
-              {normalizeTokenValue(tx.value)} {chainConfig.symbol}
+              {tx.valueWithDecimal} {chainConfig.symbol}
             </span>
             <span className="ml-0 ml-md-1 text-nowrap">
               {tx.gasPrice} TX Fee

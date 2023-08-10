@@ -36,6 +36,7 @@ export const getTxs = gql`
           hash
           blockNumber
           value
+          valueWithDecimal
           gasUsed
           cumulativeGasUsed
           error

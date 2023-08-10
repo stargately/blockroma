@@ -21,6 +21,7 @@ import {
   TokensArgs,
 } from "@/api-gateway/resolvers/types/token-type";
 import { TokenTransferConnection } from "@/api-gateway/resolvers/types/token-transfer-type";
+import { divDecimals } from "@/server/service/utils/div-decimals";
 
 @ArgsType()
 class BlockRequest {
@@ -162,6 +163,12 @@ export class ExplorerResolver {
     const resp = await ctx.service.indexedChainService.getTransferByTxHash(
       args.transactionHash
     );
+    const token =
+      resp.data &&
+      resp.data.length &&
+      (await ctx.service.indexedChainService.getToken(
+        resp.data[0].tokenContractAddress
+      ));
     return {
       edges: resp.data.map((ed) => ({
         cursor: "",
@@ -171,6 +178,7 @@ export class ExplorerResolver {
           fromAddress: ed!.fromAddressHash,
           toAddress: ed!.toAddressHash,
           tokenContractAddress: ed!.tokenContractAddressHash,
+          amountWithDecimals: token ? divDecimals(ed!.amount) : "",
         },
       })),
       pageInfo: resp.pageInfo,
@@ -199,7 +207,16 @@ export class ExplorerResolver {
       const txs = txsWithPageInfo.data.map(
         // @ts-ignore
         (tx) => ({
-          node: { ...tx, id: txHashId("Transaction", tx.hash) },
+          node: {
+            ...tx,
+            id: txHashId("Transaction", tx.hash),
+            valueWithDecimal: divDecimals(tx.value),
+            gasPriceWithDecimal: divDecimals(tx.gasPrice),
+            maxFeePerGasWithDecimal: divDecimals(tx.maxFeePerGas),
+            maxPriorityFeePerGasWithDecimal: divDecimals(
+              tx.maxPriorityFeePerGas
+            ),
+          },
           cursor: (args.first ? args.after : args.before) ?? "",
         })
       );
@@ -237,6 +254,10 @@ export class ExplorerResolver {
     }
     const txWithId = {
       id: txHashId("Transaction", tx.hash),
+      valueWithDecimal: divDecimals(tx.value),
+      gasPriceWithDecimal: divDecimals(tx.gasPrice),
+      maxFeePerGasWithDecimal: divDecimals(tx.maxFeePerGas),
+      maxPriorityFeePerGasWithDecimal: divDecimals(tx.maxPriorityFeePerGas),
       ...tx,
     };
     if (txWithId.gasUsed === null) {
@@ -279,6 +300,7 @@ export class ExplorerResolver {
     return {
       ...address,
       hashQr: await QRCode.toDataURL(`0x${address.hash.toString("hex")}`),
+      fetchedCoinBalanceWithDecimal: divDecimals(address.fetchedCoinBalance),
       numTxs,
     };
   }

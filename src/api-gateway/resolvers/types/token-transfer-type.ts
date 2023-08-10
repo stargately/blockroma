@@ -26,6 +26,9 @@ export class TokenTransfer {
   amount?: string;
 
   @Field(() => String)
+  amountWithDecimals?: string;
+
+  @Field(() => String)
   tokenId?: string;
 
   @Field(() => BufferScalar)

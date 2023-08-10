@@ -35,7 +35,13 @@ export class Transaction {
   gasPrice?: Decimal;
 
   @Field(() => String)
+  gasPriceWithDecimal?: Decimal;
+
+  @Field(() => String)
   gasUsed?: Decimal;
+
+  @Field(() => String)
+  gasUsedWithDecimal?: Decimal;
 
   @Field(() => BufferScalar)
   hash?: Buffer;
@@ -85,13 +91,22 @@ export class Transaction {
   value?: string;
 
   @Field(() => String)
+  valueWithDecimal?: string;
+
+  @Field(() => String)
   revertReason?: string;
 
   @Field(() => String)
   maxPriorityFeePerGas?: Decimal;
 
   @Field(() => String)
+  maxPriorityFeePerGasWithDecimal?: Decimal;
+
+  @Field(() => String)
   maxFeePerGas?: Decimal;
+
+  @Field(() => String)
+  maxFeePerGasWithDecimal?: Decimal;
 }
 
 @ObjectType()

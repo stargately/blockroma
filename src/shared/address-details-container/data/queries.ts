@@ -18,6 +18,7 @@ export const queryAddressByHash = gql`
             hash
             blockNumber
             value
+            valueWithDecimal
             gasUsed
             cumulativeGasUsed
             error
@@ -44,6 +45,7 @@ export const queryAddressDetailsByHash = gql`
   query QueryAddressDetailsByHash($hash: Buffer!) {
     address(hash: $hash) {
       fetchedCoinBalance
+      fetchedCoinBalanceWithDecimal
       fetchedCoinBalanceBlockNumber
       nonce
       hash

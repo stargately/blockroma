@@ -7,6 +7,7 @@
 type Address {
   fetchedCoinBalance: String
   fetchedCoinBalanceBlockNumber: Int
+  fetchedCoinBalanceWithDecimal: String
   gasUsed: Float
   hash: Buffer!
   hashQr: String
@@ -165,6 +166,7 @@ type TokenEdge {
 # Models a token transfer.
 type TokenTransfer {
   amount: String
+  amountWithDecimals: String
   amounts: [String]
   block: Buffer
   blockNumber: Int
@@ -201,7 +203,9 @@ type Transaction {
   fromAddressHash: Buffer
   gas: String
   gasPrice: String
+  gasPriceWithDecimal: String
   gasUsed: String
+  gasUsedWithDecimal: String
   hash: Buffer
 
   # The ID of an object
@@ -209,7 +213,9 @@ type Transaction {
   index: Int
   input: Buffer
   maxFeePerGas: String
+  maxFeePerGasWithDecimal: String
   maxPriorityFeePerGas: String
+  maxPriorityFeePerGasWithDecimal: String
   nonce: Int
   r: String
   revertReason: String
@@ -220,6 +226,7 @@ type Transaction {
   type: Int
   v: String
   value: String
+  valueWithDecimal: String
 }
 
 type TransactionConnection {

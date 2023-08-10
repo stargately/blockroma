@@ -9,5 +9,6 @@ export const selectTokenTransfer = (resp: TokenTransfer | null | undefined) => {
       toAddress: node?.toAddress,
       amount: node?.amount,
       tokenContractAddress: node?.tokenContractAddress,
+      amountWithDecimals: node?.amountWithDecimals,
     }));
 };

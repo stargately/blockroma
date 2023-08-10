@@ -8,6 +8,7 @@ export const queryTx = gql`
       hash
       blockNumber
       value
+      valueWithDecimal
       gasUsed
       cumulativeGasUsed
       error
@@ -16,6 +17,7 @@ export const queryTx = gql`
       status
       gas
       gasPrice
+      gasPriceWithDecimal
       index
       input
       nonce
@@ -24,7 +26,9 @@ export const queryTx = gql`
       v
       revertReason
       maxPriorityFeePerGas
+      maxPriorityFeePerGasWithDecimal
       maxFeePerGas
+      maxFeePerGasWithDecimal
     }
   }
 `;

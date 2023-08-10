@@ -55,8 +55,8 @@ export const TxContractCallItem: React.FC = () => {
                   0x0cdde7–0ceb5a
                 </span>
               </span>
-            </a>
-            →
+            </a>{" "}
+            →{" "}
             <a
               data-test="address_hash_link"
               href="/poa/core/address/0x981c44040cb6150a2b8a7f63fb182760505bf666"

@@ -2,7 +2,6 @@ import * as React from "react";
 import { useQueryTx } from "@/shared/tx-details-container/hooks/use-query-tx";
 import { useParams } from "react-router";
 import { TxStatus } from "@/shared/explorer-components/tx-status";
-import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { getGasUsedPercent } from "@/shared/common/get-gas-used-percent";
 import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
@@ -12,7 +11,6 @@ import { t } from "onefx/lib/iso-i18n";
 import { assetURL } from "onefx/lib/asset-url";
 import { DataInput } from "../explorer-components/data-input";
 import { TokenTransferContainer } from "../token-transfer-container/token-transfer-container";
-import { divDecimals } from "../common/div-decimals";
 
 export function TxDetailsContainer(): JSX.Element {
   const params = useParams<{ txHash: string }>();
@@ -280,7 +278,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {normalizeTokenValue(tx?.value)} {chainConfig.symbol}
+                      {tx?.valueWithDecimal} {chainConfig.symbol}
                       {/*
                       TODO(dora): coin balance price
 
@@ -343,8 +341,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {divDecimals(tx?.gasPrice, chainConfig.decimals)}{" "}
-                      {chainConfig.symbol}{" "}
+                      {tx?.gasPriceWithDecimal} {chainConfig.symbol}{" "}
                     </dd>
                   </dl>
                   <dl className="row">
@@ -402,7 +399,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {divDecimals(tx?.maxFeePerGas)} {chainConfig.symbol}
+                      {tx?.maxFeePerGasWithDecimal} {chainConfig.symbol}
                     </dd>
                   </dl>
 
@@ -423,8 +420,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {divDecimals(tx?.maxPriorityFeePerGas)}{" "}
-                      {chainConfig.symbol}
+                      {tx?.maxFeePerGasWithDecimal} {chainConfig.symbol}
                     </dd>
                   </dl>
 

@@ -55,8 +55,8 @@ export const TxTokenTransferItem: React.FC = () => {
                   0x621c2a–5eb43c
                 </span>
               </span>
-            </a>
-            →
+            </a>{" "}
+            →{" "}
             <a
               data-test="address_hash_link"
               href="/poa/core/address/0xd789a607ceac2f0e14867de4eb15b15c9ffb5859"
@@ -108,8 +108,8 @@ export const TxTokenTransferItem: React.FC = () => {
                       0xd789a6–fb5859
                     </span>
                   </a>
-                </span>
-                →
+                </span>{" "}
+                →{" "}
                 <span className="d-inline-block tile-type-token-transfer-short-name">
                   <a
                     data-test="address_hash_link"
@@ -158,8 +158,8 @@ export const TxTokenTransferItem: React.FC = () => {
                         0xd789a6–fb5859
                       </span>
                     </a>
-                  </span>
-                  →
+                  </span>{" "}
+                  →{" "}
                   <span className="d-inline-block tile-type-token-transfer-short-name">
                     <a
                       data-test="address_hash_link"
@@ -204,8 +204,8 @@ export const TxTokenTransferItem: React.FC = () => {
                         0xd789a6–fb5859
                       </span>
                     </a>
-                  </span>
-                  →
+                  </span>{" "}
+                  →{" "}
                   <span className="d-inline-block tile-type-token-transfer-short-name">
                     <a
                       data-test="address_hash_link"

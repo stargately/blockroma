@@ -6,6 +6,7 @@ import { logger } from "onefx/lib/integrated-gateways/logger";
 import { UserInputError } from "apollo-server-koa";
 import { emptyPage } from "@/server/service/indexed-chain-service";
 import { TransactionConnection } from "@/api-gateway/resolvers/types/transaction-type";
+import { divDecimals } from "@/server/service/utils/div-decimals";
 
 @Resolver(() => Address)
 export class AddressResolver {
@@ -32,7 +33,16 @@ export class AddressResolver {
       const txs = txsWithPageInfo.data.map(
         // @ts-ignore
         (tx) => ({
-          node: { ...tx, id: txHashId(tx.hash) },
+          node: {
+            ...tx,
+            id: txHashId(tx.hash),
+            valueWithDecimal: divDecimals(tx.value),
+            gasPriceWithDecimal: divDecimals(tx.gasPrice),
+            maxFeePerGasWithDecimal: divDecimals(tx.maxFeePerGas),
+            maxPriorityFeePerGasWithDecimal: divDecimals(
+              tx.maxPriorityFeePerGas
+            ),
+          },
           cursor: (args.first ? args.after : args.before) ?? "",
         })
       );

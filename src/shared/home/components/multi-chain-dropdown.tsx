@@ -11,7 +11,6 @@ export const chainSwitchOpts = {
     ["/ethw/mainnet/", "ETHW-mainnet"],
   ],
   testnets: [
-    ["/bmo/testnet/", "BoomMo Chain"],
   ],
 };
 
@@ -67,7 +66,11 @@ export function MultiChainDropdown({ chainName }: Props) {
             </a>
           ))}
 
-          <a className="dropdown-item header division">Testnets</a>
+          {
+            chainSwitchOpts.testnets.length && (
+              <a className="dropdown-item header division">Testnets</a>
+            )
+          }
           {chainSwitchOpts.testnets.map((it) => (
             <a className="dropdown-item" key={it[0]} href={it[0]}>
               {it[1]}

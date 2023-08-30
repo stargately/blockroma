@@ -17,7 +17,7 @@ module.exports = {
     chainId: 10001,
     chainName: "ETHW-mainnet",
     symbol: "ETHW",
-    rpcUrls: ["https://mainnet.ethereumpow.org"],
+    rpcUrls: ["https://api.blockeden.xyz/ethw/QyLuprp5WC5y2XsVB65o"],
     decimals: 18,
     networkPath: routePrefix,
   },

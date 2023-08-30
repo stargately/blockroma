@@ -67,9 +67,9 @@ export function MultiChainDropdown({ chainName }: Props) {
           ))}
 
           {
-            chainSwitchOpts.testnets.length && (
+            chainSwitchOpts.testnets.length ? (
               <a className="dropdown-item header division">Testnets</a>
-            )
+            ) : (undefined)
           }
           {chainSwitchOpts.testnets.map((it) => (
             <a className="dropdown-item" key={it[0]} href={it[0]}>

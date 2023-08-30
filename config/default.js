@@ -6,12 +6,12 @@ const routePrefix = "";
 module.exports = {
   project: "blockroma",
   chain: {
-    chainId: 7778,
-    chainName: "BoomMo Chain",
-    symbol: "BMO",
-    rpcUrls: ["https://api-testnet.boommo.com"],
+    chainId: 10001,
+    chainName: "ETHW-mainnet",
+    symbol: "ETHW",
+    rpcUrls: ["https://api.blockeden.xyz/ethw/QyLuprp5WC5y2XsVB65o"],
     decimals: 18,
-    networkPath: "",
+    networkPath: routePrefix,
   },
   server: {
     routePrefix,
@@ -33,10 +33,7 @@ module.exports = {
   },
   indexer: {
     catchup: {
-      enabled: true,
-      blocksBatchSize: 200,
-
-      blockNumberRanges: [[2324586, 2324586]],
+      enabled: false,
     },
     realtime: {
       enabled: true,
@@ -55,22 +52,4 @@ module.exports = {
   analytics: {
     gaMeasurementId: "G-VKPSYZ2K22",
   },
-  // csp: {
-  //   enabled:false,
-  //   "default-src": ["none"],
-  //   "manifest-src": ["self"],
-  //   "style-src": ["self", "unsafe-inline", "https://fonts.googleapis.com/css"],
-  //   "frame-src": [],
-  //   "connect-src": [
-  //     "self",
-  //     "https://www.google-analytics.com/",
-  //     ...(process.env.API_GATEWAY_URL ? [process.env.API_GATEWAY_URL] : []),
-  //   ],
-  //   "child-src": ["self"],
-  //   "font-src": ["self", "data:", "https://fonts.gstatic.com/"],
-  //   "img-src": ["*", "data:"],
-  //   "media-src": ["self"],
-  //   "object-src": ["self"],
-  //   "script-src": ["self", "https://www.googletagmanager.com/"],
-  // },
 };

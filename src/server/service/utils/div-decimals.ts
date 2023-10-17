@@ -1,5 +1,5 @@
 import config from "config";
-import { BigNumber } from "ethers";
+import { ethers } from "ethers";
 
 export function divDecimals(
   num: string | number | null | undefined,
@@ -11,5 +11,5 @@ export function divDecimals(
   if (!decimals) {
     return String(num);
   }
-  return BigNumber.from(num).div(BigNumber.from(10).pow(decimals)).toString();
+  return ethers.utils.formatUnits(num, decimals);
 }

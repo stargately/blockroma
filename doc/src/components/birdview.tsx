@@ -11,7 +11,7 @@ export const Birdview: React.FC = () => {
     birdViewTile1ImgSrc: "assets/img/icons/theme/shopping/box-2.svg",
     birdViewTile1Popovers: [],
     birdViewTile1Screenshot:
-      "https://camo.githubusercontent.com/32af9e9099ba6746129b30c137ca6af438b26838d6c61eb8ff57dd678c8891ef/68747470733a2f2f74702d6d6973632e622d63646e2e6e65742f626c6f636b726f6d612d76302e312d322e676966",
+      "https://tp-misc.b-cdn.net/blockeden/blockroma-home.gif",
 
     birdViewTile2: "Transactions",
     birdViewTile2ImgSrc: "assets/img/icons/theme/shopping/chart-pie.svg",

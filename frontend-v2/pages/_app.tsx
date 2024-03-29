@@ -9,6 +9,7 @@ import { appWithTranslation } from "next-i18next";
 import { ApolloProvider } from "@apollo/client";
 import { apolloClient } from "@/shared/common/apollo-client";
 import nextI18NextConfig from "../next-i18next.config.js";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export default appWithTranslation(function App({
   Component,
@@ -18,6 +19,7 @@ export default appWithTranslation(function App({
     <ApolloProvider client={apolloClient}>
       <ReduxProvider store={configureStore({ base: { theme: "dark" } })}>
         <StyletronProvider value={styletron}>
+          <GoogleAnalytics gaId="G-VKPSYZ2K22" />
           <Component {...pageProps} />
         </StyletronProvider>
       </ReduxProvider>

@@ -25,5 +25,5 @@ export const getStaticProps: GetStaticProps<{}> = async ({ locale }) => ({
 });
 
 export async function getStaticPaths() {
-  return { paths: [], fallback: false };
+  return { paths: [], fallback: true };
 }

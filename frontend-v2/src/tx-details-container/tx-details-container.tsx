@@ -1,22 +1,35 @@
 import * as React from "react";
 import { useQueryTx } from "@/shared/tx-details-container/hooks/use-query-tx";
-import { useParams } from "react-router";
 import { TxStatus } from "@/shared/explorer-components/tx-status";
+import { normalizeTokenValue } from "@/shared/common/normalize-token-value";
 import { getGasUsedPercent } from "@/shared/common/get-gas-used-percent";
 import { CopyToClipboard } from "@/shared/explorer-components/copy-to-clipboard";
 import { TickingTs } from "@/shared/explorer-components/ticking-ts";
 import format from "date-fns/format";
 import { useChainConfig } from "@/shared/common/use-chain-config";
-import { t } from "onefx/lib/iso-i18n";
-import { assetURL } from "onefx/lib/asset-url";
+
+import { assetURL } from "@/shared/common/asset-url";
 import { DataInput } from "../explorer-components/data-input";
-import { TokenTransferContainer } from "../token-transfer-container/token-transfer-container";
+import { useTranslation } from "next-i18next";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 export function TxDetailsContainer(): JSX.Element {
-  const params = useParams<{ txHash: string }>();
+  const { t } = useTranslation("common");
+  const router = useRouter();
+  const params = router.query;
   const chainConfig = useChainConfig();
-
-  const { data, loading, error, refetch } = useQueryTx({ hash: params.txHash });
+  function divDecimals(num?: string | null): string {
+    if (!num) {
+      return "0";
+    }
+    return (Number(num) / 10 ** chainConfig.decimals)
+      .toFixed(20)
+      .replace(/\.?0*$/, "");
+  }
+  const { data, loading, error, refetch } = useQueryTx({
+    hash: params.txHash as string,
+  });
   if (loading) {
     // TODO(dora):
     return <></>;
@@ -74,7 +87,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.tx_hash.tip")}
+                        title={t("tx.tx_hash.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -106,7 +119,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.result.tip")}
+                        title={t("tx.result.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -125,7 +138,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.status.tip")}
+                        title={t("tx.status.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -160,7 +173,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.block.tip")}
+                        title={t("tx.block.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -187,7 +200,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.timestamp.tip")}
+                        title={t("tx.timestamp.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -218,16 +231,16 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.from.tip")}
+                        title={t("tx.from.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
                       {t("tx.from")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
-                      <a href={assetURL(`address/${tx?.fromAddressHash}`)}>
+                      <Link href={assetURL(`address/${tx?.fromAddressHash}`)}>
                         {tx?.fromAddressHash}
-                      </a>
+                      </Link>
 
                       <CopyToClipboard
                         reason="Copy From Address"
@@ -244,18 +257,16 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.to.tip")}
+                        title={t("tx.to.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
                       {t("tx.to")}
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
-                      <pre>
-                        <a href={assetURL(`address/${tx?.toAddressHash}`)}>
-                          {tx?.toAddressHash}
-                        </a>
-                      </pre>
+                      <Link href={assetURL(`address/${tx?.toAddressHash}`)}>
+                        {tx?.toAddressHash}
+                      </Link>
 
                       <CopyToClipboard
                         reason="Copy To Address"
@@ -272,7 +283,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.value.tip")}
+                        title={t("tx.value.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -280,7 +291,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {tx?.valueWithDecimal} {chainConfig.symbol}
+                      {normalizeTokenValue(tx?.value)} {chainConfig.symbol}
                       {/*
                       TODO(dora): coin balance price
 
@@ -304,7 +315,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.fee.tip")}
+                        title={t("tx.fee.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -335,7 +346,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.gas_price.tip")}
+                        title={t("tx.gas_price.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -343,7 +354,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {tx?.gasPriceWithDecimal} {chainConfig.symbol}{" "}
+                      {divDecimals(tx?.gasPrice)} {chainConfig.symbol}{" "}
                     </dd>
                   </dl>
                   <dl className="row">
@@ -355,13 +366,13 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.tx_type.tip")}
+                        title={t("tx.tx_type.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
                       {t("tx.tx_type")}
                     </dt>
-                    <dd className="col-sm-9 col-lg-10"> 0</dd>
+                    <dd className="col-sm-9 col-lg-10"> 0 </dd>
                   </dl>
                   <hr />
                   <dl className="row">
@@ -373,7 +384,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.gas_limit.tip")}
+                        title={t("tx.gas_limit.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -393,7 +404,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.max_fee_per_gas.tip")}
+                        title={t("tx.max_fee_per_gas.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle"></i>{" "}
                       </span>
@@ -401,7 +412,7 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {tx?.maxFeePerGasWithDecimal} {chainConfig.symbol}
+                      {divDecimals(tx?.maxFeePerGas)} {chainConfig.symbol}
                     </dd>
                   </dl>
 
@@ -422,7 +433,8 @@ export function TxDetailsContainer(): JSX.Element {
                     </dt>
                     <dd className="col-sm-9 col-lg-10">
                       {" "}
-                      {tx?.maxFeePerGasWithDecimal} {chainConfig.symbol}
+                      {divDecimals(tx?.maxPriorityFeePerGas)}{" "}
+                      {chainConfig.symbol}
                     </dd>
                   </dl>
 
@@ -455,7 +467,7 @@ export function TxDetailsContainer(): JSX.Element {
                         data-html="true"
                         data-placement="top"
                         data-toggle="tooltip"
-                        title={t("tx.nonce.tip")}
+                        title={t("tx.nonce.tip") as string}
                       >
                         <i className="fa-solid fa-info-circle" />{" "}
                       </span>
@@ -502,21 +514,6 @@ export function TxDetailsContainer(): JSX.Element {
         </section>
 
         {/* TODO(dora): more tx info */}
-
-        <div className="card">
-          <div id="transaction-tabs" className="card-tabs js-card-tabs">
-            <a
-              className="card-tab active"
-              href="/xdai/mainnet/tx/0x5a2ee4a79e55a0bc0c7f5c187fcc83ba8deaaa69614d9da2df3c6a42ada7d87c/token-transfers"
-            >
-              Token Transfers
-            </a>
-          </div>
-
-          <div className="card-body">
-            <TokenTransferContainer transactionHash={tx?.hash} />
-          </div>
-        </div>
       </section>
     </main>
   );

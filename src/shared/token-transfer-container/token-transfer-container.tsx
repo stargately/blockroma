@@ -94,10 +94,7 @@ export const TokenTransferContainer: React.FC<Props> = ({
                     {tf.transactionHash}
                   </a>
                   <span className="text-nowrap">
-                    <a
-                      data-test="address_hash_link"
-                      href={assetURL(`address/${tf.transactionHash}`)}
-                    >
+                    <a href={assetURL(`address/${tf.transactionHash}`)}>
                       <span>
                         <span className="d-none d-md-none d-xl-inline">
                           {tf.fromAddress}
@@ -105,10 +102,7 @@ export const TokenTransferContainer: React.FC<Props> = ({
                       </span>
                     </a>{" "}
                     →{" "}
-                    <a
-                      data-test="address_hash_link"
-                      href={assetURL(`address/${tf.toAddress}`)}
-                    >
+                    <a href={assetURL(`address/${tf.toAddress}`)}>
                       <span>{tf.toAddress}</span>
                     </a>
                   </span>

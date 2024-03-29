@@ -1,0 +1,50 @@
+{
+  "name": "dash-v2",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "yarn lint && yarn format",
+    "lint": "next lint",
+    "format": "pretty-quick --staged ./",
+    "schema:generate": "apollo client:codegen ./src/nft --no-addTypename --target=typescript --localSchemaFile=src/aptos-indexer.graphql"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.7.1",
+    "@fortawesome/fontawesome-free": "^6.2.1",
+    "@types/node": "18.11.9",
+    "@types/react": "18.0.25",
+    "@types/react-dom": "18.0.9",
+    "date-fns": "^2.29.3",
+    "eslint": "8.28.0",
+    "eslint-config-next": "^14.1.4",
+    "graphql": "^16.6.0",
+    "highlight.js": "^11.7.0",
+    "i18next": "^22.0.6",
+    "isomorphic-unfetch": "^3.1.0",
+    "next": "^14.1.4",
+    "next-i18next": "^13.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^12.0.0",
+    "react-outside-click-handler": "^1.3.0",
+    "react-redux": "^8.0.5",
+    "redux": "^4.2.0",
+    "redux-thunk": "^2.4.2",
+    "styletron-engine-atomic": "^1.5.0",
+    "styletron-react": "5.2.7",
+    "typescript": "4.9.3"
+  },
+  "devDependencies": {
+    "@tarekraafat/autocomplete.js": "^10.2.7",
+    "@types/react-outside-click-handler": "^1.3.1",
+    "@types/styletron-react": "^5.0.3",
+    "bootstrap": "^4.6.1",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.8.0",
+    "pretty-quick": "^3.1.3",
+    "sass": "^1.56.1"
+  }
+}

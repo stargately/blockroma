@@ -48,7 +48,7 @@ jspm_packages
 flow-typed/npm/
 
 *-translations/
-.env
+v1/.env
 dump.rdb
 .vscode/
 

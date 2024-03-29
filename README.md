@@ -22,7 +22,7 @@ Feature List
 - [x] customizable for other blockchains.
 - [ ] developer guide.
 - [ ] tx contract details and logs.
-- [ ] ERC20. [Design](./src/server/service/remote-chain-service/parse-token-transfer/README.md)
+- [ ] ERC20. [Design](v1/src/server/service/remote-chain-service/parse-token-transfer/README.md)
 - [ ] ERC721.
 - [ ] more accurate gas fee calculation.
 - [ ] better error handling and loading state.
@@ -39,7 +39,7 @@ git clone git@github.com:stargately/blockroma.git
 This is intended for \*nix users. If you use Windows, go to [Run on Windows](#run-on-windows). Let's first prepare the environment.
 
 ```bash
-cd blockroma
+cd blockroma/v1
 
 npm install
 

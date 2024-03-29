@@ -53,6 +53,5 @@ dump.rdb
 .vscode/
 
 package-lock.json
-__generated__
 
 src/client/stylesheets/components/route_prefix.scss

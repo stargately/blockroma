@@ -38,7 +38,7 @@ export const AddressDetailsContainer: React.FC = () => {
   }
   if (error && error.graphQLErrors[0]?.extensions?.code !== "NOT_FOUND") {
     // TODO(dora):
-    return <button onClick={refetch}>error</button>;
+    return <button onClick={() => refetch()}>error</button>;
   }
   const addr: Addr = data?.address ?? {};
 

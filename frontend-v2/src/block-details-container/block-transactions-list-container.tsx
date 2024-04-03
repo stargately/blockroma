@@ -38,7 +38,7 @@ export const BlockTransactionsListContainer: React.FC<Props> = ({
         <button
           data-error-message
           className="alert alert-danger col-12 text-left"
-          onClick={refetch}
+          onClick={() => refetch()}
         >
           <span className="alert-link">{t("info.err")}</span>
         </button>

@@ -84,7 +84,7 @@ const TableWithPagination = () => {
     <>
       {error && (
         <button
-          onClick={refetch}
+          onClick={() => refetch()}
           data-error-message
           className="alert alert-danger col-12 text-left"
         >

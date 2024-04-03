@@ -1,5 +1,3 @@
-import { useSelector } from "react-redux";
-
 export type ChainConfig = {
   chainId: number;
   chainName: string;
@@ -9,13 +7,15 @@ export type ChainConfig = {
   networkPath: string;
 };
 
+export const chainConfig = {
+  chainId: 7778,
+  chainName: "Blockroma",
+  symbol: "BLO",
+  rpcUrls: ["https://example.com"],
+  decimals: 18,
+  networkPath: "",
+};
+
 export function useChainConfig(): ChainConfig {
-  return {
-    chainId: 7778,
-    chainName: "Blockroma",
-    symbol: "BLO",
-    rpcUrls: ["https://example.com"],
-    decimals: 18,
-    networkPath: "",
-  };
+  return chainConfig;
 }

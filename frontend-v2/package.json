@@ -12,7 +12,7 @@
     "schema:generate": "apollo client:codegen ./src/nft --no-addTypename --target=typescript --localSchemaFile=src/aptos-indexer.graphql"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.1",
+    "@apollo/client": "^3.9.10",
     "@fortawesome/fontawesome-free": "^6.2.1",
     "@next/third-parties": "^14.1.4",
     "@types/node": "18.11.9",

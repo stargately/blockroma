@@ -35,12 +35,17 @@ export function TxDetailsContainer(): JSX.Element {
     return <></>;
   }
   if (error && error.graphQLErrors[0]?.extensions?.code === "NOT_FOUND") {
-    // TODO(dora):
     return (
-      <>
-        Transaction not found
-        <button onClick={refetch}>Refetch</button>
-      </>
+      <div className="container-fluid h-100">
+        <div className="row h-100 justify-content-center align-items-center">
+          <div className="col-xs-12 text-center" style={{height: "100vh", display: "flex", justifyContent: "center", alignItems: "center"}}>
+            <div className="message-box">
+              <p>Transaction not found. The </p>
+              <button className="btn btn-primary" onClick={() => refetch()}>Refetch</button>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -54,8 +59,8 @@ export function TxDetailsContainer(): JSX.Element {
 
   return (
     <main className="pt-4">
-      <p className="alert alert-info" role="alert" />
-      <p className="alert alert-danger" role="alert" />
+      <p className="alert alert-info" role="alert"/>
+      <p className="alert alert-danger" role="alert"/>
       <section className="container">
         <section
           className="fs-14"

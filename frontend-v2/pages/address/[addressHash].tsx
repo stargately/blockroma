@@ -5,10 +5,12 @@ import { RawNav } from "@/shared/home/components/raw-nav";
 import React from "react";
 import nextI18NextConfig from "../../next-i18next.config.js";
 import { AddressDetailsContainer } from "@/shared/address-details-container/address-details-container";
+import { SeoHead } from "@/shared/common/seo-head";
 
 export default function AddressHashPage() {
   return (
     <>
+      <SeoHead config={{ title: "Address Details" }} />
       <RawNav />
       <AddressDetailsContainer />
     </>
@@ -20,7 +22,7 @@ export const getStaticProps: GetStaticProps<{}> = async ({ locale }) => ({
     ...(await serverSideTranslations(
       locale ?? "en",
       ["common"],
-      nextI18NextConfig,
+      nextI18NextConfig
     )),
   },
 });

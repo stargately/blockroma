@@ -5,10 +5,12 @@ import { RawNav } from "@/shared/home/components/raw-nav";
 import React from "react";
 import nextI18NextConfig from "../../next-i18next.config.js";
 import { TxsTableContainer } from "@/shared/txs-table-container/txs-table-container";
+import { SeoHead } from "@/shared/common/seo-head";
 
 export default function TxsPage() {
   return (
     <>
+      <SeoHead config={{ title: "Transactions" }} />
       <RawNav />
       <TxsTableContainer />
     </>
@@ -20,7 +22,7 @@ export const getStaticProps: GetStaticProps<{}> = async ({ locale }) => ({
     ...(await serverSideTranslations(
       locale ?? "en",
       ["common"],
-      nextI18NextConfig,
+      nextI18NextConfig
     )),
   },
 });

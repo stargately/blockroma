@@ -4,10 +4,12 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { Home } from "@/shared/home";
 import { RawNav } from "@/shared/home/components/raw-nav";
 import { Footer } from "@/shared/common/footer";
+import { SeoHead } from "@/shared/common/seo-head";
 
 export default function Index() {
   return (
     <div>
+      <SeoHead />
       <RawNav />
       <Home />
       <Footer />

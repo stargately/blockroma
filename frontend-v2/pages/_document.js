@@ -1,16 +1,9 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
 import { Provider as StyletronProvider } from "styletron-react";
 import { styletron } from "../src/styletron";
-import { chainConfig } from "../src/common/use-chain-config";
+import { defaultSeoConfig } from "../src/common/seo-head";
 
-const beConfig = {
-  tagline: `${chainConfig.chainName} Blockchain Explorer`,
-  previewImageUrl: "/favicon.svg",
-  title: chainConfig.chainName,
-  description:
-    "Blockroma is a tool for inspecting and analyzing EVM based blockchains. Blockchain explorer for Ethereum Networks.",
-  twitter: "@stargately",
-};
+const beConfig = defaultSeoConfig;
 
 class MyDocument extends Document {
   static async getInitialProps(context) {

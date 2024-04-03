@@ -13,6 +13,7 @@ import { DataInput } from "../explorer-components/data-input";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { SeoHead } from "@/shared/common/seo-head";
 
 export function TxDetailsContainer(): JSX.Element {
   const { t } = useTranslation("common");
@@ -38,10 +39,20 @@ export function TxDetailsContainer(): JSX.Element {
     return (
       <div className="container-fluid h-100">
         <div className="row h-100 justify-content-center align-items-center">
-          <div className="col-xs-12 text-center" style={{height: "100vh", display: "flex", justifyContent: "center", alignItems: "center"}}>
+          <div
+            className="col-xs-12 text-center"
+            style={{
+              height: "100vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <div className="message-box">
               <p>Transaction not found. The </p>
-              <button className="btn btn-primary" onClick={() => refetch()}>Refetch</button>
+              <button className="btn btn-primary" onClick={() => refetch()}>
+                Refetch
+              </button>
             </div>
           </div>
         </div>
@@ -56,11 +67,14 @@ export function TxDetailsContainer(): JSX.Element {
   } catch (err) {
     console.error(`failed to calc txFee: ${err}`);
   }
-
+  if (!tx) {
+    // TODO(dora):
+    return <></>;
+  }
   return (
     <main className="pt-4">
-      <p className="alert alert-info" role="alert"/>
-      <p className="alert alert-danger" role="alert"/>
+      <p className="alert alert-info" role="alert" />
+      <p className="alert alert-danger" role="alert" />
       <section className="container">
         <section
           className="fs-14"
@@ -221,7 +235,7 @@ export function TxDetailsContainer(): JSX.Element {
                         {" | "}
                         {format(
                           new Date(tx?.timestamp),
-                          "MMM-d-y hh:mm:ss a x",
+                          "MMM-d-y hh:mm:ss a x"
                         )}{" "}
                         UTC
                       </span>

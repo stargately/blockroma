@@ -3,6 +3,7 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { styletron } from "../src/styletron";
 import "../src/stylesheets/app.scss";
+import "../src/stylesheets/non-critical.scss";
 import { Provider as ReduxProvider } from "react-redux";
 import { configureStore } from "../src/common/configure-store";
 import { appWithTranslation } from "next-i18next";

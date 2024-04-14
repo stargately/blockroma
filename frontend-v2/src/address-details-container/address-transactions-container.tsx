@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { AdrTransactionItem } from "@/shared/explorer-components/adr-transaction.item";
 import { useGetAddr } from "@/shared/address-details-container/hooks/use-get-addr";
-
 import { assetURL } from "@/shared/common/asset-url";
 import { useTranslation } from "next-i18next";
+import {Pagination} from "@/shared/explorer-components/pagination";
+import {useRouter} from "next/router";
+import {paginationProcessTotalNumPage} from "@/shared/common/functions/paginations";
 
 type Props = {
   addressHash: string;
@@ -13,11 +15,28 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
   addressHash,
 }) => {
   const { t } = useTranslation("common");
+  const router = useRouter();
+  const query = router.query;
+  const initialPage = Number(query.page) || 1;
+  const [currentPage, setCurrentPage] = useState(initialPage); // Manage current page, starts from 0
+
+
+  // Pagination variables
+  const pageSize = 10;
+
   const { data, loading, error, refetch } = useGetAddr({
     hash: addressHash,
-    first: 100,
-    after: 0,
+    first: pageSize,
+    after: (currentPage - 1) * pageSize,
   });
+  const setCurPageWithSideEffect = async (page: number) => {
+    setCurrentPage(page);
+    await router.push({ pathname: router.pathname, query: { ...query, page: page.toString() } }, undefined, { shallow: true });
+  };
+
+  // Logic to determine the number of pages
+  const totalPages = paginationProcessTotalNumPage(data?.address?.transactions);
+
   if (loading) {
     // TODO(dora):
     return <></>;
@@ -40,62 +59,26 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
           className="card-body"
           data-async-listing={assetURL(`address/${addressHash}/transactions`)}
         >
-          <div
-            data-selector="channel-disconnected-message"
-            style={{ display: "none" }}
-          >
-            <div
-              data-selector="reload-button"
-              className="alert alert-danger"
-              style={{ padding: "0.75rem 0rem", cursor: "pointer" }}
+          {/* Render transaction items or messages accordingly */}
+          {error && error.graphQLErrors[0]?.extensions?.code !== "NOT_FOUND" && (
+            <button
+              className="alert alert-danger col-12 text-left"
+              onClick={() => refetch()}
             >
-              <span className="alert alert-danger">
-                Connection Lost, click to load newer transactions
-              </span>
-            </div>
-          </div>
-          <div className="clearfix">
-            <h2 className="card-title float-left">{t("nav.txs")}</h2>
-          </div>
-          <div
-            data-selector="channel-batching-message"
-            style={{ display: "none" }}
-          >
-            <div
-              data-selector="reload-transactions-button"
-              className="alert alert-info"
-            >
-              <a href="#" className="alert-link">
-                <span data-selector="channel-batching-count" /> More
-                transactions have come in
-              </a>
-            </div>
-          </div>
-
-          {error &&
-            error.graphQLErrors[0]?.extensions?.code !== "NOT_FOUND" && (
-              <button
-                data-error-message
-                className="alert alert-danger col-12 text-left"
-                onClick={() => refetch()}
-              >
-                <span className="alert-link">{t("info.err")}</span>
-              </button>
-            )}
-
-          {(!txs || !txs.length) && (
-            <div data-empty-response-message>
-              <div
-                className="tile tile-muted text-center"
-                data-selector="empty-transactions-list"
-              >
-                There are no transactions for this address.
-              </div>
-            </div>
+              <span className="alert-link">{t("info.err")}</span>
+            </button>
           )}
-
-          {!!txs && (
-            <div data-items>
+          {!txs?.length ? (
+            <div
+              className="tile tile-muted text-center"
+              data-selector="empty-transactions-list"
+            >
+              There are no transactions for this address.
+            </div>
+          ) : (
+            <>
+              <Pagination setCurPage={setCurPageWithSideEffect} curPage={currentPage} numPages={totalPages} position="bottom" />
+              <div className={"mt-4"}>
               {txs.map((tx) => (
                 <AdrTransactionItem
                   key={tx?.hash}
@@ -104,31 +87,12 @@ export const AddressTransactionsContainer: React.FC<Props> = ({
                 />
               ))}
             </div>
+              <Pagination setCurPage={setCurPageWithSideEffect} curPage={currentPage} numPages={totalPages} position="bottom" />
+
+            </>
           )}
 
-          {/*
-          TODO(dora): download csv
 
-                    <div className="transaction-bottom-panel">
-            <div csv-download className="download-all-transactions">
-              Download{" "}
-              <a
-                className="download-all-transactions-link"
-                href="/csv-export?address=0x11F3fb5677c84131377BD9762Ee2ef451eEF47DB&type=transactions"
-              >
-                CSV
-                <svg xmlns="http://www.w3.org/2000/svg" width={14} height={16}>
-                  <path
-                    fill="#333333"
-                    fillRule="evenodd"
-                    d="M13 16H1c-.999 0-1-1-1-1V1s-.004-1 1-1h6l7 7v8s-.032 1-1 1zm-1-8c0-.99-1-1-1-1H8s-1 .001-1-1V3c0-.999-1-1-1-1H2v12h10V8z"
-                  />
-                </svg>
-              </a>
-            </div>
-          </div>
-
-          */}
         </div>
       </div>
     </section>

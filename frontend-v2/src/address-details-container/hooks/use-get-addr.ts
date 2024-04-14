@@ -15,12 +15,13 @@ export const useGetAddr = ({
     queryAddressByHash,
     {
       ssr: false,
+      skip: !hash || !first,
       variables: {
         hash,
         first,
         after: String(after),
       },
-    },
+    }
   );
   return { loading, data, error, refetch };
 };

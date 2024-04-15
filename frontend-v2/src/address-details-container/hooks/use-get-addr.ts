@@ -15,7 +15,7 @@ export const useGetAddr = ({
     queryAddressByHash,
     {
       ssr: false,
-      skip: !hash || !first,
+      skip: !hash,
       variables: {
         hash,
         first,

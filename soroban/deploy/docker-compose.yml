@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  stellar-rpc:
+    image: stellar/stellar-rpc:${STELLAR_RPC_VERSION:-23.0.4}
+    container_name: stellar-rpc-mainnet
+    restart: unless-stopped
+    command: --config-path /config/stellar-rpc.toml
+    ports:
+      - "${RPC_PORT:-8000}:8000"
+      - "${ADMIN_PORT:-6061}:6061"
+    volumes:
+      - ./config/stellar-rpc.toml:/config/stellar-rpc.toml:ro
+      - ./config/stellar-core.cfg:/config/stellar-core.cfg:ro
+      - ./data/stellar-rpc:/data
+      - ./data/captive-core:/captive-core
+      - ./data/logs:/logs
+    environment:
+      - CAPTIVE_CORE_STORAGE_PATH=/captive-core
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- --post-data='{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getHealth\"}' --header='Content-Type: application/json' http://localhost:8000 | grep -q '\"status\":\"healthy\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: stellar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stellar_indexer}
+      POSTGRES_USER: ${POSTGRES_USER:-stellar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stellar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    shm_size: 256mb
+
+  indexer:
+    build:
+      context: ../indexer
+      dockerfile: Dockerfile
+    container_name: stellar-indexer
+    restart: unless-stopped
+    depends_on:
+      stellar-rpc:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - STELLAR_RPC_URL=http://stellar-rpc:8000
+      - POSTGRES_DSN=postgresql://${POSTGRES_USER:-stellar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-stellar_indexer}?sslmode=disable
+    ports:
+      - "${INDEXER_PORT:-8080}:8080"
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  stellar-network:
+    driver: bridge

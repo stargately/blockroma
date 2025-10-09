@@ -1,0 +1,47 @@
+# Stellar RPC - Mainnet Production Configuration
+
+# Network Configuration
+NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
+HISTORY_ARCHIVE_URLS = [
+    "https://history.stellar.org/prd/core-live/core_live_001",
+    "https://history.stellar.org/prd/core-live/core_live_002",
+    "https://history.stellar.org/prd/core-live/core_live_003"
+]
+
+# RPC Server Settings
+ENDPOINT = "0.0.0.0:8000"
+ADMIN_ENDPOINT = "0.0.0.0:6061"
+
+# Storage Paths
+DB_PATH = "/data/soroban_rpc.db"
+CAPTIVE_CORE_STORAGE_PATH = "/captive-core"
+
+# History Retention
+# 7 days = 100,800 ledgers (at ~5 sec/ledger)
+HISTORY_RETENTION_WINDOW = 100800
+
+# Event Configuration
+MAX_EVENTS_LIMIT = 10000
+DEFAULT_EVENTS_LIMIT = 100
+
+# Transaction Configuration
+CHECKPOINT_FREQUENCY = 64
+
+# Performance Settings
+MAX_HEALTHY_LEDGER_LATENCY = "30s"
+PRE_FLIGHT_WORKER_COUNT = 10
+PRE_FLIGHT_WORKER_QUEUE_SIZE = 100
+
+# Ingestion Settings
+INGESTION_TIMEOUT = "10m"
+
+# Logging
+LOG_LEVEL = "info"
+LOG_FORMAT = "json"
+
+# Captive Core Configuration
+CAPTIVE_CORE_CONFIG_PATH = "/config/stellar-core.cfg"
+CAPTIVE_CORE_USE_DB = true
+
+# Friend Bot (disabled for mainnet)
+FRIENDBOT_URL = ""

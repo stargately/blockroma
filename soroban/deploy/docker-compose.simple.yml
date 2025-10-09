@@ -1,0 +1,88 @@
+version: '3.8'
+
+# Simplified version without health check dependencies
+# Use this if stellar-rpc health checks are unreliable
+# The indexer will retry connections automatically
+
+services:
+  stellar-rpc:
+    image: stellar/stellar-rpc:${STELLAR_RPC_VERSION:-23.0.4}
+    container_name: stellar-rpc-mainnet
+    restart: unless-stopped
+    command: --config-path /config/stellar-rpc.toml
+    ports:
+      - "${RPC_PORT:-8000}:8000"
+      - "${ADMIN_PORT:-6061}:6061"
+    volumes:
+      - ./config/stellar-rpc.toml:/config/stellar-rpc.toml:ro
+      - ./config/stellar-core.cfg:/config/stellar-core.cfg:ro
+      - ./data/stellar-rpc:/data
+      - ./data/captive-core:/captive-core
+      - ./data/logs:/logs
+    environment:
+      - CAPTIVE_CORE_STORAGE_PATH=/captive-core
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    # No health check - indexer will retry connections
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: stellar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stellar_indexer}
+      POSTGRES_USER: ${POSTGRES_USER:-stellar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stellar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    shm_size: 256mb
+
+  indexer:
+    build:
+      context: ../indexer
+      dockerfile: Dockerfile
+    container_name: stellar-indexer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - STELLAR_RPC_URL=http://stellar-rpc:8000
+      - POSTGRES_DSN=postgresql://${POSTGRES_USER:-stellar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-stellar_indexer}?sslmode=disable
+    ports:
+      - "${INDEXER_PORT:-8080}:8080"
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  stellar-network:
+    driver: bridge

@@ -10,7 +10,7 @@ Standalone indexer for Stellar Soroban smart contract events and transactions. P
 │  (v23.0.4 - Unmodified)     │
 │  Port 8000 (JSON-RPC API)   │
 └─────────────┬───────────────┘
-              │ Poll every 5s
+              │ Poll every 1s
               ▼
 ┌─────────────────────────────┐
 │  Standalone Indexer         │
@@ -19,7 +19,13 @@ Standalone indexer for Stellar Soroban smart contract events and transactions. P
               │ Write events/txs
               ▼
        ┌──────────────┐
-       │ PostgreSQL   │
+       │ PostgreSQL   │◄────────┐
+       └──────┬───────┘         │
+              │                 │
+              ▼                 │
+       ┌──────────────┐         │
+       │   Hasura     │─────────┘
+       │  (GraphQL)   │
        └──────────────┘
 ```
 
@@ -27,6 +33,7 @@ Standalone indexer for Stellar Soroban smart contract events and transactions. P
 
 ✅ **No Fork Maintenance** - Uses upstream Stellar RPC (v23.0.4)
 ✅ **Direct PostgreSQL Writes** - No Redis, simpler architecture
+✅ **GraphQL API** - Query indexed data via Hasura GraphQL Engine
 ✅ **Complete Transaction Metadata** - Stores full tx data including memos, signatures, preconditions
 ✅ **Token Operations** - Tracks SAC token transfers, mints, burns
 ✅ **Ledger State Tracking** - Indexes all ledger entries (accounts, trustlines, offers, etc.)
@@ -58,7 +65,8 @@ docker compose up -d
 This starts:
 - **stellar-rpc** - Upstream Stellar RPC (port 8000)
 - **postgres** - PostgreSQL database (port 5432)
-- **indexer** - Event/transaction indexer
+- **indexer** - Event/transaction indexer (port 8080)
+- **hasura** - GraphQL API (port 8081)
 
 ### 3. Check Status
 
@@ -71,6 +79,9 @@ docker logs -f stellar-indexer
 
 # Check database
 docker exec -it stellar-postgres psql -U stellar -d stellar_indexer -c "SELECT COUNT(*) FROM events;"
+
+# Access Hasura Console
+open http://localhost:8081
 ```
 
 ## Project Structure
@@ -91,6 +102,7 @@ soroban/
 └── deploy/               # Docker deployment
     ├── docker-compose.yml
     ├── config/           # RPC configuration
+    ├── hasura/           # Hasura GraphQL metadata
     └── scripts/          # Helper scripts
 ```
 
@@ -134,12 +146,35 @@ make test-coverage-html # Open coverage in browser
 
 **Test Results:** 36 tests, 33 passing, 3 skipped
 
+## GraphQL API
+
+The deployment includes Hasura GraphQL Engine for querying indexed data.
+
+**Access the GraphQL Console**: http://localhost:8081
+
+**Example Query:**
+```graphql
+query GetLatestEvents {
+  events(order_by: {ledger: desc}, limit: 10) {
+    id
+    contract_id
+    type
+    ledger
+    topic
+    value
+  }
+}
+```
+
+See [deploy/hasura/README.md](deploy/hasura/README.md) for more query examples and API usage.
+
 ## Documentation
 
 - [TESTING.md](indexer/TESTING.md) - Testing guide
 - [FEATURE_PARITY.md](indexer/FEATURE_PARITY.md) - Feature comparison with old indexer
 - [CHANGES_SUMMARY.md](indexer/CHANGES_SUMMARY.md) - Implementation details
 - [HEALTH_CHECK.md](deploy/HEALTH_CHECK.md) - RPC health check guide
+- [deploy/hasura/README.md](deploy/hasura/README.md) - Hasura GraphQL usage
 
 ## Monitoring
 
@@ -162,14 +197,17 @@ docker logs -f stellar-rpc-mainnet
 
 # PostgreSQL logs
 docker logs -f stellar-postgres
+
+# Hasura logs
+docker logs -f stellar-hasura
 ```
 
 ## Performance
 
-- **Polling Interval:** 5 seconds
+- **Polling Interval:** 1 second
 - **Batch Size:** 1000 events per request
-- **Latency:** ~5 seconds behind RPC
-- **Memory:** ~100MB
+- **Latency:** ~1 second behind RPC
+- **Memory:** ~100MB (indexer) + ~50MB (Hasura)
 - **CPU:** <5% idle
 
 ## Troubleshooting

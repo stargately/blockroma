@@ -1,0 +1,15 @@
+table:
+  name: token_metadata
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - contract_id
+        - name
+        - symbol
+        - decimals
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

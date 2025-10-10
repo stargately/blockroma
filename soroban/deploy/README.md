@@ -25,6 +25,7 @@ This will start:
 - **stellar-rpc**: Mainnet RPC node with captive core
 - **postgres**: PostgreSQL database for indexed data
 - **indexer**: Standalone indexer polling RPC every 1 second
+- **hasura**: GraphQL API for querying indexed data
 
 ### 3. Check Status
 
@@ -42,6 +43,9 @@ curl http://localhost:8080/stats
 
 # Check indexer health
 curl http://localhost:8080/health
+
+# Access Hasura Console
+open http://localhost:8081
 ```
 
 ## Configuration
@@ -58,6 +62,9 @@ All configuration is done via the `.env` file:
 | `RPC_PORT` | `8000` | RPC HTTP port |
 | `ADMIN_PORT` | `6061` | RPC admin port |
 | `INDEXER_PORT` | `8080` | Indexer HTTP port |
+| `HASURA_PORT` | `8081` | Hasura GraphQL port |
+| `HASURA_ADMIN_SECRET` | *(optional)* | Hasura admin authentication secret |
+| `HASURA_UNAUTHORIZED_ROLE` | `anonymous` | Default role for unauthenticated users |
 
 ## Data Directories
 
@@ -120,6 +127,23 @@ Standalone indexer polling RPC every 1 second.
 - Fetches transactions by hash
 - Processes contract data for metadata/balances
 - Updates cursor after each batch
+
+### Hasura GraphQL Engine (Port 8081)
+
+GraphQL API for querying all indexed data.
+
+**Endpoints:**
+- `http://localhost:8081/console` - Admin console (web UI)
+- `http://localhost:8081/v1/graphql` - GraphQL API endpoint
+- `http://localhost:8081/healthz` - Health check
+
+**Features:**
+- Query all indexed tables via GraphQL
+- Real-time subscriptions for live data
+- Aggregations, filtering, sorting
+- Anonymous read-only access by default
+
+See [hasura/README.md](hasura/README.md) for query examples and usage.
 
 ## Maintenance
 
@@ -210,9 +234,16 @@ The RPC service takes 2-5 minutes to start (captive core initialization). Wait f
 └──────────────────┘               │
                                    ▼
                           ┌──────────────────┐
-                          │   PostgreSQL     │
-                          │   (Port 5432)    │
-                          │  All ledger data │
+                          │   PostgreSQL     │◄──┐
+                          │   (Port 5432)    │   │
+                          │  All ledger data │   │
+                          └──────────────────┘   │
+                                   │             │
+                                   ▼             │
+                          ┌──────────────────┐   │
+                          │  Hasura GraphQL  │───┘
+                          │   (Port 8081)    │
+                          │  Query Interface │
                           └──────────────────┘
 ```
 
@@ -220,3 +251,4 @@ The RPC service takes 2-5 minutes to start (captive core initialization). Wait f
 - **Stellar RPC**: 7-day SQLite retention, serves JSON-RPC
 - **Indexer**: Polls every 1s, writes to PostgreSQL
 - **PostgreSQL**: Long-term storage for all data
+- **Hasura**: GraphQL API for querying indexed data

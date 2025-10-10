@@ -1,0 +1,15 @@
+table:
+  name: token_balances
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - contract_id
+        - address
+        - balance
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

@@ -82,6 +82,34 @@ services:
         max-size: "100m"
         max-file: "5"
 
+  hasura:
+    image: hasura/graphql-engine:v2.40.0
+    container_name: stellar-hasura
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${HASURA_PORT:-8081}:8080"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgresql://${POSTGRES_USER:-stellar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-stellar_indexer}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:-}
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${HASURA_UNAUTHORIZED_ROLE:-anonymous}
+      HASURA_GRAPHQL_CORS_DOMAIN: "*"
+      HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
+    networks:
+      - stellar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    volumes:
+      - ./hasura/metadata:/hasura-metadata
+
 volumes:
   postgres-data:
     driver: local

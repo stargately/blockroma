@@ -1,0 +1,26 @@
+table:
+  name: transactions
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - status
+        - ledger
+        - application_order
+        - source_account
+        - fee
+        - fee_charged
+        - sequence
+        - memo
+        - memo_type
+        - signatures
+        - preconditions
+        - envelope_xdr
+        - result_xdr
+        - result_meta_xdr
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

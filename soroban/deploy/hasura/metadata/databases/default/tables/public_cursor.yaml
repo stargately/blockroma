@@ -1,0 +1,12 @@
+table:
+  name: cursor
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - last_ledger
+        - updated_at
+      filter: {}
+      allow_aggregations: true

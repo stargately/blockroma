@@ -1,0 +1,18 @@
+table:
+  name: trust_line_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - account_id
+        - asset
+        - balance
+        - limit
+        - flags
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

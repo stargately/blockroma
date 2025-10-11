@@ -80,6 +80,9 @@ docker logs -f stellar-indexer
 # Check database
 docker exec -it stellar-postgres psql -U stellar -d stellar_indexer -c "SELECT COUNT(*) FROM events;"
 
+# Initialize Hasura (track tables)
+cd deploy && ./scripts/init-hasura.sh
+
 # Access Hasura Console
 open http://localhost:8081
 ```

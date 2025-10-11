@@ -44,6 +44,9 @@ curl http://localhost:8080/stats
 # Check indexer health
 curl http://localhost:8080/health
 
+# Initialize Hasura (track tables)
+./scripts/init-hasura.sh
+
 # Access Hasura Console
 open http://localhost:8081
 ```

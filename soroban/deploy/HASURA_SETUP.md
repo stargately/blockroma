@@ -62,10 +62,22 @@ cd deploy
 docker compose up -d
 ```
 
-### 2. Access Hasura Console
+### 2. Initialize Hasura (Track Tables)
+```bash
+cd deploy
+./scripts/init-hasura.sh
+```
+
+This script will:
+- Wait for Hasura to be ready
+- Track all 13 database tables
+- Set up anonymous read permissions
+- Enable aggregation queries
+
+### 3. Access Hasura Console
 Open http://localhost:8081/console in your browser
 
-### 3. Try a Query
+### 4. Try a Query
 In the GraphQL tab of the console, run:
 ```graphql
 query GetLatestEvents {
@@ -80,7 +92,7 @@ query GetLatestEvents {
 }
 ```
 
-### 4. Verify Setup
+### 5. Verify Setup
 ```bash
 cd deploy
 ./scripts/check-hasura.sh

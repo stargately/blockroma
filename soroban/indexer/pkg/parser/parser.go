@@ -60,13 +60,21 @@ func ParseEvent(event client.Event) (*models.Event, error) {
 		Topic:                    string(topicJSON),
 		Value:                    string(valueJSON),
 		InSuccessfulContractCall: event.InSuccessfulContractCall,
+		LastModifiedLedgerSeq:    event.Ledger,
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
 	}, nil
 }
 
 // ParseTransaction converts RPC transaction to database model
+// Uses the transaction hash from RPC response
 func ParseTransaction(tx client.Transaction) (*models.Transaction, error) {
+	return ParseTransactionWithHash(tx, tx.Hash)
+}
+
+// ParseTransactionWithHash converts RPC transaction to database model using provided hash
+// This is useful when the RPC response hash might be unreliable
+func ParseTransactionWithHash(tx client.Transaction, txHash string) (*models.Transaction, error) {
 	// Decode envelope to extract source account and fee
 	envelope, err := decodeEnvelope(tx.EnvelopeXdr)
 	if err != nil {
@@ -115,7 +123,7 @@ func ParseTransaction(tx client.Transaction) (*models.Transaction, error) {
 	ledgerCreatedAt := tx.LedgerCloseTime
 
 	return &models.Transaction{
-		ID:               tx.Hash,
+		ID:               txHash,  // Use the provided hash parameter, not tx.Hash
 		Status:           tx.Status,
 		Ledger:           &ledger,
 		LedgerCreatedAt:  &ledgerCreatedAt,

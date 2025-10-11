@@ -18,7 +18,21 @@ import (
 func main() {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
+
+	// Set log level from environment variable
+	logLevel := getEnv("LOG_LEVEL", "info")
+	switch logLevel {
+	case "debug":
+		logger.SetLevel(logrus.DebugLevel)
+	case "info":
+		logger.SetLevel(logrus.InfoLevel)
+	case "warn":
+		logger.SetLevel(logrus.WarnLevel)
+	case "error":
+		logger.SetLevel(logrus.ErrorLevel)
+	default:
+		logger.SetLevel(logrus.InfoLevel)
+	}
 
 	// Get configuration from environment (minimal env vars)
 	rpcURL := getEnv("STELLAR_RPC_URL", "http://stellar-rpc:8000")

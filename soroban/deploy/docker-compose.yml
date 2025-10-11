@@ -72,6 +72,7 @@ services:
     environment:
       - STELLAR_RPC_URL=http://stellar-rpc:8000
       - POSTGRES_DSN=postgresql://${POSTGRES_USER:-stellar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-stellar_indexer}?sslmode=disable
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - "${INDEXER_PORT:-8080}:8080"
     networks:

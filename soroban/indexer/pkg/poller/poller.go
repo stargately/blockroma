@@ -175,7 +175,19 @@ func (p *Poller) poll(ctx context.Context) error {
 				continue
 			}
 
-			dbTx, err := parser.ParseTransaction(*rpcTx)
+			// Validate that RPC returned a hash
+			if rpcTx.Hash == "" {
+				p.logger.WithField("requestedHash", txHash).Warn("RPC returned transaction with empty hash, using requested hash")
+			} else if rpcTx.Hash != txHash {
+				p.logger.WithFields(logrus.Fields{
+					"requestedHash": txHash,
+					"receivedHash":  rpcTx.Hash,
+				}).Warn("RPC returned different hash than requested")
+			}
+
+			// Use the hash we requested (from the event) as the transaction ID
+			// This ensures we don't have duplicate IDs if RPC returns wrong/empty hashes
+			dbTx, err := parser.ParseTransactionWithHash(*rpcTx, txHash)
 			if err != nil {
 				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse transaction")
 				continue

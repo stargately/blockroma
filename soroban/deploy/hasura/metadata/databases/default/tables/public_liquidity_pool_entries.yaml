@@ -1,0 +1,19 @@
+table:
+  name: liquidity_pool_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - liquidity_pool_id
+        - asset_a
+        - asset_b
+        - reserve_a
+        - reserve_b
+        - total_pool_shares
+        - pool_share_count
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

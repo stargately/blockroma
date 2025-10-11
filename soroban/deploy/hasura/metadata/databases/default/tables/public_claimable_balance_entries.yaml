@@ -1,0 +1,17 @@
+table:
+  name: claimable_balance_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - balance_id
+        - asset
+        - amount
+        - sponsor
+        - flags
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

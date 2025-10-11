@@ -1,0 +1,21 @@
+table:
+  name: account_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - account_id
+        - balance
+        - sequence
+        - num_subentries
+        - num_sponsoring
+        - num_sponsored
+        - flags
+        - home_domain
+        - thresholds
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

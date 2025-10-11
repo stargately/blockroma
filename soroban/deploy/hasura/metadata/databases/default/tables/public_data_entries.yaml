@@ -1,0 +1,16 @@
+table:
+  name: data_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - account_id
+        - data_name
+        - data_value
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

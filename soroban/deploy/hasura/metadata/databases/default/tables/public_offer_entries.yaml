@@ -1,0 +1,19 @@
+table:
+  name: offer_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - offer_id
+        - seller_id
+        - selling_asset
+        - buying_asset
+        - amount
+        - price
+        - flags
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

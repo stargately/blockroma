@@ -1,0 +1,17 @@
+table:
+  name: contract_data_entries
+  schema: public
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - contract_id
+        - key
+        - value
+        - durability
+        - last_modified_ledger
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true

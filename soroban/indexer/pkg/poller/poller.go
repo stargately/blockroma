@@ -207,6 +207,33 @@ func (p *Poller) poll(ctx context.Context) error {
 			// Don't fail the whole batch if contract data processing fails
 		}
 
+		// Process ledger entries for discovered accounts
+		// This fetches account details, trustlines, offers, etc.
+		// Collect source accounts from transactions
+		accountAddresses := make(map[string]bool)
+		// Get accounts from processed transactions
+		var transactions []models.Transaction
+		if err := tx.Where("id IN ?", func() []string {
+			hashes := make([]string, 0, len(txHashes))
+			for hash := range txHashes {
+				hashes = append(hashes, hash)
+			}
+			return hashes
+		}()).Find(&transactions).Error; err == nil {
+			for _, txn := range transactions {
+				if txn.SourceAccount != nil && *txn.SourceAccount != "" {
+					accountAddresses[*txn.SourceAccount] = true
+				}
+			}
+		}
+
+		if len(accountAddresses) > 0 {
+			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
+				p.logger.WithError(err).Warn("Failed to process ledger entries")
+				// Don't fail the whole batch if ledger entry processing fails
+			}
+		}
+
 		// Update cursor to latest ledger
 		if err := models.UpdateCursor(tx, latestLedger); err != nil {
 			return fmt.Errorf("update cursor: %w", err)
@@ -270,6 +297,106 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 			"metadata": metadataCount,
 			"balances": balanceCount,
 		}).Debug("Processed contract data")
+	}
+
+	return nil
+}
+
+// processLedgerEntries fetches and processes ledger entries for discovered accounts
+func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountAddresses map[string]bool) error {
+	if len(accountAddresses) == 0 {
+		return nil
+	}
+
+	// Build ledger keys for all accounts
+	var keys []string
+	for address := range accountAddresses {
+		key, err := parser.BuildAccountLedgerKey(address)
+		if err != nil {
+			p.logger.WithError(err).WithField("address", address).Debug("Failed to build ledger key")
+			continue
+		}
+		keys = append(keys, key)
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	// Fetch ledger entries from RPC
+	resp, err := p.rpcClient.GetLedgerEntries(ctx, keys)
+	if err != nil {
+		return fmt.Errorf("get ledger entries: %w", err)
+	}
+
+	// Process each ledger entry
+	accountCount := 0
+	trustlineCount := 0
+	offerCount := 0
+	dataCount := 0
+	claimableBalanceCount := 0
+	liquidityPoolCount := 0
+
+	for _, entry := range resp.Entries {
+		// Parse the ledger entry
+		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
+		if err != nil {
+			p.logger.WithError(err).Debug("Failed to parse ledger entry")
+			continue
+		}
+
+		// Upsert each model to database
+		for _, model := range parsedModels {
+			switch m := model.(type) {
+			case *models.AccountEntry:
+				if err := models.UpsertAccountEntry(tx, m); err != nil {
+					p.logger.WithError(err).WithField("accountID", m.AccountID).Warn("Failed to upsert account entry")
+				} else {
+					accountCount++
+				}
+			case *models.TrustLineEntry:
+				if err := models.UpsertTrustLineEntry(tx, m); err != nil {
+					p.logger.WithError(err).Warn("Failed to upsert trustline entry")
+				} else {
+					trustlineCount++
+				}
+			case *models.OfferEntry:
+				if err := models.UpsertOfferEntry(tx, m); err != nil {
+					p.logger.WithError(err).Warn("Failed to upsert offer entry")
+				} else {
+					offerCount++
+				}
+			case *models.DataEntry:
+				if err := models.UpsertDataEntry(tx, m); err != nil {
+					p.logger.WithError(err).Warn("Failed to upsert data entry")
+				} else {
+					dataCount++
+				}
+			case *models.ClaimableBalanceEntry:
+				if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
+					p.logger.WithError(err).Warn("Failed to upsert claimable balance entry")
+				} else {
+					claimableBalanceCount++
+				}
+			case *models.LiquidityPoolEntry:
+				if err := models.UpsertLiquidityPoolEntry(tx, m); err != nil {
+					p.logger.WithError(err).Warn("Failed to upsert liquidity pool entry")
+				} else {
+					liquidityPoolCount++
+				}
+			}
+		}
+	}
+
+	if accountCount > 0 || trustlineCount > 0 || offerCount > 0 {
+		p.logger.WithFields(logrus.Fields{
+			"accounts":         accountCount,
+			"trustlines":       trustlineCount,
+			"offers":           offerCount,
+			"data":             dataCount,
+			"claimableBalance": claimableBalanceCount,
+			"liquidityPools":   liquidityPoolCount,
+		}).Debug("Processed ledger entries")
 	}
 
 	return nil

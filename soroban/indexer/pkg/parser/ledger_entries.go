@@ -2,6 +2,7 @@ package parser
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -332,4 +333,36 @@ func priceToString(p xdr.Price) string {
 	}
 	// Calculate decimal representation: N/D
 	return fmt.Sprintf("%d", p.N) + "/" + fmt.Sprintf("%d", p.D)
+}
+
+// BuildAccountLedgerKey builds a base64-encoded ledger key for an account address
+func BuildAccountLedgerKey(accountAddress string) (string, error) {
+	// Decode the Stellar address to get the public key
+	decoded, err := strkey.Decode(strkey.VersionByteAccountID, accountAddress)
+	if err != nil {
+		return "", fmt.Errorf("decode account address: %w", err)
+	}
+
+	// Create AccountId from decoded bytes
+	var accountID xdr.AccountId
+	var uint256 xdr.Uint256
+	copy(uint256[:], decoded)
+	accountID.Type = xdr.PublicKeyTypePublicKeyTypeEd25519
+	accountID.Ed25519 = &uint256
+
+	// Create ledger key for account
+	ledgerKey := xdr.LedgerKey{
+		Type: xdr.LedgerEntryTypeAccount,
+		Account: &xdr.LedgerKeyAccount{
+			AccountId: accountID,
+		},
+	}
+
+	// Marshal to base64
+	xdrBytes, err := ledgerKey.MarshalBinary()
+	if err != nil {
+		return "", fmt.Errorf("marshal ledger key: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(xdrBytes), nil
 }

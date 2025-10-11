@@ -168,6 +168,7 @@ func (p *Poller) poll(ctx context.Context) error {
 
 		// Fetch and process transactions
 		txCount := 0
+		claimableBalanceIDs := make(map[string]bool)
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
 			if err != nil {
@@ -198,6 +199,13 @@ func (p *Poller) poll(ctx context.Context) error {
 			}
 
 			txCount++
+
+			// Extract claimable balance IDs from transaction operations
+			if balanceIDs, err := parser.ExtractClaimableBalanceIDs(rpcTx.EnvelopeXdr); err == nil {
+				for _, balanceID := range balanceIDs {
+					claimableBalanceIDs[balanceID] = true
+				}
+			}
 		}
 
 		// Process contract data for discovered contracts
@@ -231,6 +239,14 @@ func (p *Poller) poll(ctx context.Context) error {
 			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
 				p.logger.WithError(err).Warn("Failed to process ledger entries")
 				// Don't fail the whole batch if ledger entry processing fails
+			}
+		}
+
+		// Process claimable balance ledger entries
+		if len(claimableBalanceIDs) > 0 {
+			if err := p.processClaimableBalances(ctx, tx, claimableBalanceIDs); err != nil {
+				p.logger.WithError(err).Warn("Failed to process claimable balances")
+				// Don't fail the whole batch if claimable balance processing fails
 			}
 		}
 
@@ -397,6 +413,65 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 			"claimableBalance": claimableBalanceCount,
 			"liquidityPools":   liquidityPoolCount,
 		}).Debug("Processed ledger entries")
+	}
+
+	return nil
+}
+
+// processClaimableBalances fetches and processes claimable balance ledger entries
+func (p *Poller) processClaimableBalances(ctx context.Context, tx *gorm.DB, balanceIDs map[string]bool) error {
+	if len(balanceIDs) == 0 {
+		return nil
+	}
+
+	// Build ledger keys for all claimable balances
+	var keys []string
+	for balanceID := range balanceIDs {
+		key, err := parser.BuildClaimableBalanceLedgerKey(balanceID)
+		if err != nil {
+			p.logger.WithError(err).WithField("balanceID", balanceID).Debug("Failed to build claimable balance ledger key")
+			continue
+		}
+		keys = append(keys, key)
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	// Fetch ledger entries from RPC
+	resp, err := p.rpcClient.GetLedgerEntries(ctx, keys)
+	if err != nil {
+		return fmt.Errorf("get claimable balance ledger entries: %w", err)
+	}
+
+	// Process each ledger entry
+	claimableBalanceCount := 0
+
+	for _, entry := range resp.Entries {
+		// Parse the ledger entry
+		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
+		if err != nil {
+			p.logger.WithError(err).Debug("Failed to parse claimable balance ledger entry")
+			continue
+		}
+
+		// Upsert each model to database
+		for _, model := range parsedModels {
+			if m, ok := model.(*models.ClaimableBalanceEntry); ok {
+				if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
+					p.logger.WithError(err).WithField("balanceID", m.BalanceID).Warn("Failed to upsert claimable balance entry")
+				} else {
+					claimableBalanceCount++
+				}
+			}
+		}
+	}
+
+	if claimableBalanceCount > 0 {
+		p.logger.WithFields(logrus.Fields{
+			"claimableBalances": claimableBalanceCount,
+		}).Debug("Processed claimable balances")
 	}
 
 	return nil

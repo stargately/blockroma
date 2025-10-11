@@ -355,3 +355,212 @@ func TestPriceToString(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildClaimableBalanceLedgerKey(t *testing.T) {
+	tests := []struct {
+		name      string
+		balanceID string
+		wantErr   bool
+	}{
+		{
+			name:      "valid balance ID",
+			balanceID: "000000000000000000000000000000000000000000000000000000000000dead",
+			wantErr:   false,
+		},
+		{
+			name:      "another valid balance ID",
+			balanceID: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			wantErr:   false,
+		},
+		{
+			name:      "invalid hex",
+			balanceID: "invalid-hex",
+			wantErr:   true,
+		},
+		{
+			name:      "empty balance ID",
+			balanceID: "",
+			wantErr:   true,
+		},
+		{
+			name:      "wrong length - too short",
+			balanceID: "dead",
+			wantErr:   true,
+		},
+		{
+			name:      "wrong length - too long",
+			balanceID: "000000000000000000000000000000000000000000000000000000000000deadbeef",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, err := BuildClaimableBalanceLedgerKey(tt.balanceID)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("BuildClaimableBalanceLedgerKey() expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("BuildClaimableBalanceLedgerKey() error = %v", err)
+			}
+
+			if key == "" {
+				t.Error("BuildClaimableBalanceLedgerKey() returned empty key")
+			}
+
+			// Verify the key is valid base64
+			decoded, err := base64.StdEncoding.DecodeString(key)
+			if err != nil {
+				t.Errorf("BuildClaimableBalanceLedgerKey() returned invalid base64: %v", err)
+			}
+
+			// Verify the key can be unmarshaled as a LedgerKey
+			var ledgerKey xdr.LedgerKey
+			if err := xdr.SafeUnmarshal(decoded, &ledgerKey); err != nil {
+				t.Errorf("BuildClaimableBalanceLedgerKey() returned invalid XDR: %v", err)
+			}
+
+			// Verify it's a claimable balance type
+			if ledgerKey.Type != xdr.LedgerEntryTypeClaimableBalance {
+				t.Errorf("BuildClaimableBalanceLedgerKey() wrong type = %v, want ClaimableBalance", ledgerKey.Type)
+			}
+		})
+	}
+}
+
+func TestBuildClaimableBalanceLedgerKey_RoundTrip(t *testing.T) {
+	// Test that we can build a key, decode it, and get back the same balance ID
+	originalBalanceID := "000000000000000000000000000000000000000000000000000000000000dead"
+
+	// Build the key
+	key, err := BuildClaimableBalanceLedgerKey(originalBalanceID)
+	if err != nil {
+		t.Fatalf("BuildClaimableBalanceLedgerKey() error = %v", err)
+	}
+
+	// Decode the key
+	decoded, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		t.Fatalf("Failed to decode key: %v", err)
+	}
+
+	// Unmarshal as LedgerKey
+	var ledgerKey xdr.LedgerKey
+	if err := xdr.SafeUnmarshal(decoded, &ledgerKey); err != nil {
+		t.Fatalf("Failed to unmarshal ledger key: %v", err)
+	}
+
+	// Extract the balance ID
+	if ledgerKey.ClaimableBalance == nil {
+		t.Fatal("Ledger key ClaimableBalance is nil")
+	}
+
+	recoveredBalanceID := ledgerKey.ClaimableBalance.BalanceId.V0.HexString()
+	if recoveredBalanceID != originalBalanceID {
+		t.Errorf("Round trip failed: got %v, want %v", recoveredBalanceID, originalBalanceID)
+	}
+}
+
+func TestExtractClaimableBalanceIDs(t *testing.T) {
+	// Create a transaction with a ClaimClaimableBalance operation
+	sourceAccount := xdr.MustAddress("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")
+
+	// Create a claimable balance ID
+	var hash xdr.Hash
+	hashBytes, _ := base64.StdEncoding.DecodeString("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3q0=")
+	copy(hash[:], hashBytes)
+
+	balanceID := xdr.ClaimableBalanceId{
+		Type: xdr.ClaimableBalanceIdTypeClaimableBalanceIdTypeV0,
+		V0:   &hash,
+	}
+
+	claimOp := xdr.ClaimClaimableBalanceOp{
+		BalanceId: balanceID,
+	}
+
+	operation := xdr.Operation{
+		SourceAccount: nil,
+		Body: xdr.OperationBody{
+			Type:                     xdr.OperationTypeClaimClaimableBalance,
+			ClaimClaimableBalanceOp: &claimOp,
+		},
+	}
+
+	tx := xdr.Transaction{
+		SourceAccount: sourceAccount.ToMuxedAccount(),
+		Fee:           100,
+		SeqNum:        123456,
+		Operations:    []xdr.Operation{operation},
+	}
+
+	envelope := xdr.TransactionEnvelope{
+		Type: xdr.EnvelopeTypeEnvelopeTypeTx,
+		V1: &xdr.TransactionV1Envelope{
+			Tx: tx,
+		},
+	}
+
+	// Marshal to XDR
+	xdrBytes, err := envelope.MarshalBinary()
+	if err != nil {
+		t.Fatalf("Failed to marshal envelope: %v", err)
+	}
+
+	xdrString := base64.StdEncoding.EncodeToString(xdrBytes)
+
+	// Extract balance IDs
+	balanceIDs, err := ExtractClaimableBalanceIDs(xdrString)
+	if err != nil {
+		t.Fatalf("ExtractClaimableBalanceIDs() error = %v", err)
+	}
+
+	if len(balanceIDs) != 1 {
+		t.Fatalf("ExtractClaimableBalanceIDs() returned %d IDs, want 1", len(balanceIDs))
+	}
+
+	expectedID := "000000000000000000000000000000000000000000000000000000000000dead"
+	if balanceIDs[0] != expectedID {
+		t.Errorf("ExtractClaimableBalanceIDs() returned %v, want %v", balanceIDs[0], expectedID)
+	}
+}
+
+func TestExtractClaimableBalanceIDs_NoOperations(t *testing.T) {
+	// Create a transaction with no operations
+	sourceAccount := xdr.MustAddress("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")
+
+	tx := xdr.Transaction{
+		SourceAccount: sourceAccount.ToMuxedAccount(),
+		Fee:           100,
+		SeqNum:        123456,
+		Operations:    []xdr.Operation{},
+	}
+
+	envelope := xdr.TransactionEnvelope{
+		Type: xdr.EnvelopeTypeEnvelopeTypeTx,
+		V1: &xdr.TransactionV1Envelope{
+			Tx: tx,
+		},
+	}
+
+	xdrBytes, err := envelope.MarshalBinary()
+	if err != nil {
+		t.Fatalf("Failed to marshal envelope: %v", err)
+	}
+
+	xdrString := base64.StdEncoding.EncodeToString(xdrBytes)
+
+	balanceIDs, err := ExtractClaimableBalanceIDs(xdrString)
+	if err != nil {
+		t.Fatalf("ExtractClaimableBalanceIDs() error = %v", err)
+	}
+
+	if len(balanceIDs) != 0 {
+		t.Errorf("ExtractClaimableBalanceIDs() returned %d IDs, want 0", len(balanceIDs))
+	}
+}

@@ -366,3 +366,91 @@ func BuildAccountLedgerKey(accountAddress string) (string, error) {
 
 	return base64.StdEncoding.EncodeToString(xdrBytes), nil
 }
+
+// BuildClaimableBalanceLedgerKey builds a base64-encoded ledger key for a claimable balance ID
+func BuildClaimableBalanceLedgerKey(balanceIDHex string) (string, error) {
+	// Decode hex string to bytes
+	balanceIDBytes, err := hex.DecodeString(balanceIDHex)
+	if err != nil {
+		return "", fmt.Errorf("decode balance ID hex: %w", err)
+	}
+
+	// Create ClaimableBalanceID from bytes
+	var hash xdr.Hash
+	if len(balanceIDBytes) != 32 {
+		return "", fmt.Errorf("invalid balance ID length: expected 32 bytes, got %d", len(balanceIDBytes))
+	}
+	copy(hash[:], balanceIDBytes)
+
+	balanceID := xdr.ClaimableBalanceId{
+		Type: xdr.ClaimableBalanceIdTypeClaimableBalanceIdTypeV0,
+		V0:   &hash,
+	}
+
+	// Create ledger key for claimable balance
+	ledgerKey := xdr.LedgerKey{
+		Type: xdr.LedgerEntryTypeClaimableBalance,
+		ClaimableBalance: &xdr.LedgerKeyClaimableBalance{
+			BalanceId: balanceID,
+		},
+	}
+
+	// Marshal to base64
+	xdrBytes, err := ledgerKey.MarshalBinary()
+	if err != nil {
+		return "", fmt.Errorf("marshal ledger key: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(xdrBytes), nil
+}
+
+// ExtractClaimableBalanceIDs extracts claimable balance IDs from a transaction envelope XDR
+func ExtractClaimableBalanceIDs(envelopeXdr string) ([]string, error) {
+	data, err := base64.StdEncoding.DecodeString(envelopeXdr)
+	if err != nil {
+		return nil, fmt.Errorf("decode envelope xdr: %w", err)
+	}
+
+	var envelope xdr.TransactionEnvelope
+	if err := xdr.SafeUnmarshal(data, &envelope); err != nil {
+		return nil, fmt.Errorf("unmarshal envelope: %w", err)
+	}
+
+	var balanceIDs []string
+	var operations []xdr.Operation
+
+	// Extract operations based on envelope type
+	switch envelope.Type {
+	case xdr.EnvelopeTypeEnvelopeTypeTxV0:
+		if v0, ok := envelope.GetV0(); ok {
+			operations = v0.Tx.Operations
+		}
+	case xdr.EnvelopeTypeEnvelopeTypeTx:
+		if v1, ok := envelope.GetV1(); ok {
+			operations = v1.Tx.Operations
+		}
+	case xdr.EnvelopeTypeEnvelopeTypeTxFeeBump:
+		if fb, ok := envelope.GetFeeBump(); ok {
+			if innerV1, ok := fb.Tx.InnerTx.GetV1(); ok {
+				operations = innerV1.Tx.Operations
+			}
+		}
+	}
+
+	// Look for claimable balance operations
+	for _, op := range operations {
+		switch op.Body.Type {
+		case xdr.OperationTypeCreateClaimableBalance:
+			// For CreateClaimableBalance, we need to compute the balance ID
+			// The balance ID is derived from the operation source and sequence number
+			// This is complex, so we'll skip it for now and rely on claim operations
+			continue
+		case xdr.OperationTypeClaimClaimableBalance:
+			if claimOp, ok := op.Body.GetClaimClaimableBalanceOp(); ok {
+				balanceIDs = append(balanceIDs, claimOp.BalanceId.V0.HexString())
+			}
+		}
+	}
+
+	return balanceIDs, nil
+}

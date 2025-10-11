@@ -1,0 +1,38 @@
+# Environment files
+.env
+.env.local
+
+# Data directories (keep structure with .gitkeep files only)
+# Ignore all files in data directories but preserve .gitkeep files
+data/*/
+data/**/*
+!data/.gitkeep
+!data/*/.gitkeep
+!data/README.md
+
+# Specific data directory patterns
+data/fullnode/*
+!data/fullnode/.gitkeep
+data/postgres/*
+!data/postgres/.gitkeep
+
+# Config files with secrets
+config/genesis.blob
+config/waypoint.txt
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*~

@@ -1,0 +1,15 @@
+# Aptos Indexer Processor Configuration
+
+server_config:
+  processor_config:
+    type: parquet_transaction_metadata_processor
+    starting_version: 0
+    
+  transaction_stream_config:
+    indexer_grpc_data_service_address: http://fullnode:50051
+    auth_token: ""
+    starting_version: 0
+    request_ending_version: null
+    
+  db_config:
+    postgres_connection_string: postgresql://postgres:indexer_password@postgres:5432/aptos_indexer

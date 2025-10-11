@@ -1,0 +1,318 @@
+# Docker Compose configuration for running ALL Aptos indexer processors
+# This configuration runs multiple processor containers, each handling different data types
+#
+# Usage:
+# Run: docker compose -f docker-compose.all-processors.yml up -d
+
+version: '3.8'
+
+services:
+  # Aptos Full Node with indexer grpc enabled
+  fullnode:
+    image: "${VALIDATOR_IMAGE_REPO:-aptoslabs/validator}:${IMAGE_TAG:-mainnet}"
+    container_name: aptos-fullnode
+    volumes:
+      - type: bind
+        source: ./data/fullnode
+        target: /opt/aptos/data
+      - type: bind
+        source: ./config/fullnode.yaml
+        target: /opt/aptos/etc/fullnode.yaml
+      - type: bind
+        source: ./config/genesis.blob
+        target: /opt/aptos/etc/genesis.blob
+      - type: bind
+        source: ./config/waypoint.txt
+        target: /opt/aptos/etc/waypoint.txt
+    command: ["/usr/local/bin/aptos-node", "-f", "/opt/aptos/etc/fullnode.yaml"]
+    restart: unless-stopped
+    ports:
+      - "6181:6181"
+      - "${FULLNODE_METRICS_PORT:-6182}:6182"  # Metrics port
+      - "${FULLNODE_API_PORT:-8082}:8080"  # REST API
+      - "${FULLNODE_INSPECTION_PORT:-9101}:9101"  # Inspection service
+      - "${FULLNODE_GRPC_PORT:-50051}:50051" # Indexer gRPC
+    networks:
+      - aptos-indexer-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+#
+#  postgres:
+#    image: postgres:15-alpine
+#    container_name: aptos-indexer-db
+#    environment:
+#      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-indexer_password}
+#      POSTGRES_DB: ${POSTGRES_DB:-aptos_indexer}
+#    ports:
+#      - "${POSTGRES_PORT:-5432}:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U postgres"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      - aptos-indexer-network
+#
+#  # Account Transactions Processor
+#  account-transactions-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-account-transactions-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/account-transactions-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: account_transactions_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # ANS (Aptos Name Service) Processor
+#  ans-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-ans-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/ans-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: ans_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Coin Processor (included in original, handles coin activities and balances)
+#  coin-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-coin-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/coin-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: coin_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Default Processor (core blockchain data)
+#  default-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-default-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/default-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: default_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Events Processor
+#  events-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-events-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/events-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: events_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Fungible Asset Processor
+#  fungible-asset-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-fungible-asset-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/fungible-asset-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: fungible_asset_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # NFT Metadata Processor
+#  nft-metadata-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-nft-metadata-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/nft-metadata-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: nft_metadata_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Objects Processor
+#  objects-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-objects-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/objects-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: objects_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Stake Processor
+#  stake-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-stake-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/stake-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: stake_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Token V2 Processor
+#  token-v2-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-token-v2-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/token-v2-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: token_v2_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Transaction Metadata Processor
+#  transaction-metadata-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-transaction-metadata-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/transaction-metadata-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: transaction_metadata_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # User Transaction Processor
+#  user-transaction-processor:
+#    image: aptoslabs/indexer-processor-rust:latest
+#    container_name: aptos-user-transaction-processor
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    volumes:
+#      - ./config/processors/user-transaction-processor.yaml:/config.yaml:ro
+#    command: ["-c", "/config.yaml"]
+#    environment:
+#      RUST_LOG: info
+#      PROCESSOR_NAME: user_transaction_processor
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#  # Hasura GraphQL Engine
+#  hasura:
+#    image: hasura/graphql-engine:v2.36.0
+#    container_name: aptos-indexer-hasura
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      fullnode:
+#        condition: service_healthy
+#    ports:
+#      - "${HASURA_PORT:-8090}:8080"
+#    environment:
+#      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-indexer_password}@postgres:5432/${POSTGRES_DB:-aptos_indexer}
+#      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+#      HASURA_GRAPHQL_DEV_MODE: "true"
+#      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+#      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:-hasura_admin_secret}
+#      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+#    networks:
+#      - aptos-indexer-network
+#    restart: unless-stopped
+#
+#volumes:
+#  postgres_data:
+
+networks:
+  aptos-indexer-network:
+    driver: bridge

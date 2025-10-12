@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/blockroma/soroban-indexer/pkg/worker"
 )
 
 type Client struct {
-	endpoint   string
-	httpClient *http.Client
+	endpoint       string
+	httpClient     *http.Client
+	circuitBreaker *worker.CircuitBreaker
 }
 
 func NewClient(endpoint string) *Client {
@@ -20,6 +23,8 @@ func NewClient(endpoint string) *Client {
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		// Circuit breaker: open after 5 consecutive failures, reset after 10s, 30s request timeout
+		circuitBreaker: worker.NewCircuitBreaker(5, 10*time.Second, 30*time.Second),
 	}
 }
 
@@ -47,52 +52,54 @@ func (e *rpcError) Error() string {
 	return fmt.Sprintf("rpc error %d: %s", e.Code, e.Message)
 }
 
-// call performs a JSON-RPC call
+// call performs a JSON-RPC call with circuit breaker protection
 func (c *Client) call(ctx context.Context, method string, params interface{}, result interface{}) error {
-	req := jsonRPCRequest{
-		JSONRPC: "2.0",
-		ID:      1,
-		Method:  method,
-		Params:  params,
-	}
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return fmt.Errorf("marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.endpoint, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("create request: %w", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("http request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("http status: %d", resp.StatusCode)
-	}
-
-	var rpcResp jsonRPCResponse
-	if err := json.NewDecoder(resp.Body).Decode(&rpcResp); err != nil {
-		return fmt.Errorf("decode response: %w", err)
-	}
-
-	if rpcResp.Error != nil {
-		return rpcResp.Error
-	}
-
-	if result != nil {
-		if err := json.Unmarshal(rpcResp.Result, result); err != nil {
-			return fmt.Errorf("unmarshal result: %w", err)
+	return c.circuitBreaker.Call(ctx, func(ctx context.Context) error {
+		req := jsonRPCRequest{
+			JSONRPC: "2.0",
+			ID:      1,
+			Method:  method,
+			Params:  params,
 		}
-	}
 
-	return nil
+		body, err := json.Marshal(req)
+		if err != nil {
+			return fmt.Errorf("marshal request: %w", err)
+		}
+
+		httpReq, err := http.NewRequestWithContext(ctx, "POST", c.endpoint, bytes.NewReader(body))
+		if err != nil {
+			return fmt.Errorf("create request: %w", err)
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+
+		resp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			return fmt.Errorf("http request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("http status: %d", resp.StatusCode)
+		}
+
+		var rpcResp jsonRPCResponse
+		if err := json.NewDecoder(resp.Body).Decode(&rpcResp); err != nil {
+			return fmt.Errorf("decode response: %w", err)
+		}
+
+		if rpcResp.Error != nil {
+			return rpcResp.Error
+		}
+
+		if result != nil {
+			if err := json.Unmarshal(rpcResp.Result, result); err != nil {
+				return fmt.Errorf("unmarshal result: %w", err)
+			}
+		}
+
+		return nil
+	})
 }
 
 // GetLatestLedger gets the latest ledger number

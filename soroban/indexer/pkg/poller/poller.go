@@ -19,18 +19,40 @@ import (
 )
 
 type Poller struct {
-	rpcClient *client.Client
-	db        *gorm.DB
-	logger    *logrus.Logger
-	batchSize uint
+	rpcClient      *client.Client
+	db             *gorm.DB
+	logger         *logrus.Logger
+	batchSize      uint
+	maxConcurrency int // Maximum number of concurrent RPC requests
+}
+
+// PollerConfig defines configuration for the poller
+type PollerConfig struct {
+	BatchSize      uint // Events per request (default: 1000)
+	MaxConcurrency int  // Max concurrent RPC requests (default: 10)
 }
 
 func New(rpcClient *client.Client, db *gorm.DB, logger *logrus.Logger) *Poller {
+	return NewWithConfig(rpcClient, db, logger, PollerConfig{
+		BatchSize:      1000,
+		MaxConcurrency: 10,
+	})
+}
+
+func NewWithConfig(rpcClient *client.Client, db *gorm.DB, logger *logrus.Logger, config PollerConfig) *Poller {
+	if config.BatchSize == 0 {
+		config.BatchSize = 1000
+	}
+	if config.MaxConcurrency == 0 {
+		config.MaxConcurrency = 10
+	}
+
 	return &Poller{
-		rpcClient: rpcClient,
-		db:        db,
-		logger:    logger,
-		batchSize: 1000, // events per request
+		rpcClient:      rpcClient,
+		db:             db,
+		logger:         logger,
+		batchSize:      config.BatchSize,
+		maxConcurrency: config.MaxConcurrency,
 	}
 }
 

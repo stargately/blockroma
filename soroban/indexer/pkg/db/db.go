@@ -16,10 +16,37 @@ type DB struct {
 	*gorm.DB
 }
 
-// Connect establishes connection to PostgreSQL
+// ConnectionPoolConfig defines database connection pool configuration
+type ConnectionPoolConfig struct {
+	MaxIdleConns    int           // Maximum idle connections (default: 10)
+	MaxOpenConns    int           // Maximum open connections (default: 100)
+	ConnMaxLifetime time.Duration // Connection max lifetime (default: 1 hour)
+	ConnMaxIdleTime time.Duration // Connection max idle time (default: 10 minutes)
+}
+
+// DefaultPoolConfig returns the default connection pool configuration
+func DefaultPoolConfig() ConnectionPoolConfig {
+	return ConnectionPoolConfig{
+		MaxIdleConns:    10,
+		MaxOpenConns:    100,
+		ConnMaxLifetime: time.Hour,
+		ConnMaxIdleTime: 10 * time.Minute,
+	}
+}
+
+// Connect establishes connection to PostgreSQL with default pool configuration
 func Connect(dsn string) (*DB, error) {
+	return ConnectWithConfig(dsn, DefaultPoolConfig())
+}
+
+// ConnectWithConfig establishes connection to PostgreSQL with custom pool configuration
+func ConnectWithConfig(dsn string, poolConfig ConnectionPoolConfig) (*DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
+		// Prepare statements for better performance
+		PrepareStmt: true,
+		// Skip default transaction for better performance (we handle transactions manually)
+		SkipDefaultTransaction: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("connect to database: %w", err)
@@ -31,9 +58,18 @@ func Connect(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	// Apply pool configuration
+	sqlDB.SetMaxIdleConns(poolConfig.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(poolConfig.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(poolConfig.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(poolConfig.ConnMaxIdleTime)
+
+	logrus.WithFields(logrus.Fields{
+		"maxIdleConns":    poolConfig.MaxIdleConns,
+		"maxOpenConns":    poolConfig.MaxOpenConns,
+		"connMaxLifetime": poolConfig.ConnMaxLifetime,
+		"connMaxIdleTime": poolConfig.ConnMaxIdleTime,
+	}).Info("Database connection pool configured")
 
 	// Run custom migrations before auto-migrate
 	if err := runCustomMigrations(db); err != nil {
@@ -92,6 +128,28 @@ func (db *DB) Close() error {
 // WithTransaction runs function within a transaction
 func (db *DB) WithTransaction(fn func(*gorm.DB) error) error {
 	return db.Transaction(fn)
+}
+
+// PoolStats returns connection pool statistics
+func (db *DB) PoolStats() (map[string]interface{}, error) {
+	sqlDB, err := db.DB.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := sqlDB.Stats()
+
+	return map[string]interface{}{
+		"maxOpenConnections":  stats.MaxOpenConnections,
+		"openConnections":     stats.OpenConnections,
+		"inUse":               stats.InUse,
+		"idle":                stats.Idle,
+		"waitCount":           stats.WaitCount,
+		"waitDuration":        stats.WaitDuration,
+		"maxIdleClosed":       stats.MaxIdleClosed,
+		"maxIdleTimeClosed":   stats.MaxIdleTimeClosed,
+		"maxLifetimeClosed":   stats.MaxLifetimeClosed,
+	}, nil
 }
 
 // runCustomMigrations handles custom database migrations that AutoMigrate can't handle

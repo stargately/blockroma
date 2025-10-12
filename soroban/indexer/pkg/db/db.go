@@ -44,11 +44,13 @@ func Connect(dsn string) (*DB, error) {
 	if err := db.AutoMigrate(
 		&models.Event{},
 		&models.Transaction{},
+		&models.Operation{},
 		&models.Cursor{},
 		&models.TokenMetadata{},
 		&models.TokenOperation{},
 		&models.TokenBalance{},
 		&models.ContractDataEntry{},
+		&models.ContractCode{},
 		&models.AccountEntry{},
 		&models.TrustLineEntry{},
 		&models.OfferEntry{},
@@ -57,6 +59,11 @@ func Connect(dsn string) (*DB, error) {
 		&models.DataEntry{},
 	); err != nil {
 		return nil, fmt.Errorf("auto migrate: %w", err)
+	}
+
+	// Create indexes for better query performance
+	if err := createIndexes(db); err != nil {
+		return nil, fmt.Errorf("create indexes: %w", err)
 	}
 
 	logrus.Info("Database connected and migrated")
@@ -166,4 +173,76 @@ func setColumnNotNull(db *gorm.DB, tableName, columnName string) error {
 		sql := fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s SET NOT NULL", tableName, columnName)
 		return db.Exec(sql).Error
 	}
+}
+
+// createIndexes creates database indexes for optimal query performance
+func createIndexes(db *gorm.DB) error {
+	dialector := db.Dialector.Name()
+
+	// Only create specialized indexes for PostgreSQL
+	if dialector != "postgres" {
+		logrus.Debug("Skipping index creation for non-PostgreSQL database")
+		return nil
+	}
+
+	indexes := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "idx_events_topic_gin",
+			query: "CREATE INDEX IF NOT EXISTS idx_events_topic_gin ON events USING gin (topic)",
+		},
+		{
+			name:  "idx_events_value_gin",
+			query: "CREATE INDEX IF NOT EXISTS idx_events_value_gin ON events USING gin (value)",
+		},
+		{
+			name:  "idx_events_contract_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_events_contract_id ON events (contract_id)",
+		},
+		{
+			name:  "idx_events_ledger",
+			query: "CREATE INDEX IF NOT EXISTS idx_events_ledger ON events (ledger)",
+		},
+		{
+			name:  "idx_events_type",
+			query: "CREATE INDEX IF NOT EXISTS idx_events_type ON events (type)",
+		},
+		{
+			name:  "idx_transactions_ledger",
+			query: "CREATE INDEX IF NOT EXISTS idx_transactions_ledger ON transactions (ledger)",
+		},
+		{
+			name:  "idx_operations_tx_hash",
+			query: "CREATE INDEX IF NOT EXISTS idx_operations_tx_hash ON operations (tx_hash)",
+		},
+		{
+			name:  "idx_operations_type",
+			query: "CREATE INDEX IF NOT EXISTS idx_operations_type ON operations (operation_type)",
+		},
+		{
+			name:  "idx_token_operations_contract_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_contract_id ON token_operations (contract_id)",
+		},
+		{
+			name:  "idx_token_operations_from_address",
+			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_from_address ON token_operations (from_address)",
+		},
+		{
+			name:  "idx_token_operations_to_address",
+			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_to_address ON token_operations (to_address)",
+		},
+	}
+
+	for _, idx := range indexes {
+		logrus.WithField("index", idx.name).Debug("Creating index")
+		if err := db.Exec(idx.query).Error; err != nil {
+			logrus.WithError(err).WithField("index", idx.name).Warn("Failed to create index (may already exist)")
+			// Continue with other indexes even if one fails
+		}
+	}
+
+	logrus.Info("Database indexes created/verified")
+	return nil
 }

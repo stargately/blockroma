@@ -2,11 +2,15 @@ package poller
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stellar/go/xdr"
 	"gorm.io/gorm"
 
 	"github.com/blockroma/soroban-indexer/pkg/client"
@@ -168,6 +172,8 @@ func (p *Poller) poll(ctx context.Context) error {
 
 		// Fetch and process transactions
 		txCount := 0
+		operationCount := 0
+		contractCodeCount := 0
 		claimableBalanceIDs := make(map[string]bool)
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
@@ -199,6 +205,34 @@ func (p *Poller) poll(ctx context.Context) error {
 			}
 
 			txCount++
+
+			// Parse and store all operations from this transaction
+			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse operations")
+			} else {
+				for _, op := range operations {
+					if err := models.UpsertOperation(tx, op); err != nil {
+						p.logger.WithError(err).WithField("opID", op.ID).Warn("Failed to upsert operation")
+					} else {
+						operationCount++
+					}
+				}
+			}
+
+			// Extract and store contract code (WASM) from UploadContractWasm operations
+			contractCodes, err := parser.ExtractContractCodeFromEnvelope(txHash, rpcTx.Ledger, rpcTx.LedgerCloseTime, rpcTx.EnvelopeXdr)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Debug("Failed to extract contract code")
+			} else {
+				for _, code := range contractCodes {
+					if err := models.UpsertContractCode(tx, code); err != nil {
+						p.logger.WithError(err).WithField("hash", code.Hash).Warn("Failed to upsert contract code")
+					} else {
+						contractCodeCount++
+					}
+				}
+			}
 
 			// Extract claimable balance IDs from transaction operations
 			if balanceIDs, err := parser.ExtractClaimableBalanceIDs(rpcTx.EnvelopeXdr); err == nil {
@@ -258,6 +292,8 @@ func (p *Poller) poll(ctx context.Context) error {
 		p.logger.WithFields(logrus.Fields{
 			"events":        eventCount,
 			"transactions":  txCount,
+			"operations":    operationCount,
+			"contractCode":  contractCodeCount,
 			"tokenOps":      tokenOpCount,
 			"contracts":     len(contractIDs),
 			"ledger":        latestLedger,
@@ -268,7 +304,7 @@ func (p *Poller) poll(ctx context.Context) error {
 	})
 }
 
-// processContractData processes contract data entries to extract token metadata and balances
+// processContractData proactively fetches contract storage data for metadata and balances
 // This is called after processing events to update contract state
 func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractIDs map[string]bool) error {
 	if len(contractIDs) == 0 {
@@ -277,10 +313,18 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 
 	metadataCount := 0
 	balanceCount := 0
+	contractDataCount := 0
 
-	// For each contract, process its stored data
+	// For each contract, proactively fetch its metadata and balance data
 	for contractID := range contractIDs {
-		// Query contract data entries for this contract
+		// Step 1: Fetch contract metadata (token name, symbol, decimals)
+		if err := p.fetchContractMetadata(ctx, tx, contractID); err != nil {
+			p.logger.WithError(err).WithField("contractID", contractID).Debug("Failed to fetch contract metadata")
+		} else {
+			metadataCount++
+		}
+
+		// Step 2: Query existing contract data entries for this contract (passive indexing)
 		var entries []models.ContractDataEntry
 		if err := p.db.Where("contract_id = ?", contractID).Find(&entries).Error; err != nil {
 			p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to fetch contract data")
@@ -288,7 +332,9 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 		}
 
 		for _, entry := range entries {
-			// Try to parse token metadata
+			contractDataCount++
+
+			// Try to parse token metadata from existing data
 			if metadata := parser.ParseTokenMetadata(contractID, entry.Key, entry.Val); metadata != nil {
 				if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
 					p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to upsert token metadata")
@@ -297,7 +343,7 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 				}
 			}
 
-			// Try to parse token balance
+			// Try to parse token balance from existing data
 			if balance := parser.ParseTokenBalance(contractID, entry.Key, entry.Val); balance != nil {
 				if err := models.UpsertTokenBalance(tx, balance); err != nil {
 					p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to upsert token balance")
@@ -308,11 +354,89 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 		}
 	}
 
-	if metadataCount > 0 || balanceCount > 0 {
+	if metadataCount > 0 || balanceCount > 0 || contractDataCount > 0 {
 		p.logger.WithFields(logrus.Fields{
-			"metadata": metadataCount,
-			"balances": balanceCount,
+			"metadata":     metadataCount,
+			"balances":     balanceCount,
+			"contractData": contractDataCount,
 		}).Debug("Processed contract data")
+	}
+
+	return nil
+}
+
+// fetchContractMetadata proactively fetches metadata for a contract using getContractData RPC
+func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contractID string) error {
+	// Build metadata key (ScvLedgerKeyContractInstance)
+	metadataKey := parser.BuildMetadataKey()
+
+	// Encode the key to base64 XDR for RPC call
+	keyBytes, err := metadataKey.MarshalBinary()
+	if err != nil {
+		return fmt.Errorf("marshal metadata key: %w", err)
+	}
+	keyBase64 := base64.StdEncoding.EncodeToString(keyBytes)
+
+	// Fetch contract data from RPC (persistent storage)
+	resp, err := p.rpcClient.GetContractData(ctx, contractID, keyBase64, "persistent")
+	if err != nil {
+		return fmt.Errorf("get contract data: %w", err)
+	}
+
+	// Parse the XDR response
+	data, err := base64.StdEncoding.DecodeString(resp.XDR)
+	if err != nil {
+		return fmt.Errorf("decode xdr: %w", err)
+	}
+
+	var ledgerEntry xdr.LedgerEntry
+	if err := xdr.SafeUnmarshal(data, &ledgerEntry); err != nil {
+		return fmt.Errorf("unmarshal ledger entry: %w", err)
+	}
+
+	// Parse and store contract data entry
+	if ledgerEntry.Data.Type == xdr.LedgerEntryTypeContractData {
+		contractData := ledgerEntry.Data.ContractData
+
+		// Convert key and value to JSON using parser function
+		keyJSON := parser.ScValToInterface(contractData.Key)
+		valJSON := parser.ScValToInterface(contractData.Val)
+
+		// Create ledger key hash
+		key, _ := ledgerEntry.LedgerKey()
+		bin, _ := key.MarshalBinary()
+		keyHash := sha256.Sum256(bin)
+		hexKey := hex.EncodeToString(keyHash[:])
+
+		keyXDR, _ := xdr.MarshalBase64(contractData.Key)
+		valXDR, _ := xdr.MarshalBase64(contractData.Val)
+
+		durability := "persistent"
+		if contractData.Durability == xdr.ContractDataDurabilityTemporary {
+			durability = "temporary"
+		}
+
+		// Store contract data entry
+		contractDataEntry := &models.ContractDataEntry{
+			KeyHash:    hexKey,
+			ContractID: contractID,
+			Key:        keyJSON,
+			KeyXdr:     keyXDR,
+			Val:        valJSON,
+			ValXdr:     valXDR,
+			Durability: durability,
+		}
+
+		if err := models.UpsertContractDataEntry(tx, contractDataEntry); err != nil {
+			return fmt.Errorf("upsert contract data entry: %w", err)
+		}
+
+		// Try to parse token metadata
+		if metadata := parser.ParseTokenMetadata(contractID, keyJSON, valJSON); metadata != nil {
+			if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
+				return fmt.Errorf("upsert token metadata: %w", err)
+			}
+		}
 	}
 
 	return nil
@@ -511,4 +635,364 @@ func (p *Poller) GetStats() (map[string]interface{}, error) {
 		"totalTokenOps":      tokenOpCount,
 		"totalContractData":  contractDataCount,
 	}, nil
+}
+
+// BackfillConfig defines configuration for backfill mode
+type BackfillConfig struct {
+	StartLedger uint32 // First ledger to process
+	EndLedger   uint32 // Last ledger to process (0 = current ledger)
+	BatchSize   uint32 // Number of ledgers to process per batch
+	RateLimit   uint32 // Max requests per second
+}
+
+// Backfill processes historical ledgers sequentially
+func (p *Poller) Backfill(ctx context.Context, config BackfillConfig) error {
+	start := time.Now()
+
+	// Validate configuration
+	if config.StartLedger == 0 {
+		return fmt.Errorf("start ledger must be > 0")
+	}
+	if config.BatchSize == 0 {
+		config.BatchSize = 100 // Default batch size
+	}
+	if config.RateLimit == 0 {
+		config.RateLimit = 10 // Default 10 requests/sec
+	}
+
+	// Get current ledger if end ledger not specified
+	if config.EndLedger == 0 {
+		latestLedger, err := p.rpcClient.GetLatestLedger(ctx)
+		if err != nil {
+			return fmt.Errorf("get latest ledger: %w", err)
+		}
+		config.EndLedger = latestLedger
+	}
+
+	// Validate range
+	if config.StartLedger > config.EndLedger {
+		return fmt.Errorf("start ledger (%d) must be <= end ledger (%d)", config.StartLedger, config.EndLedger)
+	}
+
+	totalLedgers := config.EndLedger - config.StartLedger + 1
+	p.logger.WithFields(logrus.Fields{
+		"startLedger":  config.StartLedger,
+		"endLedger":    config.EndLedger,
+		"totalLedgers": totalLedgers,
+		"batchSize":    config.BatchSize,
+		"rateLimit":    config.RateLimit,
+	}).Info("Starting backfill")
+
+	// Rate limiter: requests per second
+	rateLimiter := time.NewTicker(time.Second / time.Duration(config.RateLimit))
+	defer rateLimiter.Stop()
+
+	// Progress tracking
+	processedLedgers := uint32(0)
+	totalEvents := 0
+	totalTransactions := 0
+	totalOperations := 0
+	lastProgressLog := time.Now()
+
+	// Process ledgers in sequential order
+	currentLedger := config.StartLedger
+
+	for currentLedger <= config.EndLedger {
+		select {
+		case <-ctx.Done():
+			p.logger.WithFields(logrus.Fields{
+				"processedLedgers": processedLedgers,
+				"currentLedger":    currentLedger,
+				"duration":         time.Since(start),
+			}).Info("Backfill cancelled")
+			return ctx.Err()
+		case <-rateLimiter.C:
+			// Rate limit: process one batch per tick
+		}
+
+		// Determine batch range
+		endBatchLedger := currentLedger
+		if currentLedger+config.BatchSize-1 < config.EndLedger {
+			endBatchLedger = currentLedger + config.BatchSize - 1
+		} else {
+			endBatchLedger = config.EndLedger
+		}
+
+		// Process this batch of ledgers
+		batchStart := time.Now()
+		batchEvents, batchTxs, batchOps, err := p.processLedgerBatch(ctx, currentLedger, endBatchLedger)
+		if err != nil {
+			p.logger.WithError(err).WithFields(logrus.Fields{
+				"startLedger": currentLedger,
+				"endLedger":   endBatchLedger,
+			}).Error("Failed to process ledger batch")
+
+			// Try to resume from the failed ledger
+			// For now, we skip and continue (can be made configurable)
+			p.logger.Warn("Continuing to next batch after error")
+		}
+
+		processedLedgers += (endBatchLedger - currentLedger + 1)
+		totalEvents += batchEvents
+		totalTransactions += batchTxs
+		totalOperations += batchOps
+
+		// Log progress every 10 seconds
+		if time.Since(lastProgressLog) >= 10*time.Second {
+			progress := float64(processedLedgers) / float64(totalLedgers) * 100
+			estimated := time.Duration(float64(time.Since(start)) / float64(processedLedgers) * float64(totalLedgers-processedLedgers))
+
+			p.logger.WithFields(logrus.Fields{
+				"progress":          fmt.Sprintf("%.2f%%", progress),
+				"processedLedgers":  processedLedgers,
+				"totalLedgers":      totalLedgers,
+				"currentLedger":     endBatchLedger,
+				"events":            totalEvents,
+				"transactions":      totalTransactions,
+				"operations":        totalOperations,
+				"duration":          time.Since(start).Round(time.Second),
+				"estimatedRemaining": estimated.Round(time.Second),
+				"batchDuration":     batchStart.Sub(lastProgressLog).Round(time.Millisecond),
+			}).Info("Backfill progress")
+			lastProgressLog = time.Now()
+		}
+
+		// Move to next batch
+		currentLedger = endBatchLedger + 1
+	}
+
+	// Final summary
+	duration := time.Since(start)
+	rate := float64(processedLedgers) / duration.Seconds()
+
+	p.logger.WithFields(logrus.Fields{
+		"totalLedgers":     processedLedgers,
+		"events":           totalEvents,
+		"transactions":     totalTransactions,
+		"operations":       totalOperations,
+		"duration":         duration.Round(time.Second),
+		"ledgersPerSecond": fmt.Sprintf("%.2f", rate),
+	}).Info("Backfill completed successfully")
+
+	return nil
+}
+
+// processLedgerBatch processes a range of ledgers and returns counts
+func (p *Poller) processLedgerBatch(ctx context.Context, startLedger, endLedger uint32) (events, txs, ops int, err error) {
+	// Fetch events for this ledger range
+	req := client.GetEventsRequest{
+		StartLedger: startLedger,
+		Pagination: &client.EventPaginationParams{
+			Limit: p.batchSize,
+		},
+	}
+
+	// Keep fetching until we've processed all events in this range
+	for {
+		resp, err := p.rpcClient.GetEvents(ctx, req)
+		if err != nil {
+			return events, txs, ops, fmt.Errorf("get events: %w", err)
+		}
+
+		if len(resp.Events) == 0 {
+			break
+		}
+
+		// Process this page of events
+		pageEvents, pageTxs, pageOps, err := p.processEventBatch(ctx, resp.Events)
+		if err != nil {
+			return events, txs, ops, err
+		}
+
+		events += pageEvents
+		txs += pageTxs
+		ops += pageOps
+
+		// Check if we've gone past the end ledger
+		if len(resp.Events) > 0 && resp.Events[len(resp.Events)-1].Ledger > endLedger {
+			break
+		}
+
+		// If there's a cursor, use it for pagination
+		if resp.LatestLedger > 0 && resp.LatestLedger >= endLedger {
+			break
+		}
+
+		// No more pages
+		if len(resp.Events) < int(p.batchSize) {
+			break
+		}
+
+		// Update request to fetch next page (using last event's ledger)
+		if len(resp.Events) > 0 {
+			lastLedger := resp.Events[len(resp.Events)-1].Ledger
+			req.StartLedger = lastLedger
+		}
+	}
+
+	// Update cursor to end of this batch
+	if err := models.UpdateCursor(p.db, endLedger); err != nil {
+		return events, txs, ops, fmt.Errorf("update cursor: %w", err)
+	}
+
+	return events, txs, ops, nil
+}
+
+// processEventBatch processes a batch of events (similar to poll() but without cursor updates)
+func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event) (events, txs, ops int, err error) {
+	// Process events and transactions in a single transaction
+	err = p.db.Transaction(func(tx *gorm.DB) error {
+		eventCount := 0
+		txHashes := make(map[string]bool)
+		contractIDs := make(map[string]bool)
+
+		for _, event := range eventList {
+			dbEvent, err := parser.ParseEvent(event)
+			if err != nil {
+				p.logger.WithError(err).WithField("eventID", event.ID).Warn("Failed to parse event")
+				continue
+			}
+
+			if err := models.UpsertEvent(tx, dbEvent); err != nil {
+				return fmt.Errorf("upsert event: %w", err)
+			}
+
+			eventCount++
+
+			// Track contract IDs for later processing
+			if event.ContractID != "" {
+				contractIDs[event.ContractID] = true
+			}
+
+			// Try to parse token operation from this event
+			ledgerClosedAt, _ := time.Parse(time.RFC3339, dbEvent.LedgerClosedAt)
+			topics := []interface{}{}
+			json.Unmarshal([]byte(dbEvent.Topic.(string)), &topics)
+			var value interface{}
+			json.Unmarshal([]byte(dbEvent.Value.(string)), &value)
+
+			if tokenOp := parser.ParseTokenOperation(
+				event.ID,
+				event.ContractID,
+				event.Ledger,
+				ledgerClosedAt,
+				dbEvent.TxIndex,
+				topics,
+				value,
+			); tokenOp != nil {
+				if err := models.UpsertTokenOperation(tx, tokenOp); err != nil {
+					p.logger.WithError(err).WithField("eventID", event.ID).Warn("Failed to upsert token operation")
+				}
+			}
+
+			// Track unique tx hashes for transaction fetching
+			if event.TxHash != "" {
+				txHashes[event.TxHash] = true
+			}
+		}
+
+		// Fetch and process transactions
+		txCount := 0
+		operationCount := 0
+		contractCodeCount := 0
+		claimableBalanceIDs := make(map[string]bool)
+		for txHash := range txHashes {
+			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to fetch transaction")
+				continue
+			}
+
+			// Use the hash we requested (from the event) as the transaction ID
+			dbTx, err := parser.ParseTransactionWithHash(*rpcTx, txHash)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse transaction")
+				continue
+			}
+
+			if err := models.UpsertTransaction(tx, dbTx); err != nil {
+				return fmt.Errorf("upsert transaction: %w", err)
+			}
+
+			txCount++
+
+			// Parse and store all operations from this transaction
+			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse operations")
+			} else {
+				for _, op := range operations {
+					if err := models.UpsertOperation(tx, op); err != nil {
+						p.logger.WithError(err).WithField("opID", op.ID).Warn("Failed to upsert operation")
+					} else {
+						operationCount++
+					}
+				}
+			}
+
+			// Extract and store contract code (WASM) from UploadContractWasm operations
+			contractCodes, err := parser.ExtractContractCodeFromEnvelope(txHash, rpcTx.Ledger, rpcTx.LedgerCloseTime, rpcTx.EnvelopeXdr)
+			if err != nil {
+				p.logger.WithError(err).WithField("txHash", txHash).Debug("Failed to extract contract code")
+			} else {
+				for _, code := range contractCodes {
+					if err := models.UpsertContractCode(tx, code); err != nil {
+						p.logger.WithError(err).WithField("hash", code.Hash).Warn("Failed to upsert contract code")
+					} else {
+						contractCodeCount++
+					}
+				}
+			}
+
+			// Extract claimable balance IDs from transaction operations
+			if balanceIDs, err := parser.ExtractClaimableBalanceIDs(rpcTx.EnvelopeXdr); err == nil {
+				for _, balanceID := range balanceIDs {
+					claimableBalanceIDs[balanceID] = true
+				}
+			}
+		}
+
+		// Process contract data for discovered contracts
+		if err := p.processContractData(ctx, tx, contractIDs); err != nil {
+			p.logger.WithError(err).Warn("Failed to process contract data")
+		}
+
+		// Process ledger entries for discovered accounts
+		accountAddresses := make(map[string]bool)
+		var transactions []models.Transaction
+		if err := tx.Where("id IN ?", func() []string {
+			hashes := make([]string, 0, len(txHashes))
+			for hash := range txHashes {
+				hashes = append(hashes, hash)
+			}
+			return hashes
+		}()).Find(&transactions).Error; err == nil {
+			for _, txn := range transactions {
+				if txn.SourceAccount != nil && *txn.SourceAccount != "" {
+					accountAddresses[*txn.SourceAccount] = true
+				}
+			}
+		}
+
+		if len(accountAddresses) > 0 {
+			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
+				p.logger.WithError(err).Warn("Failed to process ledger entries")
+			}
+		}
+
+		// Process claimable balance ledger entries
+		if len(claimableBalanceIDs) > 0 {
+			if err := p.processClaimableBalances(ctx, tx, claimableBalanceIDs); err != nil {
+				p.logger.WithError(err).Warn("Failed to process claimable balances")
+			}
+		}
+
+		events = eventCount
+		txs = txCount
+		ops = operationCount
+
+		return nil
+	})
+
+	return events, txs, ops, err
 }

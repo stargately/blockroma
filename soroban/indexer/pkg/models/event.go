@@ -44,3 +44,61 @@ func NewEvent(data []byte) (*Event, error) {
 	err := json.Unmarshal(data, &event)
 	return &event, err
 }
+
+// QueryEventsByTopicContains queries events where topic JSONB contains the specified value
+// Uses PostgreSQL's @> (contains) operator with GIN index support
+// Example: QueryEventsByTopicContains(db, `["transfer"]`) finds events with "transfer" in topic array
+func QueryEventsByTopicContains(db *gorm.DB, topicJSON string) ([]Event, error) {
+	var events []Event
+	err := db.Where("topic @> ?", topicJSON).Find(&events).Error
+	return events, err
+}
+
+// QueryEventsByTopicElement queries events where a specific topic array element matches a value
+// Uses PostgreSQL's -> operator to extract array elements and ->> for text comparison
+// Example: QueryEventsByTopicElement(db, 0, "transfer") finds events where topic[0] = "transfer"
+func QueryEventsByTopicElement(db *gorm.DB, index int, value string) ([]Event, error) {
+	var events []Event
+	// Use ->> for text extraction and comparison
+	err := db.Where("topic ->> ? = ?", index, value).Find(&events).Error
+	return events, err
+}
+
+// QueryEventsByContractAndTopic queries events by contract ID and topic pattern
+// Combines regular index (contract_id) with JSONB GIN index (topic) for efficient filtering
+func QueryEventsByContractAndTopic(db *gorm.DB, contractID, topicJSON string) ([]Event, error) {
+	var events []Event
+	err := db.Where("contract_id = ? AND topic @> ?", contractID, topicJSON).Find(&events).Error
+	return events, err
+}
+
+// QueryEventsByValuePath queries events where a specific path in the value JSONB matches
+// Uses PostgreSQL's #> operator for path extraction and comparison
+// Example: QueryEventsByValuePath(db, "{amount}", `"1000"`) finds events where value.amount = 1000
+func QueryEventsByValuePath(db *gorm.DB, path string, value string) ([]Event, error) {
+	var events []Event
+	err := db.Where("value #> ? = ?", path, value).Find(&events).Error
+	return events, err
+}
+
+// QueryTokenTransferEvents queries transfer events for a specific token contract
+// This is a convenience function for the common pattern of finding token transfer events
+func QueryTokenTransferEvents(db *gorm.DB, contractID string, limit int, offset int) ([]Event, error) {
+	var events []Event
+	err := db.Where("contract_id = ? AND topic @> ?", contractID, `["transfer"]`).
+		Order("ledger DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&events).Error
+	return events, err
+}
+
+// QueryEventsByLedgerRange queries events within a ledger range
+// Uses regular B-tree index on ledger column for efficient range scans
+func QueryEventsByLedgerRange(db *gorm.DB, startLedger, endLedger int32) ([]Event, error) {
+	var events []Event
+	err := db.Where("ledger >= ? AND ledger <= ?", startLedger, endLedger).
+		Order("ledger ASC, tx_index ASC").
+		Find(&events).Error
+	return events, err
+}

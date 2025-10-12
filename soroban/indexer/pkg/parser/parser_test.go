@@ -87,9 +87,9 @@ func TestScValToInterface(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := scValToInterface(tt.scVal)
+			result := ScValToInterface(tt.scVal)
 			if !tt.checkFn(result) {
-				t.Errorf("scValToInterface() check failed for %v (%T)", result, result)
+				t.Errorf("ScValToInterface() check failed for %v (%T)", result, result)
 			}
 		})
 	}
@@ -142,3 +142,259 @@ func createAddressScVal() string {
 
 // Helper pointer functions
 func boolPtr(b bool) *bool { return &b }
+
+// TestParseMemo tests memo parsing from XDR
+func TestParseMemo(t *testing.T) {
+	tests := []struct {
+		name     string
+		memo     xdr.Memo
+		wantType string
+		wantNil  bool
+	}{
+		{
+			name:    "none memo",
+			memo:    xdr.Memo{Type: xdr.MemoTypeMemoNone},
+			wantNil: true,
+		},
+		{
+			name:     "text memo",
+			memo:     xdr.Memo{Type: xdr.MemoTypeMemoText, Text: strPtr("Hello World")},
+			wantType: "text",
+		},
+		{
+			name:     "id memo",
+			memo:     xdr.Memo{Type: xdr.MemoTypeMemoId, Id: uint64Ptr(12345)},
+			wantType: "id",
+		},
+		{
+			name:     "hash memo",
+			memo:     createHashMemo(),
+			wantType: "hash",
+		},
+		{
+			name:     "return memo",
+			memo:     createReturnMemo(),
+			wantType: "return",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseMemo(tt.memo)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parseMemo() = %v, want nil", result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("parseMemo() = nil, want non-nil")
+					return
+				}
+				if result.Type != tt.wantType {
+					t.Errorf("parseMemo() Type = %v, want %v", result.Type, tt.wantType)
+				}
+			}
+		})
+	}
+}
+
+// TestParsePreconditionsV1 tests precondition parsing for V1 transactions
+func TestParsePreconditionsV1(t *testing.T) {
+	tests := []struct {
+		name    string
+		cond    xdr.Preconditions
+		wantNil bool
+	}{
+		{
+			name:    "no preconditions",
+			cond:    xdr.Preconditions{Type: xdr.PreconditionTypePrecondNone},
+			wantNil: true,
+		},
+		{
+			name: "time bounds only",
+			cond: xdr.Preconditions{
+				Type: xdr.PreconditionTypePrecondTime,
+				TimeBounds: &xdr.TimeBounds{
+					MinTime: xdr.TimePoint(1000),
+					MaxTime: xdr.TimePoint(2000),
+				},
+			},
+			wantNil: false,
+		},
+		{
+			name:    "v2 preconditions",
+			cond:    createV2Preconditions(),
+			wantNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parsePreconditionsV1(tt.cond)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parsePreconditionsV1() = %v, want nil", result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("parsePreconditionsV1() = nil, want non-nil")
+				}
+			}
+		})
+	}
+}
+
+// TestParsePreconditionsV0 tests precondition parsing for V0 transactions
+func TestParsePreconditionsV0(t *testing.T) {
+	tests := []struct {
+		name    string
+		tb      *xdr.TimeBounds
+		wantNil bool
+	}{
+		{
+			name:    "nil time bounds",
+			tb:      nil,
+			wantNil: true,
+		},
+		{
+			name: "valid time bounds",
+			tb: &xdr.TimeBounds{
+				MinTime: xdr.TimePoint(1000),
+				MaxTime: xdr.TimePoint(2000),
+			},
+			wantNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parsePreconditionsV0(tt.tb)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parsePreconditionsV0() = %v, want nil", result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("parsePreconditionsV0() = nil, want non-nil")
+					return
+				}
+				if result.TimeBounds == nil {
+					t.Errorf("parsePreconditionsV0() TimeBounds = nil, want non-nil")
+					return
+				}
+				if result.TimeBounds.Min != int64(tt.tb.MinTime) {
+					t.Errorf("parsePreconditionsV0() Min = %v, want %v", result.TimeBounds.Min, tt.tb.MinTime)
+				}
+				if result.TimeBounds.Max != int64(tt.tb.MaxTime) {
+					t.Errorf("parsePreconditionsV0() Max = %v, want %v", result.TimeBounds.Max, tt.tb.MaxTime)
+				}
+			}
+		})
+	}
+}
+
+// TestParseSignatures tests signature parsing
+func TestParseSignatures(t *testing.T) {
+	tests := []struct {
+		name    string
+		sigs    []xdr.DecoratedSignature
+		wantNil bool
+		wantLen int
+	}{
+		{
+			name:    "empty signatures",
+			sigs:    []xdr.DecoratedSignature{},
+			wantNil: true,
+		},
+		{
+			name:    "single signature",
+			sigs:    []xdr.DecoratedSignature{createSignature()},
+			wantNil: false,
+			wantLen: 1,
+		},
+		{
+			name:    "multiple signatures",
+			sigs:    []xdr.DecoratedSignature{createSignature(), createSignature()},
+			wantNil: false,
+			wantLen: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseSignatures(tt.sigs)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parseSignatures() = %v, want nil", result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("parseSignatures() = nil, want non-nil")
+					return
+				}
+				if len(*result) != tt.wantLen {
+					t.Errorf("parseSignatures() length = %v, want %v", len(*result), tt.wantLen)
+				}
+			}
+		})
+	}
+}
+
+// Helper functions for creating test data
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func uint64Ptr(u uint64) *xdr.Uint64 {
+	v := xdr.Uint64(u)
+	return &v
+}
+
+func createHashMemo() xdr.Memo {
+	var hash xdr.Hash
+	copy(hash[:], []byte("0123456789abcdef0123456789abcdef"))
+	return xdr.Memo{Type: xdr.MemoTypeMemoHash, Hash: &hash}
+}
+
+func createReturnMemo() xdr.Memo {
+	var hash xdr.Hash
+	copy(hash[:], []byte("fedcba9876543210fedcba9876543210"))
+	return xdr.Memo{Type: xdr.MemoTypeMemoReturn, RetHash: &hash}
+}
+
+func createV2Preconditions() xdr.Preconditions {
+	minSeq := xdr.SequenceNumber(100)
+	return xdr.Preconditions{
+		Type: xdr.PreconditionTypePrecondV2,
+		V2: &xdr.PreconditionsV2{
+			TimeBounds: &xdr.TimeBounds{
+				MinTime: xdr.TimePoint(1000),
+				MaxTime: xdr.TimePoint(2000),
+			},
+			LedgerBounds: &xdr.LedgerBounds{
+				MinLedger: xdr.Uint32(100),
+				MaxLedger: xdr.Uint32(200),
+			},
+			MinSeqNum:       &minSeq,
+			MinSeqAge:       xdr.Duration(300),
+			MinSeqLedgerGap: xdr.Uint32(10),
+			ExtraSigners:    []xdr.SignerKey{},
+		},
+	}
+}
+
+func createSignature() xdr.DecoratedSignature {
+	var hint xdr.SignatureHint
+	copy(hint[:], []byte{0x01, 0x02, 0x03, 0x04})
+
+	sig := make([]byte, 64)
+	for i := range sig {
+		sig[i] = byte(i)
+	}
+
+	return xdr.DecoratedSignature{
+		Hint:      hint,
+		Signature: xdr.Signature(sig),
+	}
+}

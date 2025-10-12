@@ -564,3 +564,228 @@ func TestExtractClaimableBalanceIDs_NoOperations(t *testing.T) {
 		t.Errorf("ExtractClaimableBalanceIDs() returned %d IDs, want 0", len(balanceIDs))
 	}
 }
+
+func TestBuildMetadataKey(t *testing.T) {
+	// Build metadata key
+	key := BuildMetadataKey()
+
+	// Verify it's the correct type
+	if key.Type != xdr.ScValTypeScvLedgerKeyContractInstance {
+		t.Errorf("BuildMetadataKey() type = %v, want ScvLedgerKeyContractInstance", key.Type)
+	}
+}
+
+func TestBuildBalanceKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		address string
+		wantErr bool
+	}{
+		{
+			name:    "valid account address",
+			address: "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
+			wantErr: false,
+		},
+		{
+			name:    "valid contract address",
+			address: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4",
+			wantErr: false,
+		},
+		{
+			name:    "another valid account",
+			address: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+			wantErr: false,
+		},
+		{
+			name:    "invalid address format",
+			address: "INVALID_ADDRESS",
+			wantErr: true,
+		},
+		{
+			name:    "empty address",
+			address: "",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, err := BuildBalanceKey(tt.address)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("BuildBalanceKey() expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("BuildBalanceKey() error = %v", err)
+			}
+
+			// Verify it's a vector
+			if key.Type != xdr.ScValTypeScvVec {
+				t.Errorf("BuildBalanceKey() type = %v, want ScvVec", key.Type)
+			}
+
+			// Verify the vector has 2 elements
+			if key.Vec == nil {
+				t.Fatal("BuildBalanceKey() Vec is nil")
+			}
+
+			// Dereference **ScVec to get *ScVec, then dereference again to get ScVec (slice)
+			vecPtr := *key.Vec
+			if vecPtr == nil {
+				t.Fatal("BuildBalanceKey() Vec pointer is nil")
+			}
+
+			vec := *vecPtr
+			if len(vec) != 2 {
+				t.Errorf("BuildBalanceKey() Vec length = %d, want 2", len(vec))
+			}
+
+			// Verify first element is "Balance" symbol
+			if vec[0].Type != xdr.ScValTypeScvSymbol {
+				t.Errorf("BuildBalanceKey() first element type = %v, want ScvSymbol", vec[0].Type)
+			}
+
+			if vec[0].Sym != nil && string(*vec[0].Sym) != "Balance" {
+				t.Errorf("BuildBalanceKey() first element = %v, want 'Balance'", string(*vec[0].Sym))
+			}
+
+			// Verify second element is an address
+			if vec[1].Type != xdr.ScValTypeScvAddress {
+				t.Errorf("BuildBalanceKey() second element type = %v, want ScvAddress", vec[1].Type)
+			}
+		})
+	}
+}
+
+func TestBuildContractDataKey(t *testing.T) {
+	// Valid contract ID
+	contractID := "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4"
+
+	// Create a simple metadata key
+	metadataKey := BuildMetadataKey()
+
+	tests := []struct {
+		name       string
+		contractID string
+		key        xdr.ScVal
+		durability xdr.ContractDataDurability
+		wantErr    bool
+	}{
+		{
+			name:       "valid contract data key - persistent",
+			contractID: contractID,
+			key:        metadataKey,
+			durability: xdr.ContractDataDurabilityPersistent,
+			wantErr:    false,
+		},
+		{
+			name:       "valid contract data key - temporary",
+			contractID: contractID,
+			key:        metadataKey,
+			durability: xdr.ContractDataDurabilityTemporary,
+			wantErr:    false,
+		},
+		{
+			name:       "invalid contract ID",
+			contractID: "INVALID_CONTRACT",
+			key:        metadataKey,
+			durability: xdr.ContractDataDurabilityPersistent,
+			wantErr:    true,
+		},
+		{
+			name:       "empty contract ID",
+			contractID: "",
+			key:        metadataKey,
+			durability: xdr.ContractDataDurabilityPersistent,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, err := BuildContractDataKey(tt.contractID, tt.key, tt.durability)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("BuildContractDataKey() expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("BuildContractDataKey() error = %v", err)
+			}
+
+			if key == "" {
+				t.Error("BuildContractDataKey() returned empty key")
+			}
+
+			// Verify the key is valid base64
+			decoded, err := base64.StdEncoding.DecodeString(key)
+			if err != nil {
+				t.Errorf("BuildContractDataKey() returned invalid base64: %v", err)
+			}
+
+			// Verify the key can be unmarshaled as a LedgerKey
+			var ledgerKey xdr.LedgerKey
+			if err := xdr.SafeUnmarshal(decoded, &ledgerKey); err != nil {
+				t.Errorf("BuildContractDataKey() returned invalid XDR: %v", err)
+			}
+
+			// Verify it's a contract data type
+			if ledgerKey.Type != xdr.LedgerEntryTypeContractData {
+				t.Errorf("BuildContractDataKey() wrong type = %v, want ContractData", ledgerKey.Type)
+			}
+
+			// Verify durability
+			if ledgerKey.ContractData != nil {
+				if ledgerKey.ContractData.Durability != tt.durability {
+					t.Errorf("BuildContractDataKey() durability = %v, want %v", ledgerKey.ContractData.Durability, tt.durability)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildContractDataKey_RoundTrip(t *testing.T) {
+	// Test that we can build a key, decode it, and get back the same data
+	originalContractID := "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4"
+	metadataKey := BuildMetadataKey()
+
+	// Build the key
+	key, err := BuildContractDataKey(originalContractID, metadataKey, xdr.ContractDataDurabilityPersistent)
+	if err != nil {
+		t.Fatalf("BuildContractDataKey() error = %v", err)
+	}
+
+	// Decode the key
+	decoded, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		t.Fatalf("Failed to decode key: %v", err)
+	}
+
+	// Unmarshal as LedgerKey
+	var ledgerKey xdr.LedgerKey
+	if err := xdr.SafeUnmarshal(decoded, &ledgerKey); err != nil {
+		t.Fatalf("Failed to unmarshal ledger key: %v", err)
+	}
+
+	// Extract the contract data
+	if ledgerKey.ContractData == nil {
+		t.Fatal("Ledger key ContractData is nil")
+	}
+
+	// Verify durability
+	if ledgerKey.ContractData.Durability != xdr.ContractDataDurabilityPersistent {
+		t.Errorf("Durability = %v, want Persistent", ledgerKey.ContractData.Durability)
+	}
+
+	// Verify key type
+	if ledgerKey.ContractData.Key.Type != xdr.ScValTypeScvLedgerKeyContractInstance {
+		t.Errorf("Key type = %v, want ScvLedgerKeyContractInstance", ledgerKey.ContractData.Key.Type)
+	}
+}

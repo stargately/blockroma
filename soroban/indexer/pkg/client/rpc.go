@@ -270,3 +270,33 @@ func (c *Client) GetLedgerEntries(ctx context.Context, keys []string) (*GetLedge
 
 	return &result, nil
 }
+
+// ContractDataRequest parameters for getContractData
+type ContractDataRequest struct {
+	ContractID string `json:"contractId"`
+	Key        string `json:"key"`
+	Durability string `json:"durability"` // "persistent" or "temporary"
+}
+
+// ContractDataResponse response from getContractData
+type ContractDataResponse struct {
+	XDR                string `json:"xdr"`
+	LastModifiedLedger uint32 `json:"lastModifiedLedgerSeq,omitempty"`
+	LiveUntilLedgerSeq uint32 `json:"liveUntilLedgerSeq,omitempty"`
+}
+
+// GetContractData fetches contract data for a specific key
+func (c *Client) GetContractData(ctx context.Context, contractID, key, durability string) (*ContractDataResponse, error) {
+	req := ContractDataRequest{
+		ContractID: contractID,
+		Key:        key,
+		Durability: durability,
+	}
+
+	var result ContractDataResponse
+	if err := c.call(ctx, "getContractData", req, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}

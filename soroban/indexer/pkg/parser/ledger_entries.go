@@ -102,8 +102,8 @@ func ParseContractDataEntry(entry xdr.LedgerEntry, keyHash string) *models.Contr
 	valXDR, _ := xdr.MarshalBase64(contractData.Val)
 
 	// Parse key and value to JSON
-	keyJSON := scValToInterface(contractData.Key)
-	valJSON := scValToInterface(contractData.Val)
+	keyJSON := ScValToInterface(contractData.Key)
+	valJSON := ScValToInterface(contractData.Val)
 
 	durability := "persistent"
 	if contractData.Durability == xdr.ContractDataDurabilityTemporary {
@@ -453,4 +453,124 @@ func ExtractClaimableBalanceIDs(envelopeXdr string) ([]string, error) {
 	}
 
 	return balanceIDs, nil
+}
+
+// BuildContractDataKey builds a base64-encoded ledger key for contract data
+func BuildContractDataKey(contractID string, key xdr.ScVal, durability xdr.ContractDataDurability) (string, error) {
+	// Decode the contract ID
+	decoded, err := strkey.Decode(strkey.VersionByteContract, contractID)
+	if err != nil {
+		return "", fmt.Errorf("decode contract ID: %w", err)
+	}
+
+	// Create contract address
+	var hash xdr.Hash
+	copy(hash[:], decoded)
+
+	// Convert Hash to ContractId (they are the same type)
+	contractIDXDR := xdr.ContractId(hash)
+
+	contractAddress := xdr.ScAddress{
+		Type:       xdr.ScAddressTypeScAddressTypeContract,
+		ContractId: &contractIDXDR,
+	}
+
+	// Create ledger key for contract data
+	ledgerKey := xdr.LedgerKey{
+		Type: xdr.LedgerEntryTypeContractData,
+		ContractData: &xdr.LedgerKeyContractData{
+			Contract:   contractAddress,
+			Key:        key,
+			Durability: durability,
+		},
+	}
+
+	// Marshal to base64
+	xdrBytes, err := ledgerKey.MarshalBinary()
+	if err != nil {
+		return "", fmt.Errorf("marshal ledger key: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(xdrBytes), nil
+}
+
+// BuildMetadataKey creates an ScVal for the METADATA key
+func BuildMetadataKey() xdr.ScVal {
+	return xdr.ScVal{
+		Type: xdr.ScValTypeScvLedgerKeyContractInstance,
+	}
+}
+
+// BuildBalanceKey creates an ScVal for a Balance(address) key
+func BuildBalanceKey(address string) (xdr.ScVal, error) {
+	// Decode the address to get the raw bytes
+	decoded, err := strkey.Decode(strkey.VersionByteAccountID, address)
+	if err != nil {
+		// Try as contract address
+		decoded, err = strkey.Decode(strkey.VersionByteContract, address)
+		if err != nil {
+			return xdr.ScVal{}, fmt.Errorf("decode address: %w", err)
+		}
+		// Contract address - use ContractId type
+		var hash xdr.Hash
+		copy(hash[:], decoded)
+		contractID := xdr.ContractId(hash)
+
+		scAddress := xdr.ScAddress{
+			Type:       xdr.ScAddressTypeScAddressTypeContract,
+			ContractId: &contractID,
+		}
+
+		balanceSymbol := xdr.ScSymbol("Balance")
+		vec := xdr.ScVec{
+			// ["Balance", Address]
+			xdr.ScVal{
+				Type: xdr.ScValTypeScvSymbol,
+				Sym:  &balanceSymbol,
+			},
+			xdr.ScVal{
+				Type:    xdr.ScValTypeScvAddress,
+				Address: &scAddress,
+			},
+		}
+		vecPtr := &vec
+
+		return xdr.ScVal{
+			Type: xdr.ScValTypeScvVec,
+			Vec:  &vecPtr,
+		}, nil
+	}
+
+	// Account address
+	var uint256 xdr.Uint256
+	copy(uint256[:], decoded)
+
+	accountID := xdr.AccountId{
+		Type:    xdr.PublicKeyTypePublicKeyTypeEd25519,
+		Ed25519: &uint256,
+	}
+
+	scAddress := xdr.ScAddress{
+		Type:      xdr.ScAddressTypeScAddressTypeAccount,
+		AccountId: &accountID,
+	}
+
+	balanceSymbol := xdr.ScSymbol("Balance")
+	vec := xdr.ScVec{
+		// ["Balance", Address]
+		xdr.ScVal{
+			Type: xdr.ScValTypeScvSymbol,
+			Sym:  &balanceSymbol,
+		},
+		xdr.ScVal{
+			Type:    xdr.ScValTypeScvAddress,
+			Address: &scAddress,
+		},
+	}
+	vecPtr := &vec
+
+	return xdr.ScVal{
+		Type: xdr.ScValTypeScvVec,
+		Vec:  &vecPtr,
+	}, nil
 }

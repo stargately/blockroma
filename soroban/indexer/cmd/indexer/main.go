@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,6 +17,13 @@ import (
 )
 
 func main() {
+	// Parse CLI flags
+	startLedger := flag.Uint("start-ledger", 0, "Start ledger for backfill mode (0 = live polling)")
+	endLedger := flag.Uint("end-ledger", 0, "End ledger for backfill mode (0 = current ledger)")
+	batchSize := flag.Uint("batch-size", 100, "Batch size for backfill mode")
+	rateLimit := flag.Uint("rate-limit", 10, "Max requests per second for backfill mode")
+	flag.Parse()
+
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
@@ -40,6 +48,19 @@ func main() {
 
 	if postgresURL == "" {
 		logger.Fatal("POSTGRES_DSN environment variable is required")
+	}
+
+	// Determine mode
+	isBackfillMode := *startLedger > 0
+	if isBackfillMode {
+		logger.WithFields(logrus.Fields{
+			"startLedger": *startLedger,
+			"endLedger":   *endLedger,
+			"batchSize":   *batchSize,
+			"rateLimit":   *rateLimit,
+		}).Info("Starting in BACKFILL mode")
+	} else {
+		logger.Info("Starting in LIVE POLLING mode")
 	}
 
 	logger.WithFields(logrus.Fields{
@@ -85,13 +106,32 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	// Start poller in goroutine
+	// Start appropriate mode
 	errCh := make(chan error, 1)
-	go func() {
-		if err := p.Start(ctx); err != nil {
-			errCh <- err
-		}
-	}()
+	if isBackfillMode {
+		// Backfill mode: process historical ledgers
+		go func() {
+			config := poller.BackfillConfig{
+				StartLedger: uint32(*startLedger),
+				EndLedger:   uint32(*endLedger),
+				BatchSize:   uint32(*batchSize),
+				RateLimit:   uint32(*rateLimit),
+			}
+			if err := p.Backfill(ctx, config); err != nil {
+				errCh <- err
+			} else {
+				logger.Info("Backfill completed successfully")
+				cancel() // Exit after successful backfill
+			}
+		}()
+	} else {
+		// Live polling mode: continuous processing
+		go func() {
+			if err := p.Start(ctx); err != nil {
+				errCh <- err
+			}
+		}()
+	}
 
 	// Wait for shutdown signal or error
 	select {
@@ -100,8 +140,13 @@ func main() {
 		cancel()
 		time.Sleep(2 * time.Second) // Grace period
 	case err := <-errCh:
-		logger.WithError(err).Error("Poller error")
+		if err != nil {
+			logger.WithError(err).Error("Indexer error")
+		}
 		cancel()
+	case <-ctx.Done():
+		// Context cancelled (e.g., backfill completed)
+		logger.Info("Context cancelled")
 	}
 
 	logger.Info("Indexer stopped")

@@ -367,6 +367,72 @@ func TestRPCError_Error(t *testing.T) {
 	}
 }
 
+func TestClient_GetContractData(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req jsonRPCRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("Failed to decode request: %v", err)
+		}
+
+		if req.Method != "getContractData" {
+			t.Errorf("Method = %v, want getContractData", req.Method)
+		}
+
+		// Verify request params
+		var params ContractDataRequest
+		paramsJSON, _ := json.Marshal(req.Params)
+		json.Unmarshal(paramsJSON, &params)
+
+		if params.ContractID == "" {
+			t.Error("ContractID should not be empty")
+		}
+		if params.Key == "" {
+			t.Error("Key should not be empty")
+		}
+		if params.Durability != "persistent" && params.Durability != "temporary" {
+			t.Errorf("Durability = %v, want 'persistent' or 'temporary'", params.Durability)
+		}
+
+		mockResponse := ContractDataResponse{
+			XDR:                "AAAAAQAAAAYAAAABcHViAAAAAA==",
+			LastModifiedLedger: 12345,
+			LiveUntilLedgerSeq: 12445,
+		}
+
+		respJSON, _ := json.Marshal(mockResponse)
+		resp := jsonRPCResponse{
+			JSONRPC: "2.0",
+			ID:      req.ID,
+			Result:  json.RawMessage(respJSON),
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	contractData, err := client.GetContractData(
+		context.Background(),
+		"CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+		"metadata-key",
+		"persistent",
+	)
+	if err != nil {
+		t.Fatalf("GetContractData() error = %v", err)
+	}
+
+	if contractData.XDR == "" {
+		t.Error("XDR should not be empty")
+	}
+
+	if contractData.LastModifiedLedger != 12345 {
+		t.Errorf("LastModifiedLedger = %v, want 12345", contractData.LastModifiedLedger)
+	}
+
+	if contractData.LiveUntilLedgerSeq != 12445 {
+		t.Errorf("LiveUntilLedgerSeq = %v, want 12445", contractData.LiveUntilLedgerSeq)
+	}
+}
+
 // Helper function
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr))

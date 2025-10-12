@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/stellar/go/xdr"
 	"github.com/blockroma/soroban-indexer/pkg/client"
 	"github.com/blockroma/soroban-indexer/pkg/models"
+	"github.com/blockroma/soroban-indexer/pkg/models/util"
 )
 
 // ParseEvent converts RPC event to database model
@@ -84,6 +86,9 @@ func ParseTransactionWithHash(tx client.Transaction, txHash string) (*models.Tra
 	sourceAccount := ""
 	fee := int32(0)
 	sequence := int64(0)
+	var memo *util.TypeItem
+	var preconditions *util.Preconditions
+	var signatures *util.Signatures
 
 	// Extract details from envelope
 	switch envelope.Type {
@@ -93,21 +98,46 @@ func ParseTransactionWithHash(tx client.Transaction, txHash string) (*models.Tra
 			sourceAccount, _ = strkey.Encode(strkey.VersionByteAccountID, v0.Tx.SourceAccountEd25519[:])
 			fee = int32(v0.Tx.Fee)
 			sequence = int64(v0.Tx.SeqNum)
+
+			// Parse memo
+			memo = parseMemo(v0.Tx.Memo)
+
+			// Parse preconditions (V0 only has time bounds)
+			preconditions = parsePreconditionsV0(v0.Tx.TimeBounds)
+
+			// Parse signatures
+			signatures = parseSignatures(v0.Signatures)
 		}
 	case xdr.EnvelopeTypeEnvelopeTypeTx:
 		if v1, ok := envelope.GetV1(); ok {
 			sourceAccount = v1.Tx.SourceAccount.ToAccountId().Address()
 			fee = int32(v1.Tx.Fee)
 			sequence = int64(v1.Tx.SeqNum)
+
+			// Parse memo
+			memo = parseMemo(v1.Tx.Memo)
+
+			// Parse preconditions (V1 has full preconditions support)
+			preconditions = parsePreconditionsV1(v1.Tx.Cond)
+
+			// Parse signatures
+			signatures = parseSignatures(v1.Signatures)
 		}
 	case xdr.EnvelopeTypeEnvelopeTypeTxFeeBump:
 		if fb, ok := envelope.GetFeeBump(); ok {
 			sourceAccount = fb.Tx.FeeSource.ToAccountId().Address()
 			fee = int32(fb.Tx.Fee)
-			// Fee bump doesn't have sequence, get from inner tx
+
+			// Fee bump doesn't have sequence, memo, or preconditions
+			// Get from inner tx
 			if innerV1, ok := fb.Tx.InnerTx.GetV1(); ok {
 				sequence = int64(innerV1.Tx.SeqNum)
+				memo = parseMemo(innerV1.Tx.Memo)
+				preconditions = parsePreconditionsV1(innerV1.Tx.Cond)
 			}
+
+			// Parse signatures from fee bump envelope
+			signatures = parseSignatures(fb.Signatures)
 		}
 	}
 
@@ -132,6 +162,9 @@ func ParseTransactionWithHash(tx client.Transaction, txHash string) (*models.Tra
 		Fee:              &fee,
 		FeeCharged:       &feeCharged,
 		Sequence:         &sequence,
+		Memo:             memo,
+		Preconditions:    preconditions,
+		Signatures:       signatures,
 		CreatedAt:        time.Unix(tx.LedgerCloseTime, 0),
 		UpdatedAt:        time.Now(),
 	}, nil
@@ -153,11 +186,11 @@ func parseScVal(xdrStr string) (interface{}, error) {
 		return nil, err
 	}
 
-	return scValToInterface(scVal), nil
+	return ScValToInterface(scVal), nil
 }
 
-// scValToInterface converts XDR ScVal to Go interface
-func scValToInterface(val xdr.ScVal) interface{} {
+// ScValToInterface converts XDR ScVal to Go interface
+func ScValToInterface(val xdr.ScVal) interface{} {
 	switch val.Type {
 	case xdr.ScValTypeScvBool:
 		return val.MustB()
@@ -193,15 +226,15 @@ func scValToInterface(val xdr.ScVal) interface{} {
 		vec := *val.MustVec()
 		result := make([]interface{}, len(vec))
 		for i, v := range vec {
-			result[i] = scValToInterface(v)
+			result[i] = ScValToInterface(v)
 		}
 		return result
 	case xdr.ScValTypeScvMap:
 		m := *val.MustMap()
 		result := make(map[string]interface{})
 		for _, entry := range m {
-			key := scValToInterface(entry.Key)
-			val := scValToInterface(entry.Val)
+			key := ScValToInterface(entry.Key)
+			val := ScValToInterface(entry.Val)
 			if keyStr, ok := key.(string); ok {
 				result[keyStr] = val
 			}
@@ -244,4 +277,149 @@ func decodeResult(xdrStr string) (*xdr.TransactionResult, error) {
 	}
 
 	return &result, nil
+}
+
+// parseMemo converts XDR memo to TypeItem
+func parseMemo(memo xdr.Memo) *util.TypeItem {
+	switch memo.Type {
+	case xdr.MemoTypeMemoNone:
+		return nil // No memo
+	case xdr.MemoTypeMemoText:
+		text := memo.MustText()
+		return &util.TypeItem{
+			Type:      "text",
+			ItemValue: text,
+		}
+	case xdr.MemoTypeMemoId:
+		id := memo.MustId()
+		return &util.TypeItem{
+			Type:      "id",
+			ItemValue: fmt.Sprintf("%d", id),
+		}
+	case xdr.MemoTypeMemoHash:
+		hash := memo.MustHash()
+		return &util.TypeItem{
+			Type:      "hash",
+			ItemValue: hex.EncodeToString(hash[:]),
+		}
+	case xdr.MemoTypeMemoReturn:
+		retHash := memo.MustRetHash()
+		return &util.TypeItem{
+			Type:      "return",
+			ItemValue: hex.EncodeToString(retHash[:]),
+		}
+	default:
+		return nil
+	}
+}
+
+// parsePreconditionsV1 converts XDR preconditions (v1) to Preconditions
+func parsePreconditionsV1(cond xdr.Preconditions) *util.Preconditions {
+	switch cond.Type {
+	case xdr.PreconditionTypePrecondNone:
+		return nil // No preconditions
+	case xdr.PreconditionTypePrecondTime:
+		// V1 with only time bounds
+		tb := cond.MustTimeBounds()
+		return &util.Preconditions{
+			TimeBounds: &util.Bonds{
+				Min: int64(tb.MinTime),
+				Max: int64(tb.MaxTime),
+			},
+		}
+	case xdr.PreconditionTypePrecondV2:
+		// V2 with full preconditions
+		v2 := cond.MustV2()
+		result := &util.Preconditions{}
+
+		// Time bounds
+		if v2.TimeBounds != nil {
+			result.TimeBounds = &util.Bonds{
+				Min: int64(v2.TimeBounds.MinTime),
+				Max: int64(v2.TimeBounds.MaxTime),
+			}
+		}
+
+		// Ledger bounds
+		if v2.LedgerBounds != nil {
+			result.LedgerBounds = &util.Bonds{
+				Min: int64(v2.LedgerBounds.MinLedger),
+				Max: int64(v2.LedgerBounds.MaxLedger),
+			}
+		}
+
+		// Min sequence number
+		if v2.MinSeqNum != nil {
+			minSeq := int64(*v2.MinSeqNum)
+			result.MinSeqNum = &minSeq
+		}
+
+		// Min sequence age
+		minAge := int64(v2.MinSeqAge)
+		result.MinSeqAge = &minAge
+
+		// Min sequence ledger gap
+		minGap := int32(v2.MinSeqLedgerGap)
+		result.MinSeqLedgerGap = &minGap
+
+		// Extra signers
+		if len(v2.ExtraSigners) > 0 {
+			signers := make([]util.SignerKey, 0, len(v2.ExtraSigners))
+			for _, signer := range v2.ExtraSigners {
+				signerKey := util.SignerKey{Type: signer.Type.String()}
+
+				// Populate the appropriate field based on signer type
+				switch signer.Type {
+				case xdr.SignerKeyTypeSignerKeyTypeEd25519:
+					signerKey.Ed25519 = base64.StdEncoding.EncodeToString(signer.Ed25519[:])
+				case xdr.SignerKeyTypeSignerKeyTypePreAuthTx:
+					signerKey.PreAuthTx = base64.StdEncoding.EncodeToString(signer.PreAuthTx[:])
+				case xdr.SignerKeyTypeSignerKeyTypeHashX:
+					signerKey.HashX = base64.StdEncoding.EncodeToString(signer.HashX[:])
+				case xdr.SignerKeyTypeSignerKeyTypeEd25519SignedPayload:
+					if payload, ok := signer.GetEd25519SignedPayload(); ok {
+						signerKey.Ed25519SignedPayload = base64.StdEncoding.EncodeToString(payload.Ed25519[:])
+					}
+				}
+
+				signers = append(signers, signerKey)
+			}
+			result.ExtraSigners = &signers
+		}
+
+		return result
+	default:
+		return nil
+	}
+}
+
+// parsePreconditionsV0 converts V0 time bounds to Preconditions
+func parsePreconditionsV0(tb *xdr.TimeBounds) *util.Preconditions {
+	// V0 TimeBounds can be nil
+	if tb == nil {
+		return nil
+	}
+	return &util.Preconditions{
+		TimeBounds: &util.Bonds{
+			Min: int64(tb.MinTime),
+			Max: int64(tb.MaxTime),
+		},
+	}
+}
+
+// parseSignatures converts XDR signatures to Signatures slice
+func parseSignatures(sigs []xdr.DecoratedSignature) *util.Signatures {
+	if len(sigs) == 0 {
+		return nil
+	}
+
+	signatures := make(util.Signatures, 0, len(sigs))
+	for _, sig := range sigs {
+		signatures = append(signatures, util.Signature{
+			Hint:      hex.EncodeToString(sig.Hint[:]),
+			Signature: base64.StdEncoding.EncodeToString(sig.Signature),
+		})
+	}
+
+	return &signatures
 }

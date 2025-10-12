@@ -105,6 +105,194 @@ func TestParseTransaction(t *testing.T) {
 	t.Skip("XDR transaction structure complex, covered by integration tests")
 }
 
+func TestComputeTransactionHash(t *testing.T) {
+	// Create a simple transaction envelope for testing
+	createTestEnvelope := func() string {
+		// Create a minimal V1 transaction
+		sourceAccount := xdr.MustAddress("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")
+
+		tx := xdr.Transaction{
+			SourceAccount: sourceAccount.ToMuxedAccount(),
+			Fee:           xdr.Uint32(100),
+			SeqNum:        xdr.SequenceNumber(1),
+			Cond:          xdr.Preconditions{Type: xdr.PreconditionTypePrecondNone},
+			Memo:          xdr.Memo{Type: xdr.MemoTypeMemoNone},
+			Operations:    []xdr.Operation{},
+			Ext:           xdr.TransactionExt{V: 0},
+		}
+
+		envelope := xdr.TransactionEnvelope{
+			Type: xdr.EnvelopeTypeEnvelopeTypeTx,
+			V1: &xdr.TransactionV1Envelope{
+				Tx:         tx,
+				Signatures: []xdr.DecoratedSignature{},
+			},
+		}
+
+		encoded, _ := xdr.MarshalBase64(envelope)
+		return encoded
+	}
+
+	tests := []struct {
+		name              string
+		envelopeXDR       string
+		networkPassphrase string
+		wantErr           bool
+		checkHash         bool
+	}{
+		{
+			name:              "valid testnet transaction",
+			envelopeXDR:       createTestEnvelope(),
+			networkPassphrase: "Test SDF Network ; September 2015",
+			wantErr:           false,
+			checkHash:         true,
+		},
+		{
+			name:              "valid pubnet transaction",
+			envelopeXDR:       createTestEnvelope(),
+			networkPassphrase: "Public Global Stellar Network ; September 2015",
+			wantErr:           false,
+			checkHash:         true,
+		},
+		{
+			name:              "invalid base64 envelope",
+			envelopeXDR:       "not-valid-base64!!!",
+			networkPassphrase: "Test SDF Network ; September 2015",
+			wantErr:           true,
+			checkHash:         false,
+		},
+		{
+			name:              "empty envelope",
+			envelopeXDR:       "",
+			networkPassphrase: "Test SDF Network ; September 2015",
+			wantErr:           true,
+			checkHash:         false,
+		},
+		{
+			name:              "valid envelope with empty passphrase",
+			envelopeXDR:       createTestEnvelope(),
+			networkPassphrase: "",
+			wantErr:           true, // network.HashTransactionInEnvelope requires passphrase
+			checkHash:         false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hash, err := ComputeTransactionHash(tt.envelopeXDR, tt.networkPassphrase)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ComputeTransactionHash() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.checkHash && err == nil {
+				// Verify hash format (64 hex characters)
+				if len(hash) != 64 {
+					t.Errorf("ComputeTransactionHash() hash length = %d, want 64", len(hash))
+				}
+
+				// Verify hash is valid hex
+				for _, c := range hash {
+					if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+						t.Errorf("ComputeTransactionHash() hash contains invalid hex character: %c", c)
+						break
+					}
+				}
+
+				t.Logf("Computed hash: %s", hash)
+			}
+		})
+	}
+}
+
+func TestComputeTransactionHash_Deterministic(t *testing.T) {
+	// Create test envelope
+	sourceAccount := xdr.MustAddress("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")
+
+	tx := xdr.Transaction{
+		SourceAccount: sourceAccount.ToMuxedAccount(),
+		Fee:           xdr.Uint32(100),
+		SeqNum:        xdr.SequenceNumber(1),
+		Cond:          xdr.Preconditions{Type: xdr.PreconditionTypePrecondNone},
+		Memo:          xdr.Memo{Type: xdr.MemoTypeMemoNone},
+		Operations:    []xdr.Operation{},
+		Ext:           xdr.TransactionExt{V: 0},
+	}
+
+	envelope := xdr.TransactionEnvelope{
+		Type: xdr.EnvelopeTypeEnvelopeTypeTx,
+		V1: &xdr.TransactionV1Envelope{
+			Tx:         tx,
+			Signatures: []xdr.DecoratedSignature{},
+		},
+	}
+
+	envelopeXDR, _ := xdr.MarshalBase64(envelope)
+	networkPassphrase := "Test SDF Network ; September 2015"
+
+	// Compute hash multiple times
+	hash1, err1 := ComputeTransactionHash(envelopeXDR, networkPassphrase)
+	if err1 != nil {
+		t.Fatalf("First hash computation failed: %v", err1)
+	}
+
+	hash2, err2 := ComputeTransactionHash(envelopeXDR, networkPassphrase)
+	if err2 != nil {
+		t.Fatalf("Second hash computation failed: %v", err2)
+	}
+
+	// Verify hashes are identical (deterministic)
+	if hash1 != hash2 {
+		t.Errorf("ComputeTransactionHash() is not deterministic: hash1=%s, hash2=%s", hash1, hash2)
+	}
+}
+
+func TestComputeTransactionHash_DifferentPassphrases(t *testing.T) {
+	// Create test envelope
+	sourceAccount := xdr.MustAddress("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")
+
+	tx := xdr.Transaction{
+		SourceAccount: sourceAccount.ToMuxedAccount(),
+		Fee:           xdr.Uint32(100),
+		SeqNum:        xdr.SequenceNumber(1),
+		Cond:          xdr.Preconditions{Type: xdr.PreconditionTypePrecondNone},
+		Memo:          xdr.Memo{Type: xdr.MemoTypeMemoNone},
+		Operations:    []xdr.Operation{},
+		Ext:           xdr.TransactionExt{V: 0},
+	}
+
+	envelope := xdr.TransactionEnvelope{
+		Type: xdr.EnvelopeTypeEnvelopeTypeTx,
+		V1: &xdr.TransactionV1Envelope{
+			Tx:         tx,
+			Signatures: []xdr.DecoratedSignature{},
+		},
+	}
+
+	envelopeXDR, _ := xdr.MarshalBase64(envelope)
+
+	// Compute with testnet passphrase
+	testnetHash, err1 := ComputeTransactionHash(envelopeXDR, "Test SDF Network ; September 2015")
+	if err1 != nil {
+		t.Fatalf("Testnet hash computation failed: %v", err1)
+	}
+
+	// Compute with pubnet passphrase
+	pubnetHash, err2 := ComputeTransactionHash(envelopeXDR, "Public Global Stellar Network ; September 2015")
+	if err2 != nil {
+		t.Fatalf("Pubnet hash computation failed: %v", err2)
+	}
+
+	// Verify hashes are different (same tx on different networks has different hash)
+	if testnetHash == pubnetHash {
+		t.Errorf("ComputeTransactionHash() should produce different hashes for different network passphrases")
+	}
+
+	t.Logf("Testnet hash: %s", testnetHash)
+	t.Logf("Pubnet hash: %s", pubnetHash)
+}
+
 // Helper functions to create test XDR values
 
 func createStringScVal(s string) string {

@@ -24,6 +24,13 @@ type Poller struct {
 	logger         *logrus.Logger
 	batchSize      uint
 	maxConcurrency int // Maximum number of concurrent RPC requests
+
+	// Network passphrase for transaction hashing
+	networkPassphrase string
+
+	// Statistics for empty hash responses (deprecated - now computed from envelope)
+	emptyHashCount   int
+	lastEmptyHashLog time.Time
 }
 
 // PollerConfig defines configuration for the poller
@@ -64,6 +71,14 @@ func (p *Poller) Start(ctx context.Context) error {
 	if err := p.rpcClient.Health(ctx); err != nil {
 		return fmt.Errorf("rpc health check failed: %w", err)
 	}
+
+	// Get network passphrase for transaction hashing
+	networkInfo, err := p.rpcClient.GetNetwork(ctx)
+	if err != nil {
+		return fmt.Errorf("get network info: %w", err)
+	}
+	p.networkPassphrase = networkInfo.Passphrase
+	p.logger.WithField("networkPassphrase", p.networkPassphrase).Info("Network passphrase configured")
 
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -204,19 +219,39 @@ func (p *Poller) poll(ctx context.Context) error {
 				continue
 			}
 
-			// Validate that RPC returned a hash
+			// Determine the correct transaction hash
+			actualTxHash := txHash // Start with the hash from events
+
+			// If RPC returned an empty hash, compute it from the envelope
 			if rpcTx.Hash == "" {
-				p.logger.WithField("requestedHash", txHash).Warn("RPC returned transaction with empty hash, using requested hash")
+				computedHash, err := parser.ComputeTransactionHash(rpcTx.EnvelopeXdr, p.networkPassphrase)
+				if err != nil {
+					p.logger.WithError(err).WithField("txHash", txHash).Debug("Failed to compute transaction hash from envelope, using event hash")
+				} else {
+					actualTxHash = computedHash
+					// Verify it matches the event hash
+					if computedHash != txHash {
+						p.logger.WithFields(logrus.Fields{
+							"eventHash":    txHash,
+							"computedHash": computedHash,
+						}).Warn("Computed hash from envelope differs from event hash")
+					}
+				}
 			} else if rpcTx.Hash != txHash {
+				// RPC returned a hash but it doesn't match the event hash
 				p.logger.WithFields(logrus.Fields{
-					"requestedHash": txHash,
-					"receivedHash":  rpcTx.Hash,
-				}).Warn("RPC returned different hash than requested")
+					"eventHash": txHash,
+					"rpcHash":   rpcTx.Hash,
+				}).Warn("RPC returned different hash than event")
+				// Use the RPC hash if available
+				actualTxHash = rpcTx.Hash
+			} else {
+				// RPC hash matches event hash - use it
+				actualTxHash = rpcTx.Hash
 			}
 
-			// Use the hash we requested (from the event) as the transaction ID
-			// This ensures we don't have duplicate IDs if RPC returns wrong/empty hashes
-			dbTx, err := parser.ParseTransactionWithHash(*rpcTx, txHash)
+			// Parse transaction with the determined hash
+			dbTx, err := parser.ParseTransactionWithHash(*rpcTx, actualTxHash)
 			if err != nil {
 				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse transaction")
 				continue

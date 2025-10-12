@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stellar/go/network"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/xdr"
 	"github.com/blockroma/soroban-indexer/pkg/client"
@@ -66,6 +67,24 @@ func ParseEvent(event client.Event) (*models.Event, error) {
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
 	}, nil
+}
+
+// ComputeTransactionHash computes the transaction hash from the envelope XDR
+// This is the proper way to get the transaction hash, as the RPC may return empty hashes
+func ComputeTransactionHash(envelopeXDR string, networkPassphrase string) (string, error) {
+	// Decode the envelope
+	envelope, err := decodeEnvelope(envelopeXDR)
+	if err != nil {
+		return "", fmt.Errorf("decode envelope: %w", err)
+	}
+
+	// Hash the transaction envelope with the network passphrase
+	hash, err := network.HashTransactionInEnvelope(*envelope, networkPassphrase)
+	if err != nil {
+		return "", fmt.Errorf("hash transaction: %w", err)
+	}
+
+	return hex.EncodeToString(hash[:]), nil
 }
 
 // ParseTransaction converts RPC transaction to database model

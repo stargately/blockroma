@@ -212,6 +212,8 @@ func (p *Poller) poll(ctx context.Context) error {
 		operationCount := 0
 		contractCodeCount := 0
 		claimableBalanceIDs := make(map[string]bool)
+		accountAddresses := make(map[string]bool)
+
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
 			if err != nil {
@@ -263,6 +265,11 @@ func (p *Poller) poll(ctx context.Context) error {
 
 			txCount++
 
+			// Extract source account for ledger entry processing
+			if dbTx.SourceAccount != nil && *dbTx.SourceAccount != "" {
+				accountAddresses[*dbTx.SourceAccount] = true
+			}
+
 			// Parse and collect operations from this transaction
 			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
 			if err != nil {
@@ -309,29 +316,15 @@ func (p *Poller) poll(ctx context.Context) error {
 
 		// Process ledger entries for discovered accounts
 		// This fetches account details, trustlines, offers, etc.
-		// Collect source accounts from transactions
-		accountAddresses := make(map[string]bool)
-		// Get accounts from processed transactions
-		var transactions []models.Transaction
-		if err := tx.Where("id IN ?", func() []string {
-			hashes := make([]string, 0, len(txHashes))
-			for hash := range txHashes {
-				hashes = append(hashes, hash)
-			}
-			return hashes
-		}()).Find(&transactions).Error; err == nil {
-			for _, txn := range transactions {
-				if txn.SourceAccount != nil && *txn.SourceAccount != "" {
-					accountAddresses[*txn.SourceAccount] = true
-				}
-			}
-		}
-
+		// Account addresses were collected during transaction processing above
 		if len(accountAddresses) > 0 {
+			p.logger.WithField("accountCount", len(accountAddresses)).Info("Processing account ledger entries")
 			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
 				p.logger.WithError(err).Warn("Failed to process ledger entries")
 				// Don't fail the whole batch if ledger entry processing fails
 			}
+		} else {
+			p.logger.Debug("No account addresses found in transactions")
 		}
 
 		// Process claimable balance ledger entries
@@ -423,20 +416,19 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 	return nil
 }
 
-// fetchContractMetadata proactively fetches metadata for a contract using getContractData RPC
+// fetchContractMetadata proactively fetches metadata for a contract using getLedgerEntries RPC
 func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contractID string) error {
 	// Build metadata key (ScvLedgerKeyContractInstance)
-	metadataKey := parser.BuildMetadataKey()
+	metadataKeyScVal := parser.BuildMetadataKey()
 
-	// Encode the key to base64 XDR for RPC call
-	keyBytes, err := metadataKey.MarshalBinary()
+	// Build the proper LedgerKey for contract data
+	ledgerKey, err := parser.BuildContractDataKey(contractID, metadataKeyScVal, xdr.ContractDataDurabilityPersistent)
 	if err != nil {
-		return fmt.Errorf("marshal metadata key: %w", err)
+		return fmt.Errorf("build contract data key: %w", err)
 	}
-	keyBase64 := base64.StdEncoding.EncodeToString(keyBytes)
 
 	// Fetch contract data from RPC (persistent storage)
-	resp, err := p.rpcClient.GetContractData(ctx, contractID, keyBase64, "persistent")
+	resp, err := p.rpcClient.GetContractData(ctx, contractID, ledgerKey, "persistent")
 	if err != nil {
 		return fmt.Errorf("get contract data: %w", err)
 	}
@@ -506,28 +498,27 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 		return nil
 	}
 
+	p.logger.WithField("accountCount", len(accountAddresses)).Debug("Building ledger keys for accounts")
+
 	// Build ledger keys for all accounts
 	var keys []string
 	for address := range accountAddresses {
 		key, err := parser.BuildAccountLedgerKey(address)
 		if err != nil {
-			p.logger.WithError(err).WithField("address", address).Debug("Failed to build ledger key")
+			p.logger.WithError(err).WithField("address", address).Warn("Failed to build ledger key")
 			continue
 		}
 		keys = append(keys, key)
 	}
 
 	if len(keys) == 0 {
+		p.logger.Warn("No valid ledger keys built from account addresses")
 		return nil
 	}
 
-	// Fetch ledger entries from RPC
-	resp, err := p.rpcClient.GetLedgerEntries(ctx, keys)
-	if err != nil {
-		return fmt.Errorf("get ledger entries: %w", err)
-	}
+	p.logger.WithField("keyCount", len(keys)).Debug("Fetching ledger entries from RPC")
 
-	// Process each ledger entry
+	// Process ledger entries
 	accountCount := 0
 	trustlineCount := 0
 	offerCount := 0
@@ -535,7 +526,32 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 	claimableBalanceCount := 0
 	liquidityPoolCount := 0
 
-	for _, entry := range resp.Entries {
+	// Batch ledger entry requests (RPC max is 200 keys per request)
+	const maxKeysPerRequest = 200
+	for i := 0; i < len(keys); i += maxKeysPerRequest {
+		end := i + maxKeysPerRequest
+		if end > len(keys) {
+			end = len(keys)
+		}
+		batch := keys[i:end]
+
+		p.logger.WithFields(logrus.Fields{
+			"batchStart": i,
+			"batchEnd":   end,
+			"batchSize":  len(batch),
+		}).Debug("Fetching ledger entry batch")
+
+		// Fetch this batch of ledger entries from RPC
+		resp, err := p.rpcClient.GetLedgerEntries(ctx, batch)
+		if err != nil {
+			p.logger.WithError(err).WithField("batchSize", len(batch)).Warn("Failed to fetch ledger entry batch")
+			continue // Skip this batch but continue with others
+		}
+
+		p.logger.WithField("entriesReceived", len(resp.Entries)).Debug("Received ledger entries from RPC")
+
+		// Process each ledger entry in this batch
+		for _, entry := range resp.Entries {
 		// Parse the ledger entry
 		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
 		if err != nil {
@@ -584,18 +600,17 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 				}
 			}
 		}
+		}
 	}
 
-	if accountCount > 0 || trustlineCount > 0 || offerCount > 0 {
-		p.logger.WithFields(logrus.Fields{
-			"accounts":         accountCount,
-			"trustlines":       trustlineCount,
-			"offers":           offerCount,
-			"data":             dataCount,
-			"claimableBalance": claimableBalanceCount,
-			"liquidityPools":   liquidityPoolCount,
-		}).Debug("Processed ledger entries")
-	}
+	p.logger.WithFields(logrus.Fields{
+		"accounts":         accountCount,
+		"trustlines":       trustlineCount,
+		"offers":           offerCount,
+		"data":             dataCount,
+		"claimableBalance": claimableBalanceCount,
+		"liquidityPools":   liquidityPoolCount,
+	}).Info("Processed ledger entries")
 
 	return nil
 }
@@ -954,6 +969,8 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 		operationCount := 0
 		contractCodeCount := 0
 		claimableBalanceIDs := make(map[string]bool)
+		accountAddresses := make(map[string]bool)
+
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
 			if err != nil {
@@ -973,6 +990,11 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 			}
 
 			txCount++
+
+			// Extract source account for ledger entry processing
+			if dbTx.SourceAccount != nil && *dbTx.SourceAccount != "" {
+				accountAddresses[*dbTx.SourceAccount] = true
+			}
 
 			// Parse and collect operations from this transaction
 			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
@@ -1017,26 +1039,14 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 		}
 
 		// Process ledger entries for discovered accounts
-		accountAddresses := make(map[string]bool)
-		var transactions []models.Transaction
-		if err := tx.Where("id IN ?", func() []string {
-			hashes := make([]string, 0, len(txHashes))
-			for hash := range txHashes {
-				hashes = append(hashes, hash)
-			}
-			return hashes
-		}()).Find(&transactions).Error; err == nil {
-			for _, txn := range transactions {
-				if txn.SourceAccount != nil && *txn.SourceAccount != "" {
-					accountAddresses[*txn.SourceAccount] = true
-				}
-			}
-		}
-
+		// Account addresses were collected during transaction processing above
 		if len(accountAddresses) > 0 {
+			p.logger.WithField("accountCount", len(accountAddresses)).Info("Processing account ledger entries")
 			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
 				p.logger.WithError(err).Warn("Failed to process ledger entries")
 			}
+		} else {
+			p.logger.Debug("No account addresses found in transactions")
 		}
 
 		// Process claimable balance ledger entries

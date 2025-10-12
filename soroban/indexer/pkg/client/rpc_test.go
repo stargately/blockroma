@@ -374,29 +374,22 @@ func TestClient_GetContractData(t *testing.T) {
 			t.Fatalf("Failed to decode request: %v", err)
 		}
 
-		if req.Method != "getContractData" {
-			t.Errorf("Method = %v, want getContractData", req.Method)
+		// GetContractData now uses getLedgerEntries internally
+		if req.Method != "getLedgerEntries" {
+			t.Errorf("Method = %v, want getLedgerEntries", req.Method)
 		}
 
-		// Verify request params
-		var params ContractDataRequest
-		paramsJSON, _ := json.Marshal(req.Params)
-		json.Unmarshal(paramsJSON, &params)
-
-		if params.ContractID == "" {
-			t.Error("ContractID should not be empty")
-		}
-		if params.Key == "" {
-			t.Error("Key should not be empty")
-		}
-		if params.Durability != "persistent" && params.Durability != "temporary" {
-			t.Errorf("Durability = %v, want 'persistent' or 'temporary'", params.Durability)
-		}
-
-		mockResponse := ContractDataResponse{
-			XDR:                "AAAAAQAAAAYAAAABcHViAAAAAA==",
-			LastModifiedLedger: 12345,
-			LiveUntilLedgerSeq: 12445,
+		// Mock response for getLedgerEntries
+		mockResponse := GetLedgerEntriesResponse{
+			Entries: []LedgerEntryResult{
+				{
+					Key:                "metadata-key",
+					XDR:                "AAAAAQAAAAYAAAABcHViAAAAAA==",
+					LastModifiedLedger: 12345,
+					LiveUntilLedgerSeq: 12445,
+				},
+			},
+			LatestLedger: 12345,
 		}
 
 		respJSON, _ := json.Marshal(mockResponse)

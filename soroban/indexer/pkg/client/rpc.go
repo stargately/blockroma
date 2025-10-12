@@ -28,6 +28,13 @@ func NewClient(endpoint string) *Client {
 	}
 }
 
+// SetLogger sets the logger for the circuit breaker
+func (c *Client) SetLogger(logger worker.Logger) {
+	if c.circuitBreaker != nil {
+		c.circuitBreaker.SetLogger(logger)
+	}
+}
+
 // JSON-RPC request/response types
 type jsonRPCRequest struct {
 	JSONRPC string      `json:"jsonrpc"`
@@ -278,32 +285,19 @@ func (c *Client) GetLedgerEntries(ctx context.Context, keys []string) (*GetLedge
 	return &result, nil
 }
 
-// ContractDataRequest parameters for getContractData
-type ContractDataRequest struct {
-	ContractID string `json:"contractId"`
-	Key        string `json:"key"`
-	Durability string `json:"durability"` // "persistent" or "temporary"
-}
-
-// ContractDataResponse response from getContractData
-type ContractDataResponse struct {
-	XDR                string `json:"xdr"`
-	LastModifiedLedger uint32 `json:"lastModifiedLedgerSeq,omitempty"`
-	LiveUntilLedgerSeq uint32 `json:"liveUntilLedgerSeq,omitempty"`
-}
-
-// GetContractData fetches contract data for a specific key
-func (c *Client) GetContractData(ctx context.Context, contractID, key, durability string) (*ContractDataResponse, error) {
-	req := ContractDataRequest{
-		ContractID: contractID,
-		Key:        key,
-		Durability: durability,
-	}
-
-	var result ContractDataResponse
-	if err := c.call(ctx, "getContractData", req, &result); err != nil {
+// GetContractData fetches contract data for a specific key using getLedgerEntries
+// This is a convenience wrapper around GetLedgerEntries for fetching contract data
+func (c *Client) GetContractData(ctx context.Context, contractID, key, durability string) (*LedgerEntryResult, error) {
+	// Use getLedgerEntries with the provided key
+	// The key should already be a base64-encoded ledger key from BuildContractDataKey
+	resp, err := c.GetLedgerEntries(ctx, []string{key})
+	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	if len(resp.Entries) == 0 {
+		return nil, fmt.Errorf("contract data not found")
+	}
+
+	return &resp.Entries[0], nil
 }

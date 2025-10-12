@@ -14,6 +14,7 @@ import (
 	"github.com/blockroma/soroban-indexer/pkg/client"
 	"github.com/blockroma/soroban-indexer/pkg/db"
 	"github.com/blockroma/soroban-indexer/pkg/poller"
+	"github.com/blockroma/soroban-indexer/pkg/worker"
 )
 
 func main() {
@@ -76,6 +77,9 @@ func main() {
 
 	// Create RPC client
 	rpcClient := client.NewClient(rpcURL)
+
+	// Set logger on circuit breaker for detailed failure logging
+	rpcClient.SetLogger(worker.NewLogrusAdapter(logger))
 
 	// Check RPC connectivity
 	ctx := context.Background()

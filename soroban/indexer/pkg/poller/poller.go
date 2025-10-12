@@ -548,16 +548,22 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 			continue // Skip this batch but continue with others
 		}
 
-		p.logger.WithField("entriesReceived", len(resp.Entries)).Debug("Received ledger entries from RPC")
+		p.logger.WithField("entriesReceived", len(resp.Entries)).Info("Received ledger entries from RPC")
 
 		// Process each ledger entry in this batch
-		for _, entry := range resp.Entries {
+		for idx, entry := range resp.Entries {
 		// Parse the ledger entry
 		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
 		if err != nil {
-			p.logger.WithError(err).Debug("Failed to parse ledger entry")
+			p.logger.WithError(err).Warn("Failed to parse ledger entry")
 			continue
 		}
+
+		// DEBUG: Log what we parsed
+		p.logger.WithFields(logrus.Fields{
+			"entryIndex": idx,
+			"modelCount": len(parsedModels),
+		}).Info("Parsed ledger entry")
 
 		// Upsert each model to database
 		for _, model := range parsedModels {

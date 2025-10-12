@@ -34,50 +34,46 @@ func ParseLedgerEntry(xdrString string) ([]interface{}, error) {
 	keyHash := sha256.Sum256(bin)
 	hexKey := hex.EncodeToString(keyHash[:])
 
-	// Parse based on entry type
-	if key.ContractData != nil {
+	// Parse based on entry.Data.Type (not key type)
+	// The key tells us what we requested, but entry.Data tells us what we got
+	switch entry.Data.Type {
+	case xdr.LedgerEntryTypeContractData:
 		model := ParseContractDataEntry(entry, hexKey)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.Account != nil {
+	case xdr.LedgerEntryTypeAccount:
 		model := ParseAccountEntry(entry)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.TrustLine != nil {
+	case xdr.LedgerEntryTypeTrustline:
 		model := ParseTrustLineEntry(entry)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.Offer != nil {
+	case xdr.LedgerEntryTypeOffer:
 		model := ParseOfferEntry(entry)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.Data != nil {
+	case xdr.LedgerEntryTypeData:
 		model := ParseDataEntry(entry)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.ClaimableBalance != nil {
+	case xdr.LedgerEntryTypeClaimableBalance:
 		model := ParseClaimableBalanceEntry(entry)
 		if model != nil {
 			results = append(results, model)
 		}
-	}
 
-	if key.LiquidityPool != nil {
+	case xdr.LedgerEntryTypeLiquidityPool:
 		model := ParseLiquidityPoolEntry(entry)
 		if model != nil {
 			results = append(results, model)

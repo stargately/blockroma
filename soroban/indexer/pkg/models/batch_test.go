@@ -168,22 +168,25 @@ func TestBatchUpsertOperations(t *testing.T) {
 
 	operations := []*Operation{
 		{
-			ID:             "tx1_0",
-			TxHash:         "tx1",
-			OperationIndex: 0,
-			OperationType:  "payment",
+			ID:               "tx1_0",
+			TxHash:           "tx1",
+			OperationIndex:   0,
+			OperationType:    "payment",
+			OperationDetails: []byte(`{"destination":"GABC","amount":"100"}`),
 		},
 		{
-			ID:             "tx1_1",
-			TxHash:         "tx1",
-			OperationIndex: 1,
-			OperationType:  "create_account",
+			ID:               "tx1_1",
+			TxHash:           "tx1",
+			OperationIndex:   1,
+			OperationType:    "create_account",
+			OperationDetails: []byte(`{"destination":"GDEF","starting_balance":"10"}`),
 		},
 		{
-			ID:             "tx2_0",
-			TxHash:         "tx2",
-			OperationIndex: 0,
-			OperationType:  "invoke_host_function",
+			ID:               "tx2_0",
+			TxHash:           "tx2",
+			OperationIndex:   0,
+			OperationType:    "invoke_host_function",
+			OperationDetails: []byte(`{"function":"transfer"}`),
 		},
 	}
 
@@ -196,6 +199,19 @@ func TestBatchUpsertOperations(t *testing.T) {
 	db.Model(&Operation{}).Count(&count)
 	if count != 3 {
 		t.Errorf("Expected 3 operations, got %d", count)
+	}
+
+	// Test update
+	operations[0].OperationDetails = []byte(`{"destination":"GXYZ","amount":"200"}`)
+	err = BatchUpsertOperations(db, operations[:1])
+	if err != nil {
+		t.Fatalf("BatchUpsertOperations update failed: %v", err)
+	}
+
+	var op Operation
+	db.Where("id = ?", "tx1_0").First(&op)
+	if string(op.OperationDetails) != `{"destination":"GXYZ","amount":"200"}` {
+		t.Errorf("Expected updated details, got %s", string(op.OperationDetails))
 	}
 }
 

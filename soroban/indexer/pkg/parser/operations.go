@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -217,11 +218,13 @@ func parseOperationDetails(body xdr.OperationBody) (map[string]interface{}, erro
 			switch op.Asset.Type {
 			case xdr.AssetTypeAssetTypeCreditAlphanum4:
 				if op.Asset.AssetCode4 != nil {
-					assetCode = string((*op.Asset.AssetCode4)[:])
+					// Trim null bytes from asset code
+					assetCode = string(bytes.TrimRight((*op.Asset.AssetCode4)[:], "\x00"))
 				}
 			case xdr.AssetTypeAssetTypeCreditAlphanum12:
 				if op.Asset.AssetCode12 != nil {
-					assetCode = string((*op.Asset.AssetCode12)[:])
+					// Trim null bytes from asset code
+					assetCode = string(bytes.TrimRight((*op.Asset.AssetCode12)[:], "\x00"))
 				}
 			}
 			details["asset"] = assetCode
@@ -396,10 +399,12 @@ func assetToMap(asset xdr.Asset) map[string]interface{} {
 	case xdr.AssetTypeAssetTypeNative:
 		result["code"] = "XLM"
 	case xdr.AssetTypeAssetTypeCreditAlphanum4:
-		result["code"] = string(asset.AlphaNum4.AssetCode[:])
+		// Trim null bytes from asset code
+		result["code"] = string(bytes.TrimRight(asset.AlphaNum4.AssetCode[:], "\x00"))
 		result["issuer"] = asset.AlphaNum4.Issuer.Address()
 	case xdr.AssetTypeAssetTypeCreditAlphanum12:
-		result["code"] = string(asset.AlphaNum12.AssetCode[:])
+		// Trim null bytes from asset code
+		result["code"] = string(bytes.TrimRight(asset.AlphaNum12.AssetCode[:], "\x00"))
 		result["issuer"] = asset.AlphaNum12.Issuer.Address()
 	}
 
@@ -415,12 +420,14 @@ func changeTrustAssetToMap(asset xdr.ChangeTrustAsset) map[string]interface{} {
 		result["code"] = "XLM"
 	case xdr.AssetTypeAssetTypeCreditAlphanum4:
 		if asset.AlphaNum4 != nil {
-			result["code"] = string(asset.AlphaNum4.AssetCode[:])
+			// Trim null bytes from asset code
+			result["code"] = string(bytes.TrimRight(asset.AlphaNum4.AssetCode[:], "\x00"))
 			result["issuer"] = asset.AlphaNum4.Issuer.Address()
 		}
 	case xdr.AssetTypeAssetTypeCreditAlphanum12:
 		if asset.AlphaNum12 != nil {
-			result["code"] = string(asset.AlphaNum12.AssetCode[:])
+			// Trim null bytes from asset code
+			result["code"] = string(bytes.TrimRight(asset.AlphaNum12.AssetCode[:], "\x00"))
 			result["issuer"] = asset.AlphaNum12.Issuer.Address()
 		}
 	case xdr.AssetTypeAssetTypePoolShare:

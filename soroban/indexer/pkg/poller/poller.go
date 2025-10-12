@@ -228,16 +228,17 @@ func (p *Poller) poll(ctx context.Context) error {
 
 			txCount++
 
-			// Parse and store all operations from this transaction
+			// Parse and collect operations from this transaction
 			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
 			if err != nil {
 				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse operations")
 			} else {
-				for _, op := range operations {
-					if err := models.UpsertOperation(tx, op); err != nil {
-						p.logger.WithError(err).WithField("opID", op.ID).Warn("Failed to upsert operation")
+				// Batch upsert all operations for this transaction
+				if len(operations) > 0 {
+					if err := models.BatchUpsertOperations(tx, operations); err != nil {
+						p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to batch upsert operations")
 					} else {
-						operationCount++
+						operationCount += len(operations)
 					}
 				}
 			}
@@ -938,16 +939,17 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 
 			txCount++
 
-			// Parse and store all operations from this transaction
+			// Parse and collect operations from this transaction
 			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
 			if err != nil {
 				p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to parse operations")
 			} else {
-				for _, op := range operations {
-					if err := models.UpsertOperation(tx, op); err != nil {
-						p.logger.WithError(err).WithField("opID", op.ID).Warn("Failed to upsert operation")
+				// Batch upsert all operations for this transaction
+				if len(operations) > 0 {
+					if err := models.BatchUpsertOperations(tx, operations); err != nil {
+						p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to batch upsert operations")
 					} else {
-						operationCount++
+						operationCount += len(operations)
 					}
 				}
 			}

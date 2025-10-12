@@ -284,12 +284,12 @@ func createIndexes(db *gorm.DB) error {
 			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_contract_id ON token_operations (contract_id)",
 		},
 		{
-			name:  "idx_token_operations_from_address",
-			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_from_address ON token_operations (from_address)",
+			name:  "idx_token_operations_from",
+			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_from ON token_operations (\"from\")",
 		},
 		{
-			name:  "idx_token_operations_to_address",
-			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_to_address ON token_operations (to_address)",
+			name:  "idx_token_operations_to",
+			query: "CREATE INDEX IF NOT EXISTS idx_token_operations_to ON token_operations (\"to\")",
 		},
 	}
 

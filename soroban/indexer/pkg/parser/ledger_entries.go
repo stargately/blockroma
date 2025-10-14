@@ -97,9 +97,19 @@ func ParseContractDataEntry(entry xdr.LedgerEntry, keyHash string) *models.Contr
 	keyXDR, _ := xdr.MarshalBase64(contractData.Key)
 	valXDR, _ := xdr.MarshalBase64(contractData.Val)
 
-	// Parse key and value to JSON
-	keyJSON := ScValToInterface(contractData.Key)
-	valJSON := ScValToInterface(contractData.Val)
+	// Convert key and value to interface{} first
+	keyInterface := ScValToInterface(contractData.Key)
+	valInterface := ScValToInterface(contractData.Val)
+
+	// Marshal to JSON bytes for JSONB storage
+	keyBytes, err := json.Marshal(keyInterface)
+	if err != nil {
+		return nil // Return nil on error
+	}
+	valBytes, err := json.Marshal(valInterface)
+	if err != nil {
+		return nil // Return nil on error
+	}
 
 	durability := "persistent"
 	if contractData.Durability == xdr.ContractDataDurabilityTemporary {
@@ -109,9 +119,9 @@ func ParseContractDataEntry(entry xdr.LedgerEntry, keyHash string) *models.Contr
 	return &models.ContractDataEntry{
 		KeyHash:    keyHash,
 		ContractID: contractID,
-		Key:        keyJSON,
+		Key:        models.JSONB(keyBytes),
 		KeyXdr:     keyXDR,
-		Val:        valJSON,
+		Val:        models.JSONB(valBytes),
 		ValXdr:     valXDR,
 		Durability: durability,
 	}

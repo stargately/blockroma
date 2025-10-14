@@ -65,8 +65,6 @@ services:
     container_name: stellar-indexer
     restart: unless-stopped
     depends_on:
-      stellar-rpc:
-        condition: service_healthy
       postgres:
         condition: service_healthy
     environment:

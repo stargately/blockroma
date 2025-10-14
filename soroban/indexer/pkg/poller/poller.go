@@ -195,10 +195,9 @@ func (p *Poller) poll(ctx context.Context) error {
 				value,
 			); tokenOp != nil {
 				if err := models.UpsertTokenOperation(tx, tokenOp); err != nil {
-					p.logger.WithError(err).WithField("eventID", event.ID).Warn("Failed to upsert token operation")
-				} else {
-					tokenOpCount++
+					return fmt.Errorf("upsert token operation: %w", err)
 				}
+				tokenOpCount++
 			}
 
 			// Track unique tx hashes for transaction fetching
@@ -211,8 +210,8 @@ func (p *Poller) poll(ctx context.Context) error {
 		txCount := 0
 		operationCount := 0
 		contractCodeCount := 0
-		claimableBalanceIDs := make(map[string]bool)
-		accountAddresses := make(map[string]bool)
+		contractDataCount := 0
+		txWithMetaCount := 0
 
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
@@ -265,9 +264,53 @@ func (p *Poller) poll(ctx context.Context) error {
 
 			txCount++
 
-			// Extract source account for ledger entry processing
-			if dbTx.SourceAccount != nil && *dbTx.SourceAccount != "" {
-				accountAddresses[*dbTx.SourceAccount] = true
+			// Extract contract data from transaction metadata (passive indexing)
+			// This captures contract storage changes from successful transactions
+			if rpcTx.ResultMetaXdr != "" {
+				txWithMetaCount++
+				contractDataEntries, err := parser.ExtractContractDataFromMeta(txHash, rpcTx.ResultMetaXdr)
+				if err != nil {
+					p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to extract contract data from meta")
+				} else if len(contractDataEntries) > 0 {
+					p.logger.WithFields(logrus.Fields{
+						"txHash":      txHash,
+						"entryCount":  len(contractDataEntries),
+					}).Info("Extracted contract data from transaction metadata")
+
+					for _, entry := range contractDataEntries {
+						if err := models.UpsertContractDataEntry(tx, entry); err != nil {
+							p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to upsert contract data entry from meta")
+						} else {
+							contractDataCount++
+
+							// Unmarshal JSONB bytes back to interface{} for parsing
+							var keyInterface interface{}
+							var valInterface interface{}
+							if err := json.Unmarshal(entry.Key, &keyInterface); err != nil {
+								p.logger.WithError(err).WithField("txHash", txHash).Debug("Failed to unmarshal key JSON")
+								continue
+							}
+							if err := json.Unmarshal(entry.Val, &valInterface); err != nil {
+								p.logger.WithError(err).WithField("txHash", txHash).Debug("Failed to unmarshal val JSON")
+								continue
+							}
+
+							// Try to parse token metadata from this contract data entry
+							if metadata := parser.ParseTokenMetadata(entry.ContractID, keyInterface, valInterface); metadata != nil {
+								if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
+									p.logger.WithError(err).WithField("contractID", entry.ContractID).Warn("Failed to upsert token metadata from meta")
+								}
+							}
+
+							// Try to parse token balance from this contract data entry
+							if balance := parser.ParseTokenBalance(entry.ContractID, keyInterface, valInterface); balance != nil {
+								if err := models.UpsertTokenBalance(tx, balance); err != nil {
+									p.logger.WithError(err).WithField("contractID", entry.ContractID).Warn("Failed to upsert token balance from meta")
+								}
+							}
+						}
+					}
+				}
 			}
 
 			// Parse and collect operations from this transaction
@@ -298,13 +341,6 @@ func (p *Poller) poll(ctx context.Context) error {
 					}
 				}
 			}
-
-			// Extract claimable balance IDs from transaction operations
-			if balanceIDs, err := parser.ExtractClaimableBalanceIDs(rpcTx.EnvelopeXdr); err == nil {
-				for _, balanceID := range balanceIDs {
-					claimableBalanceIDs[balanceID] = true
-				}
-			}
 		}
 
 		// Process contract data for discovered contracts
@@ -314,26 +350,8 @@ func (p *Poller) poll(ctx context.Context) error {
 			// Don't fail the whole batch if contract data processing fails
 		}
 
-		// Process ledger entries for discovered accounts
-		// This fetches account details, trustlines, offers, etc.
-		// Account addresses were collected during transaction processing above
-		if len(accountAddresses) > 0 {
-			p.logger.WithField("accountCount", len(accountAddresses)).Info("Processing account ledger entries")
-			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
-				p.logger.WithError(err).Warn("Failed to process ledger entries")
-				// Don't fail the whole batch if ledger entry processing fails
-			}
-		} else {
-			p.logger.Debug("No account addresses found in transactions")
-		}
-
-		// Process claimable balance ledger entries
-		if len(claimableBalanceIDs) > 0 {
-			if err := p.processClaimableBalances(ctx, tx, claimableBalanceIDs); err != nil {
-				p.logger.WithError(err).Warn("Failed to process claimable balances")
-				// Don't fail the whole batch if claimable balance processing fails
-			}
-		}
+		// Note: Account/trustline/offer/claimable balance processing removed - Soroban RPC returns corrupted XDR
+		// See SOROBAN_RPC_LIMITATIONS.md for details - these tables cannot be populated via Soroban RPC
 
 		// Update cursor to latest ledger
 		if err := models.UpdateCursor(tx, latestLedger); err != nil {
@@ -343,8 +361,10 @@ func (p *Poller) poll(ctx context.Context) error {
 		p.logger.WithFields(logrus.Fields{
 			"events":        eventCount,
 			"transactions":  txCount,
+			"txWithMeta":    txWithMetaCount,
 			"operations":    operationCount,
 			"contractCode":  contractCodeCount,
+			"contractData":  contractDataCount,
 			"tokenOps":      tokenOpCount,
 			"contracts":     len(contractIDs),
 			"ledger":        latestLedger,
@@ -369,10 +389,12 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 	// For each contract, proactively fetch its metadata and balance data
 	for contractID := range contractIDs {
 		// Step 1: Fetch contract metadata (token name, symbol, decimals)
+		p.logger.WithField("contractID", contractID).Info("Attempting to fetch contract metadata")
 		if err := p.fetchContractMetadata(ctx, tx, contractID); err != nil {
-			p.logger.WithError(err).WithField("contractID", contractID).Debug("Failed to fetch contract metadata")
+			p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to fetch contract metadata")
 		} else {
 			metadataCount++
+			p.logger.WithField("contractID", contractID).Info("Successfully fetched contract metadata")
 		}
 
 		// Step 2: Query existing contract data entries for this contract (passive indexing)
@@ -385,8 +407,20 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 		for _, entry := range entries {
 			contractDataCount++
 
+			// Unmarshal JSONB bytes back to interface{} for parsing
+			var keyInterface interface{}
+			var valInterface interface{}
+			if err := json.Unmarshal(entry.Key, &keyInterface); err != nil {
+				p.logger.WithError(err).WithField("contractID", contractID).Debug("Failed to unmarshal key JSON")
+				continue
+			}
+			if err := json.Unmarshal(entry.Val, &valInterface); err != nil {
+				p.logger.WithError(err).WithField("contractID", contractID).Debug("Failed to unmarshal val JSON")
+				continue
+			}
+
 			// Try to parse token metadata from existing data
-			if metadata := parser.ParseTokenMetadata(contractID, entry.Key, entry.Val); metadata != nil {
+			if metadata := parser.ParseTokenMetadata(contractID, keyInterface, valInterface); metadata != nil {
 				if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
 					p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to upsert token metadata")
 				} else {
@@ -395,7 +429,7 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 			}
 
 			// Try to parse token balance from existing data
-			if balance := parser.ParseTokenBalance(contractID, entry.Key, entry.Val); balance != nil {
+			if balance := parser.ParseTokenBalance(contractID, keyInterface, valInterface); balance != nil {
 				if err := models.UpsertTokenBalance(tx, balance); err != nil {
 					p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to upsert token balance")
 				} else {
@@ -441,16 +475,29 @@ func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contrac
 
 	var ledgerEntry xdr.LedgerEntry
 	if err := xdr.SafeUnmarshal(data, &ledgerEntry); err != nil {
-		return fmt.Errorf("unmarshal ledger entry: %w", err)
+		// Known issue: Soroban RPC sometimes returns account entries with corrupted XDR
+		// when querying for contract data. Treat this as "contract data not found".
+		// See SOROBAN_RPC_LIMITATIONS.md for details.
+		return fmt.Errorf("contract data not found")
 	}
 
 	// Parse and store contract data entry
 	if ledgerEntry.Data.Type == xdr.LedgerEntryTypeContractData {
 		contractData := ledgerEntry.Data.ContractData
 
-		// Convert key and value to JSON using parser function
-		keyJSON := parser.ScValToInterface(contractData.Key)
-		valJSON := parser.ScValToInterface(contractData.Val)
+		// Convert key and value to interface{} first
+		keyInterface := parser.ScValToInterface(contractData.Key)
+		valInterface := parser.ScValToInterface(contractData.Val)
+
+		// Marshal to JSON bytes for JSONB storage
+		keyBytes, err := json.Marshal(keyInterface)
+		if err != nil {
+			return fmt.Errorf("marshal key to JSON: %w", err)
+		}
+		valBytes, err := json.Marshal(valInterface)
+		if err != nil {
+			return fmt.Errorf("marshal val to JSON: %w", err)
+		}
 
 		// Create ledger key hash
 		key, _ := ledgerEntry.LedgerKey()
@@ -470,9 +517,9 @@ func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contrac
 		contractDataEntry := &models.ContractDataEntry{
 			KeyHash:    hexKey,
 			ContractID: contractID,
-			Key:        keyJSON,
+			Key:        models.JSONB(keyBytes),
 			KeyXdr:     keyXDR,
-			Val:        valJSON,
+			Val:        models.JSONB(valBytes),
 			ValXdr:     valXDR,
 			Durability: durability,
 		}
@@ -481,8 +528,8 @@ func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contrac
 			return fmt.Errorf("upsert contract data entry: %w", err)
 		}
 
-		// Try to parse token metadata
-		if metadata := parser.ParseTokenMetadata(contractID, keyJSON, valJSON); metadata != nil {
+		// Try to parse token metadata (pass interface{} values, not JSONB bytes)
+		if metadata := parser.ParseTokenMetadata(contractID, keyInterface, valInterface); metadata != nil {
 			if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
 				return fmt.Errorf("upsert token metadata: %w", err)
 			}
@@ -555,7 +602,10 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 		// Parse the ledger entry
 		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
 		if err != nil {
-			p.logger.WithError(err).Warn("Failed to parse ledger entry")
+			// Known issue: Soroban RPC returns corrupted XDR for account entries
+			// See SOROBAN_RPC_LIMITATIONS.md for details
+			// Only log at Debug level to avoid flooding logs
+			p.logger.WithError(err).Debug("Failed to parse ledger entry (expected for account entries from Soroban RPC)")
 			continue
 		}
 
@@ -563,7 +613,7 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 		p.logger.WithFields(logrus.Fields{
 			"entryIndex": idx,
 			"modelCount": len(parsedModels),
-		}).Info("Parsed ledger entry")
+		}).Debug("Parsed ledger entry")
 
 		// Upsert each model to database
 		for _, model := range parsedModels {
@@ -960,7 +1010,7 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 				value,
 			); tokenOp != nil {
 				if err := models.UpsertTokenOperation(tx, tokenOp); err != nil {
-					p.logger.WithError(err).WithField("eventID", event.ID).Warn("Failed to upsert token operation")
+					return fmt.Errorf("upsert token operation: %w", err)
 				}
 			}
 

@@ -404,3 +404,267 @@ func setupBenchDB(b *testing.B) *gorm.DB {
 func strPtr(s string) *string {
 	return &s
 }
+
+// TestBatchFunctionsWithinTransaction tests that all batch functions work correctly within a transaction
+// This is critical because we removed the transaction wrappers from batch functions
+func TestBatchFunctionsWithinTransaction(t *testing.T) {
+	db := setupBatchTestDB(t)
+
+	// Test all batch functions within a single transaction
+	err := db.Transaction(func(tx *gorm.DB) error {
+		// Test BatchUpsertEvents
+		events := []*Event{
+			{
+				ID:                    "event_tx1",
+				EventType:             "contract",
+				Ledger:                100,
+				LastModifiedLedgerSeq: 100,
+			},
+		}
+		if err := BatchUpsertEvents(tx, events); err != nil {
+			return err
+		}
+
+		// Test BatchUpsertTransactions
+		fee := int32(100)
+		ledger := uint32(100)
+		transactions := []*Transaction{
+			{
+				ID:     "tx_tx1",
+				Fee:    &fee,
+				Ledger: &ledger,
+				Status: "SUCCESS",
+			},
+		}
+		if err := BatchUpsertTransactions(tx, transactions); err != nil {
+			return err
+		}
+
+		// Test BatchUpsertOperations
+		operations := []*Operation{
+			{
+				ID:               "op_tx1",
+				TxHash:           "tx_tx1",
+				OperationIndex:   0,
+				OperationType:    "payment",
+				OperationDetails: []byte(`{}`),
+			},
+		}
+		if err := BatchUpsertOperations(tx, operations); err != nil {
+			return err
+		}
+
+		// Test BatchUpsertTokenOperations
+		amount := &util.Int128{}
+		tokenOps := []*TokenOperation{
+			{
+				ID:         "tokenop_tx1",
+				ContractID: "token1",
+				Type:       "transfer",
+				From:       "addr1",
+				Amount:     amount,
+				Ledger:     100,
+			},
+		}
+		if err := BatchUpsertTokenOperations(tx, tokenOps); err != nil {
+			return err
+		}
+
+		// Test BatchUpsertContractCode
+		codes := []*ContractCode{
+			{
+				Hash:       "hash_tx1",
+				Wasm:       []byte{0x00},
+				DeployedAt: time.Now(),
+				Ledger:     100,
+				TxHash:     "tx_tx1",
+				SizeBytes:  1,
+			},
+		}
+		if err := BatchUpsertContractCode(tx, codes); err != nil {
+			return err
+		}
+
+		// Test BatchUpsertAccountEntries
+		balance := int64(1000000)
+		seqNum := int64(12345)
+		extJSON := []byte(`{"v":0}`)
+		accounts := []*AccountEntry{
+			{
+				AccountID:     "account_tx1",
+				Balance:       balance,
+				SeqNum:        seqNum,
+				NumSubEntries: 0,
+				Flags:         0,
+				Ext:           extJSON,
+			},
+		}
+		if err := BatchUpsertAccountEntries(tx, accounts); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("Transaction with batch functions failed: %v", err)
+	}
+
+	// Verify all records were inserted
+	var eventCount, txCount, opCount, tokenOpCount, codeCount, accountCount int64
+	db.Model(&Event{}).Count(&eventCount)
+	db.Model(&Transaction{}).Count(&txCount)
+	db.Model(&Operation{}).Count(&opCount)
+	db.Model(&TokenOperation{}).Count(&tokenOpCount)
+	db.Model(&ContractCode{}).Count(&codeCount)
+	db.Model(&AccountEntry{}).Count(&accountCount)
+
+	if eventCount != 1 {
+		t.Errorf("Expected 1 event, got %d", eventCount)
+	}
+	if txCount != 1 {
+		t.Errorf("Expected 1 transaction, got %d", txCount)
+	}
+	if opCount != 1 {
+		t.Errorf("Expected 1 operation, got %d", opCount)
+	}
+	if tokenOpCount != 1 {
+		t.Errorf("Expected 1 token operation, got %d", tokenOpCount)
+	}
+	if codeCount != 1 {
+		t.Errorf("Expected 1 contract code, got %d", codeCount)
+	}
+	if accountCount != 1 {
+		t.Errorf("Expected 1 account entry, got %d", accountCount)
+	}
+}
+
+// TestBatchFunctionsTransactionRollback tests that rollback works correctly with batch functions
+func TestBatchFunctionsTransactionRollback(t *testing.T) {
+	db := setupBatchTestDB(t)
+
+	// Attempt transaction that will be rolled back
+	err := db.Transaction(func(tx *gorm.DB) error {
+		events := []*Event{
+			{
+				ID:                    "event_rollback",
+				EventType:             "contract",
+				Ledger:                100,
+				LastModifiedLedgerSeq: 100,
+			},
+		}
+		if err := BatchUpsertEvents(tx, events); err != nil {
+			return err
+		}
+
+		operations := []*Operation{
+			{
+				ID:               "op_rollback",
+				TxHash:           "tx_rollback",
+				OperationIndex:   0,
+				OperationType:    "payment",
+				OperationDetails: []byte(`{}`),
+			},
+		}
+		if err := BatchUpsertOperations(tx, operations); err != nil {
+			return err
+		}
+
+		// Force rollback
+		return gorm.ErrInvalidTransaction
+	})
+
+	if err == nil {
+		t.Error("Expected transaction to fail")
+	}
+
+	// Verify nothing was inserted
+	var eventCount, opCount int64
+	db.Model(&Event{}).Count(&eventCount)
+	db.Model(&Operation{}).Count(&opCount)
+
+	if eventCount != 0 {
+		t.Errorf("Expected 0 events after rollback, got %d", eventCount)
+	}
+	if opCount != 0 {
+		t.Errorf("Expected 0 operations after rollback, got %d", opCount)
+	}
+}
+
+// TestBatchFunctionsNestedTransaction tests that batch functions work in nested transaction contexts
+// This test ensures our fix doesn't break if GORM creates savepoints
+func TestBatchFunctionsNestedTransaction(t *testing.T) {
+	db := setupBatchTestDB(t)
+
+	// Outer transaction
+	err := db.Transaction(func(tx1 *gorm.DB) error {
+		events1 := []*Event{
+			{
+				ID:                    "event_outer",
+				EventType:             "contract",
+				Ledger:                100,
+				LastModifiedLedgerSeq: 100,
+			},
+		}
+		if err := BatchUpsertEvents(tx1, events1); err != nil {
+			return err
+		}
+
+		// Inner transaction (GORM will create a savepoint)
+		return tx1.Transaction(func(tx2 *gorm.DB) error {
+			events2 := []*Event{
+				{
+					ID:                    "event_inner",
+					EventType:             "contract",
+					Ledger:                101,
+					LastModifiedLedgerSeq: 101,
+				},
+			}
+			return BatchUpsertEvents(tx2, events2)
+		})
+	})
+
+	if err != nil {
+		t.Fatalf("Nested transaction failed: %v", err)
+	}
+
+	// Verify both events were inserted
+	var count int64
+	db.Model(&Event{}).Count(&count)
+	if count != 2 {
+		t.Errorf("Expected 2 events, got %d", count)
+	}
+}
+
+// TestBatchFunctionsLargeBatchWithinTransaction tests large batches within a transaction
+func TestBatchFunctionsLargeBatchWithinTransaction(t *testing.T) {
+	db := setupBatchTestDB(t)
+
+	// Create 500 operations (will be split into multiple batches)
+	operations := make([]*Operation, 500)
+	for i := 0; i < 500; i++ {
+		operations[i] = &Operation{
+			ID:               string(rune('A'+i%26)) + string(rune('0'+i)),
+			TxHash:           "tx_large",
+			OperationIndex:   int32(i),
+			OperationType:    "payment",
+			OperationDetails: []byte(`{}`),
+		}
+	}
+
+	// Insert within transaction
+	err := db.Transaction(func(tx *gorm.DB) error {
+		return BatchUpsertOperations(tx, operations)
+	})
+
+	if err != nil {
+		t.Fatalf("Large batch within transaction failed: %v", err)
+	}
+
+	// Verify all operations were inserted
+	var count int64
+	db.Model(&Operation{}).Count(&count)
+	if count != 500 {
+		t.Errorf("Expected 500 operations, got %d", count)
+	}
+}

@@ -225,15 +225,24 @@ func ScValToInterface(val xdr.ScVal) interface{} {
 		return val.MustI64()
 	case xdr.ScValTypeScvU128:
 		parts := val.MustU128()
-		return map[string]interface{}{
-			"lo": uint64(parts.Lo),
-			"hi": uint64(parts.Hi),
-		}
+		// Convert to big integer string for consistency with soroban-rpc-indexer
+		hi := uint64(parts.Hi)
+		lo := uint64(parts.Lo)
+		result := (hi << 64) | lo
+		return fmt.Sprintf("%d", result)
 	case xdr.ScValTypeScvI128:
 		parts := val.MustI128()
-		return map[string]interface{}{
-			"lo": uint64(parts.Lo),
-			"hi": int64(parts.Hi),
+		// Convert to big integer string for consistency with soroban-rpc-indexer
+		hi := int64(parts.Hi)
+		lo := uint64(parts.Lo)
+		// Note: This is simplified; proper int128 handling needs big.Int for large values
+		if hi >= 0 {
+			result := (uint64(hi) << 64) | lo
+			return fmt.Sprintf("%d", result)
+		} else {
+			// For negative numbers, use two's complement
+			result := (uint64(hi) << 64) | lo
+			return fmt.Sprintf("%d", int64(result))
 		}
 	case xdr.ScValTypeScvBytes:
 		return val.MustBytes()
@@ -250,21 +259,58 @@ func ScValToInterface(val xdr.ScVal) interface{} {
 		return result
 	case xdr.ScValTypeScvMap:
 		m := *val.MustMap()
-		result := make(map[string]interface{})
+		// Convert to array of key-value pairs (like soroban-rpc-indexer)
+		result := make([]interface{}, 0, len(m))
 		for _, entry := range m {
 			key := ScValToInterface(entry.Key)
 			val := ScValToInterface(entry.Val)
-			if keyStr, ok := key.(string); ok {
-				result[keyStr] = val
-			}
+			result = append(result, map[string]interface{}{
+				"key":   key,
+				"value": val,
+			})
 		}
 		return result
 	case xdr.ScValTypeScvAddress:
 		addr := val.MustAddress()
 		addrStr, _ := addr.String()
 		return addrStr
+	case xdr.ScValTypeScvLedgerKeyContractInstance:
+		// Return a proper JSON object for contract instance key
+		return map[string]interface{}{
+			"type": "LedgerKeyContractInstance",
+		}
+	case xdr.ScValTypeScvContractInstance:
+		// Parse contract instance to match expected format
+		instance := val.MustInstance()
+		data := make(map[string]interface{})
+
+		// Add executable info
+		executable := make(map[string]interface{})
+		executable["type"] = instance.Executable.Type.String()
+		if instance.Executable.WasmHash != nil {
+			executable["wasmHash"] = hex.EncodeToString((*instance.Executable.WasmHash)[:])
+		}
+		data["executable"] = executable
+
+		// Add storage (convert ScMap to array of key-value pairs)
+		if instance.Storage != nil {
+			storage := make([]interface{}, 0, len(*instance.Storage))
+			for _, entry := range *instance.Storage {
+				key := ScValToInterface(entry.Key)
+				val := ScValToInterface(entry.Val)
+				storage = append(storage, map[string]interface{}{
+					"key":   key,
+					"value": val,
+				})
+			}
+			data["storage"] = storage
+		}
+
+		return data
 	default:
-		return val.String()
+		// For unknown types, return nil instead of .String() to avoid invalid JSON
+		// val.String() can return Go syntax like "<nil>" which breaks JSON encoding
+		return nil
 	}
 }
 

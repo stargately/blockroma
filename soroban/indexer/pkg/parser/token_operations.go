@@ -131,11 +131,39 @@ func ParseTokenOperation(eventID string, contractID string, ledger uint32, ledge
 }
 
 // ParseTokenMetadata extracts token metadata from contract instance data
-// Key should be "ScvLedgerKeyContractInstance"
+// Key should be an object with type "LedgerKeyContractInstance" or the legacy string "ScvLedgerKeyContractInstance"
 // Value should be the contract instance structure
 func ParseTokenMetadata(contractID string, key interface{}, value interface{}) *models.TokenMetadata {
-	keyStr := fmt.Sprintf("%v", key)
-	if keyStr != "\"ScvLedgerKeyContractInstance\"" {
+	// Check if key is the contract instance key
+	isContractInstanceKey := false
+
+	switch k := key.(type) {
+	case string:
+		// Legacy format: plain string
+		if k == "ScvLedgerKeyContractInstance" || k == "\"ScvLedgerKeyContractInstance\"" {
+			isContractInstanceKey = true
+		}
+	case map[string]interface{}:
+		// New format: object with type field
+		if typeVal, ok := k["type"]; ok {
+			if typeStr, ok := typeVal.(string); ok && typeStr == "LedgerKeyContractInstance" {
+				isContractInstanceKey = true
+			}
+		}
+	default:
+		// Try to parse as JSON object
+		keyBytes, _ := json.Marshal(key)
+		var keyMap map[string]interface{}
+		if json.Unmarshal(keyBytes, &keyMap) == nil {
+			if typeVal, ok := keyMap["type"]; ok {
+				if typeStr, ok := typeVal.(string); ok && typeStr == "LedgerKeyContractInstance" {
+					isContractInstanceKey = true
+				}
+			}
+		}
+	}
+
+	if !isContractInstanceKey {
 		return nil
 	}
 
@@ -148,9 +176,25 @@ func ParseTokenMetadata(contractID string, key interface{}, value interface{}) *
 		Executable interface{} `json:"executable"`
 	}
 
-	valueBytes, _ := json.Marshal(value)
-	if err := json.Unmarshal(valueBytes, &instance); err != nil {
-		return nil
+	// Value might already be a map or need to be unmarshaled from JSON
+	switch v := value.(type) {
+	case map[string]interface{}:
+		// Already a map, marshal and unmarshal to fit the struct
+		valueBytes, _ := json.Marshal(v)
+		if err := json.Unmarshal(valueBytes, &instance); err != nil {
+			return nil
+		}
+	case string:
+		// It's a JSON string, unmarshal directly
+		if err := json.Unmarshal([]byte(v), &instance); err != nil {
+			return nil
+		}
+	default:
+		// Try to marshal and unmarshal
+		valueBytes, _ := json.Marshal(value)
+		if err := json.Unmarshal(valueBytes, &instance); err != nil {
+			return nil
+		}
 	}
 
 	metadata := &models.TokenMetadata{

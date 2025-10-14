@@ -1,5 +1,38 @@
 # Blockroma Soroban Indexer
 
+
+## For these tables please use horizon
+
+1. account_entries - Account balances, signers, thresholds
+2. trust_line_entries - Asset trustlines
+3. offer_entries - DEX order book
+4. data_entries - Account key-value storage
+5. claimable_balance_entries - Claimable balances (⚠️ low risk currently)
+6. liquidity_pool_entries - AMM pools
+
+
+
+
+
+✅ 9 Tables WORK (Soroban-Specific Data)
+
+1. events - Contract events via getEvents()
+2. transactions - Transaction data via
+   getTransaction()
+3. operations - Parsed from transaction XDR
+4. token_operations - SAC token transfers
+   extracted from events
+5. token_metadata - Token
+   name/symbol/decimals
+6. token_balances - Token holder balances
+7. contract_data_entries - Contract storage
+8. contract_code - WASM code
+9. cursor - Indexer state
+
+
+## Overview
+
+
 Standalone indexer for Stellar Soroban smart contract events and transactions. Polls Stellar RPC and writes data to PostgreSQL for analytics and querying.
 
 ## Architecture

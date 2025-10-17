@@ -223,11 +223,11 @@ func TestCircuitBreaker_MixedResults(t *testing.T) {
 	}
 
 	// Mix of successes and failures
-	cb.Call(ctx, errorFn)     // failure=1
-	cb.Call(ctx, successFn)   // failure=0 (reset)
-	cb.Call(ctx, errorFn)     // failure=1
-	cb.Call(ctx, errorFn)     // failure=2
-	cb.Call(ctx, successFn)   // failure=0 (reset)
+	cb.Call(ctx, errorFn)   // failure=1
+	cb.Call(ctx, successFn) // failure=0 (reset)
+	cb.Call(ctx, errorFn)   // failure=1
+	cb.Call(ctx, errorFn)   // failure=2
+	cb.Call(ctx, successFn) // failure=0 (reset)
 
 	// Circuit should still be closed
 	if cb.State() != StateClosed {

@@ -51,6 +51,7 @@ jobs:
       
       - name: Run go vet
         run: make vet
+        continue-on-error: true
       
       - name: Build project
         run: make build

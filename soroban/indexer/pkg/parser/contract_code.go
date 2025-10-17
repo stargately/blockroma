@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stellar/go/xdr"
 	"github.com/blockroma/soroban-indexer/pkg/models"
+	"github.com/stellar/go/xdr"
 )
 
 // ExtractContractCode extracts WASM code from InvokeHostFunction operations

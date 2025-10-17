@@ -140,15 +140,15 @@ func (db *DB) PoolStats() (map[string]interface{}, error) {
 	stats := sqlDB.Stats()
 
 	return map[string]interface{}{
-		"maxOpenConnections":  stats.MaxOpenConnections,
-		"openConnections":     stats.OpenConnections,
-		"inUse":               stats.InUse,
-		"idle":                stats.Idle,
-		"waitCount":           stats.WaitCount,
-		"waitDuration":        stats.WaitDuration,
-		"maxIdleClosed":       stats.MaxIdleClosed,
-		"maxIdleTimeClosed":   stats.MaxIdleTimeClosed,
-		"maxLifetimeClosed":   stats.MaxLifetimeClosed,
+		"maxOpenConnections": stats.MaxOpenConnections,
+		"openConnections":    stats.OpenConnections,
+		"inUse":              stats.InUse,
+		"idle":               stats.Idle,
+		"waitCount":          stats.WaitCount,
+		"waitDuration":       stats.WaitDuration,
+		"maxIdleClosed":      stats.MaxIdleClosed,
+		"maxIdleTimeClosed":  stats.MaxIdleTimeClosed,
+		"maxLifetimeClosed":  stats.MaxLifetimeClosed,
 	}, nil
 }
 

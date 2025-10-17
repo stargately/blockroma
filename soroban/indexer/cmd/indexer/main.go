@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/blockroma/soroban-indexer/pkg/client"
 	"github.com/blockroma/soroban-indexer/pkg/db"
 	"github.com/blockroma/soroban-indexer/pkg/poller"
 	"github.com/blockroma/soroban-indexer/pkg/worker"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {

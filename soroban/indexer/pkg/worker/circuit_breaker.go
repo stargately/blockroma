@@ -44,10 +44,10 @@ type FailureRecord struct {
 type CircuitBreaker struct {
 	mu sync.RWMutex
 
-	maxFailures     int           // Number of failures before opening
-	resetTimeout    time.Duration // Time to wait before attempting to close
-	halfOpenMax     int           // Max requests in half-open state
-	requestTimeout  time.Duration // Timeout for individual requests
+	maxFailures    int           // Number of failures before opening
+	resetTimeout   time.Duration // Time to wait before attempting to close
+	halfOpenMax    int           // Max requests in half-open state
+	requestTimeout time.Duration // Timeout for individual requests
 
 	state           CircuitBreakerState
 	failures        int
@@ -55,9 +55,9 @@ type CircuitBreaker struct {
 	halfOpenCount   int
 
 	// Enhanced logging
-	logger         Logger
-	recentErrors   []FailureRecord // Track recent errors for debugging
-	maxErrorHistory int            // Max errors to keep in history
+	logger          Logger
+	recentErrors    []FailureRecord // Track recent errors for debugging
+	maxErrorHistory int             // Max errors to keep in history
 }
 
 // NewCircuitBreaker creates a new circuit breaker

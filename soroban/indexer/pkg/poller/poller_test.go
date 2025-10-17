@@ -278,8 +278,8 @@ func TestAccountEntryUpsert(t *testing.T) {
 	entry2 := &models.AccountEntry{
 		AccountID:             testAddr,
 		Balance:               2000000, // Changed
-		SeqNum:                2,        // Changed
-		NumSubEntries:         1,        // Changed
+		SeqNum:                2,       // Changed
+		NumSubEntries:         1,       // Changed
 		Flags:                 0,
 		HomeDomain:            "newdomain.com", // Changed
 		Ext:                   ext2,
@@ -485,8 +485,8 @@ func TestGetLedgerEntriesResponse(t *testing.T) {
 	mockResp := client.GetLedgerEntriesResponse{
 		Entries: []client.LedgerEntryResult{
 			{
-				Key:              base64.StdEncoding.EncodeToString([]byte("test_key")),
-				XDR:              entryXDR,
+				Key:                base64.StdEncoding.EncodeToString([]byte("test_key")),
+				XDR:                entryXDR,
 				LastModifiedLedger: 12345,
 			},
 		},

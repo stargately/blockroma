@@ -349,7 +349,7 @@ func TestExtractContractCodeFromEnvelope_V0Envelope(t *testing.T) {
 	copy(accountID[:], []byte("test-account-id-for-v0-envelope-"))
 
 	tx := xdr.TransactionV0{
-		Operations: []xdr.Operation{op},
+		Operations:           []xdr.Operation{op},
 		SourceAccountEd25519: accountID,
 	}
 

@@ -91,7 +91,7 @@ func TestContractDataEntryJSONBSerialization(t *testing.T) {
 			entry: &ContractDataEntry{
 				KeyHash:    "hash4",
 				ContractID: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-				Key: mustMarshal("balances"),
+				Key:        mustMarshal("balances"),
 				Val: mustMarshal([]interface{}{
 					map[string]interface{}{"address": "G123", "balance": 100},
 					map[string]interface{}{"address": "G456", "balance": 200},
@@ -104,7 +104,7 @@ func TestContractDataEntryJSONBSerialization(t *testing.T) {
 			entry: &ContractDataEntry{
 				KeyHash:    "hash5",
 				ContractID: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-				Key: mustMarshal("counter"),
+				Key:        mustMarshal("counter"),
 				Val: mustMarshal(map[string]interface{}{
 					"count":       42,
 					"lastUpdated": 1234567890,

@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/blockroma/soroban-indexer/pkg/models"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/xdr"
-	"github.com/blockroma/soroban-indexer/pkg/models"
 )
 
 // ParseLedgerEntry parses an XDR ledger entry and returns appropriate model(s)

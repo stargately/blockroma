@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/blockroma/soroban-indexer/pkg/models"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/xdr"
-	"github.com/blockroma/soroban-indexer/pkg/models"
 )
 
 // ParseOperations extracts all operations from a transaction envelope XDR
@@ -35,7 +35,7 @@ func ParseOperations(txHash string, envelopeXdr string) ([]*models.Operation, er
 			// TransactionV0 has SourceAccountEd25519 (Uint256), convert to MuxedAccount
 			var ed25519Account xdr.Uint256 = v0.Tx.SourceAccountEd25519
 			sourceAccount = xdr.MuxedAccount{
-				Type: xdr.CryptoKeyTypeKeyTypeEd25519,
+				Type:    xdr.CryptoKeyTypeKeyTypeEd25519,
 				Ed25519: &ed25519Account,
 			}
 		}

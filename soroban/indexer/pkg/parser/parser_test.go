@@ -3,8 +3,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/stellar/go/xdr"
 	"github.com/blockroma/soroban-indexer/pkg/client"
+	"github.com/stellar/go/xdr"
 )
 
 func TestParseEvent(t *testing.T) {
@@ -69,19 +69,19 @@ func TestParseEvent(t *testing.T) {
 
 func TestScValToInterface(t *testing.T) {
 	tests := []struct {
-		name     string
-		scVal    xdr.ScVal
-		checkFn  func(interface{}) bool
+		name    string
+		scVal   xdr.ScVal
+		checkFn func(interface{}) bool
 	}{
 		{
-			name:     "bool true",
-			scVal:    xdr.ScVal{Type: xdr.ScValTypeScvBool, B: boolPtr(true)},
-			checkFn:  func(v interface{}) bool { return v == true },
+			name:    "bool true",
+			scVal:   xdr.ScVal{Type: xdr.ScValTypeScvBool, B: boolPtr(true)},
+			checkFn: func(v interface{}) bool { return v == true },
 		},
 		{
-			name:     "void",
-			scVal:    xdr.ScVal{Type: xdr.ScValTypeScvVoid},
-			checkFn:  func(v interface{}) bool { return v == nil },
+			name:    "void",
+			scVal:   xdr.ScVal{Type: xdr.ScValTypeScvVoid},
+			checkFn: func(v interface{}) bool { return v == nil },
 		},
 	}
 

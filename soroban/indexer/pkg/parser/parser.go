@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stellar/go/network"
-	"github.com/stellar/go/strkey"
-	"github.com/stellar/go/xdr"
 	"github.com/blockroma/soroban-indexer/pkg/client"
 	"github.com/blockroma/soroban-indexer/pkg/models"
 	"github.com/blockroma/soroban-indexer/pkg/models/util"
+	"github.com/stellar/go/network"
+	"github.com/stellar/go/strkey"
+	"github.com/stellar/go/xdr"
 )
 
 // ParseEvent converts RPC event to database model
@@ -172,7 +172,7 @@ func ParseTransactionWithHash(tx client.Transaction, txHash string) (*models.Tra
 	ledgerCreatedAt := tx.LedgerCloseTime
 
 	return &models.Transaction{
-		ID:               txHash,  // Use the provided hash parameter, not tx.Hash
+		ID:               txHash, // Use the provided hash parameter, not tx.Hash
 		Status:           tx.Status,
 		Ledger:           &ledger,
 		LedgerCreatedAt:  &ledgerCreatedAt,

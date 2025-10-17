@@ -487,7 +487,7 @@ func TestExtractClaimableBalanceIDs(t *testing.T) {
 	operation := xdr.Operation{
 		SourceAccount: nil,
 		Body: xdr.OperationBody{
-			Type:                     xdr.OperationTypeClaimClaimableBalance,
+			Type:                    xdr.OperationTypeClaimClaimableBalance,
 			ClaimClaimableBalanceOp: &claimOp,
 		},
 	}

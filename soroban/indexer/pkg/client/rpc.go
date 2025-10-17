@@ -144,9 +144,9 @@ type GetEventsRequest struct {
 }
 
 type EventFilter struct {
-	Type         *string  `json:"type,omitempty"`
-	ContractIDs  []string `json:"contractIds,omitempty"`
-	Topics       []string `json:"topics,omitempty"`
+	Type        *string  `json:"type,omitempty"`
+	ContractIDs []string `json:"contractIds,omitempty"`
+	Topics      []string `json:"topics,omitempty"`
 }
 
 type EventPaginationParams struct {
@@ -223,9 +223,9 @@ func (c *Client) GetTransactionsFromEvents(ctx context.Context, events []Event) 
 
 // NetworkInfo contains network information
 type NetworkInfo struct {
-	FriendbotURL      string `json:"friendbotUrl"`
-	Passphrase        string `json:"passphrase"`
-	ProtocolVersion   int    `json:"protocolVersion"`
+	FriendbotURL    string `json:"friendbotUrl"`
+	Passphrase      string `json:"passphrase"`
+	ProtocolVersion int    `json:"protocolVersion"`
 }
 
 // GetNetwork fetches network information
@@ -256,8 +256,8 @@ func (c *Client) Health(ctx context.Context) error {
 
 // LedgerEntryResult represents a ledger entry from RPC
 type LedgerEntryResult struct {
-	Key              string `json:"key"`
-	XDR              string `json:"xdr"`
+	Key                string `json:"key"`
+	XDR                string `json:"xdr"`
 	LastModifiedLedger uint32 `json:"lastModifiedLedgerSeq,omitempty"`
 	LiveUntilLedgerSeq uint32 `json:"liveUntilLedgerSeq,omitempty"`
 }

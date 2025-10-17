@@ -35,25 +35,25 @@ func TestBatchUpsertEvents(t *testing.T) {
 
 	events := []*Event{
 		{
-			ID:                       "event1",
-			EventType:                "contract",
-			Ledger:                   100,
-			ContractID:               "contract1",
-			LastModifiedLedgerSeq:    100,
+			ID:                    "event1",
+			EventType:             "contract",
+			Ledger:                100,
+			ContractID:            "contract1",
+			LastModifiedLedgerSeq: 100,
 		},
 		{
-			ID:                       "event2",
-			EventType:                "contract",
-			Ledger:                   101,
-			ContractID:               "contract2",
-			LastModifiedLedgerSeq:    101,
+			ID:                    "event2",
+			EventType:             "contract",
+			Ledger:                101,
+			ContractID:            "contract2",
+			LastModifiedLedgerSeq: 101,
 		},
 		{
-			ID:                       "event3",
-			EventType:                "contract",
-			Ledger:                   102,
-			ContractID:               "contract3",
-			LastModifiedLedgerSeq:    102,
+			ID:                    "event3",
+			EventType:             "contract",
+			Ledger:                102,
+			ContractID:            "contract3",
+			LastModifiedLedgerSeq: 102,
 		},
 	}
 
@@ -104,10 +104,10 @@ func TestBatchUpsertEvents_CustomBatchSize(t *testing.T) {
 	events := make([]*Event, 250)
 	for i := 0; i < 250; i++ {
 		events[i] = &Event{
-			ID:                       string(rune('A' + i%26)) + string(rune('0' + i)),
-			EventType:                "contract",
-			Ledger:                   int32(100 + i),
-			LastModifiedLedgerSeq:    uint32(100 + i),
+			ID:                    string(rune('A'+i%26)) + string(rune('0'+i)),
+			EventType:             "contract",
+			Ledger:                int32(100 + i),
+			LastModifiedLedgerSeq: uint32(100 + i),
 		}
 	}
 

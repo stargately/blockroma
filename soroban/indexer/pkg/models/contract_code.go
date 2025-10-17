@@ -8,14 +8,14 @@ import (
 
 // ContractCode represents deployed contract WASM code
 type ContractCode struct {
-	Hash        string    `gorm:"column:hash;primaryKey"`      // SHA256 hash of WASM bytecode
-	Wasm        []byte    `gorm:"column:wasm;type:bytea"`      // WASM bytecode
-	DeployedAt  time.Time `gorm:"column:deployed_at"`          // First time this code was seen
-	Ledger      uint32    `gorm:"column:ledger"`               // Ledger where first deployed
-	TxHash      string    `gorm:"column:tx_hash"`              // Transaction hash that deployed it
-	SizeBytes   int       `gorm:"column:size_bytes"`           // Size of WASM in bytes
-	CreatedAt   time.Time `gorm:"column:created_at"`
-	UpdatedAt   time.Time `gorm:"column:updated_at"`
+	Hash       string    `gorm:"column:hash;primaryKey"` // SHA256 hash of WASM bytecode
+	Wasm       []byte    `gorm:"column:wasm;type:bytea"` // WASM bytecode
+	DeployedAt time.Time `gorm:"column:deployed_at"`     // First time this code was seen
+	Ledger     uint32    `gorm:"column:ledger"`          // Ledger where first deployed
+	TxHash     string    `gorm:"column:tx_hash"`         // Transaction hash that deployed it
+	SizeBytes  int       `gorm:"column:size_bytes"`      // Size of WASM in bytes
+	CreatedAt  time.Time `gorm:"column:created_at"`
+	UpdatedAt  time.Time `gorm:"column:updated_at"`
 }
 
 // TableName returns the table name for ContractCode

@@ -75,7 +75,7 @@ func TestUpsertContractCode_Idempotent(t *testing.T) {
 		Hash:       "abc123", // Same hash
 		Wasm:       wasm,
 		DeployedAt: time.Now().UTC().Add(time.Hour),
-		Ledger:     12346, // Different ledger
+		Ledger:     12346,       // Different ledger
 		TxHash:     "tx-hash-2", // Different tx
 		SizeBytes:  len(wasm),
 	}
@@ -154,7 +154,7 @@ func TestGetAllContractCodes(t *testing.T) {
 	baseTime := time.Now().UTC()
 	for i := 0; i < 5; i++ {
 		code := &ContractCode{
-			Hash:       string(rune('a' + i)) + "hash",
+			Hash:       string(rune('a'+i)) + "hash",
 			Wasm:       []byte{byte(i)},
 			DeployedAt: baseTime.Add(time.Duration(i) * time.Minute),
 			Ledger:     uint32(100 + i),
@@ -182,7 +182,7 @@ func TestGetAllContractCodes_WithOffset(t *testing.T) {
 	baseTime := time.Now().UTC()
 	for i := 0; i < 5; i++ {
 		code := &ContractCode{
-			Hash:       string(rune('a' + i)) + "hash",
+			Hash:       string(rune('a'+i)) + "hash",
 			Wasm:       []byte{byte(i)},
 			DeployedAt: baseTime.Add(time.Duration(i) * time.Minute),
 			Ledger:     uint32(100 + i),

@@ -273,8 +273,8 @@ func (p *Poller) poll(ctx context.Context) error {
 					p.logger.WithError(err).WithField("txHash", txHash).Warn("Failed to extract contract data from meta")
 				} else if len(contractDataEntries) > 0 {
 					p.logger.WithFields(logrus.Fields{
-						"txHash":      txHash,
-						"entryCount":  len(contractDataEntries),
+						"txHash":     txHash,
+						"entryCount": len(contractDataEntries),
 					}).Info("Extracted contract data from transaction metadata")
 
 					for _, entry := range contractDataEntries {
@@ -359,16 +359,16 @@ func (p *Poller) poll(ctx context.Context) error {
 		}
 
 		p.logger.WithFields(logrus.Fields{
-			"events":        eventCount,
-			"transactions":  txCount,
-			"txWithMeta":    txWithMetaCount,
-			"operations":    operationCount,
-			"contractCode":  contractCodeCount,
-			"contractData":  contractDataCount,
-			"tokenOps":      tokenOpCount,
-			"contracts":     len(contractIDs),
-			"ledger":        latestLedger,
-			"duration":      time.Since(start),
+			"events":       eventCount,
+			"transactions": txCount,
+			"txWithMeta":   txWithMetaCount,
+			"operations":   operationCount,
+			"contractCode": contractCodeCount,
+			"contractData": contractDataCount,
+			"tokenOps":     tokenOpCount,
+			"contracts":    len(contractIDs),
+			"ledger":       latestLedger,
+			"duration":     time.Since(start),
 		}).Info("Batch processed successfully")
 
 		return nil
@@ -599,63 +599,63 @@ func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountA
 
 		// Process each ledger entry in this batch
 		for idx, entry := range resp.Entries {
-		// Parse the ledger entry
-		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
-		if err != nil {
-			// Known issue: Soroban RPC returns corrupted XDR for account entries
-			// See SOROBAN_RPC_LIMITATIONS.md for details
-			// Only log at Debug level to avoid flooding logs
-			p.logger.WithError(err).Debug("Failed to parse ledger entry (expected for account entries from Soroban RPC)")
-			continue
-		}
+			// Parse the ledger entry
+			parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
+			if err != nil {
+				// Known issue: Soroban RPC returns corrupted XDR for account entries
+				// See SOROBAN_RPC_LIMITATIONS.md for details
+				// Only log at Debug level to avoid flooding logs
+				p.logger.WithError(err).Debug("Failed to parse ledger entry (expected for account entries from Soroban RPC)")
+				continue
+			}
 
-		// DEBUG: Log what we parsed
-		p.logger.WithFields(logrus.Fields{
-			"entryIndex": idx,
-			"modelCount": len(parsedModels),
-		}).Debug("Parsed ledger entry")
+			// DEBUG: Log what we parsed
+			p.logger.WithFields(logrus.Fields{
+				"entryIndex": idx,
+				"modelCount": len(parsedModels),
+			}).Debug("Parsed ledger entry")
 
-		// Upsert each model to database
-		for _, model := range parsedModels {
-			switch m := model.(type) {
-			case *models.AccountEntry:
-				if err := models.UpsertAccountEntry(tx, m); err != nil {
-					p.logger.WithError(err).WithField("accountID", m.AccountID).Warn("Failed to upsert account entry")
-				} else {
-					accountCount++
-				}
-			case *models.TrustLineEntry:
-				if err := models.UpsertTrustLineEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert trustline entry")
-				} else {
-					trustlineCount++
-				}
-			case *models.OfferEntry:
-				if err := models.UpsertOfferEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert offer entry")
-				} else {
-					offerCount++
-				}
-			case *models.DataEntry:
-				if err := models.UpsertDataEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert data entry")
-				} else {
-					dataCount++
-				}
-			case *models.ClaimableBalanceEntry:
-				if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert claimable balance entry")
-				} else {
-					claimableBalanceCount++
-				}
-			case *models.LiquidityPoolEntry:
-				if err := models.UpsertLiquidityPoolEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert liquidity pool entry")
-				} else {
-					liquidityPoolCount++
+			// Upsert each model to database
+			for _, model := range parsedModels {
+				switch m := model.(type) {
+				case *models.AccountEntry:
+					if err := models.UpsertAccountEntry(tx, m); err != nil {
+						p.logger.WithError(err).WithField("accountID", m.AccountID).Warn("Failed to upsert account entry")
+					} else {
+						accountCount++
+					}
+				case *models.TrustLineEntry:
+					if err := models.UpsertTrustLineEntry(tx, m); err != nil {
+						p.logger.WithError(err).Warn("Failed to upsert trustline entry")
+					} else {
+						trustlineCount++
+					}
+				case *models.OfferEntry:
+					if err := models.UpsertOfferEntry(tx, m); err != nil {
+						p.logger.WithError(err).Warn("Failed to upsert offer entry")
+					} else {
+						offerCount++
+					}
+				case *models.DataEntry:
+					if err := models.UpsertDataEntry(tx, m); err != nil {
+						p.logger.WithError(err).Warn("Failed to upsert data entry")
+					} else {
+						dataCount++
+					}
+				case *models.ClaimableBalanceEntry:
+					if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
+						p.logger.WithError(err).Warn("Failed to upsert claimable balance entry")
+					} else {
+						claimableBalanceCount++
+					}
+				case *models.LiquidityPoolEntry:
+					if err := models.UpsertLiquidityPoolEntry(tx, m); err != nil {
+						p.logger.WithError(err).Warn("Failed to upsert liquidity pool entry")
+					} else {
+						liquidityPoolCount++
+					}
 				}
 			}
-		}
 		}
 	}
 
@@ -758,11 +758,11 @@ func (p *Poller) GetStats() (map[string]interface{}, error) {
 	}
 
 	return map[string]interface{}{
-		"lastLedger":         cursor,
-		"totalEvents":        eventCount,
-		"totalTransactions":  txCount,
-		"totalTokenOps":      tokenOpCount,
-		"totalContractData":  contractDataCount,
+		"lastLedger":        cursor,
+		"totalEvents":       eventCount,
+		"totalTransactions": txCount,
+		"totalTokenOps":     tokenOpCount,
+		"totalContractData": contractDataCount,
 	}, nil
 }
 
@@ -872,16 +872,16 @@ func (p *Poller) Backfill(ctx context.Context, config BackfillConfig) error {
 			estimated := time.Duration(float64(time.Since(start)) / float64(processedLedgers) * float64(totalLedgers-processedLedgers))
 
 			p.logger.WithFields(logrus.Fields{
-				"progress":          fmt.Sprintf("%.2f%%", progress),
-				"processedLedgers":  processedLedgers,
-				"totalLedgers":      totalLedgers,
-				"currentLedger":     endBatchLedger,
-				"events":            totalEvents,
-				"transactions":      totalTransactions,
-				"operations":        totalOperations,
-				"duration":          time.Since(start).Round(time.Second),
+				"progress":           fmt.Sprintf("%.2f%%", progress),
+				"processedLedgers":   processedLedgers,
+				"totalLedgers":       totalLedgers,
+				"currentLedger":      endBatchLedger,
+				"events":             totalEvents,
+				"transactions":       totalTransactions,
+				"operations":         totalOperations,
+				"duration":           time.Since(start).Round(time.Second),
 				"estimatedRemaining": estimated.Round(time.Second),
-				"batchDuration":     batchStart.Sub(lastProgressLog).Round(time.Millisecond),
+				"batchDuration":      batchStart.Sub(lastProgressLog).Round(time.Millisecond),
 			}).Info("Backfill progress")
 			lastProgressLog = time.Now()
 		}

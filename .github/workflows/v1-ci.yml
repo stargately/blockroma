@@ -1,0 +1,58 @@
+name: v1 CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./v1
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: v1/node_modules
+          key: ${{ runner.os }}-v1-node-${{ hashFiles('v1/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-v1-node-
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run format check
+        run: npm run format-i18n
+      
+      - name: Run ESLint
+        run: npx eslint src --ext .js,.tsx,.ts --quiet
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Run tests
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+        run: npm test

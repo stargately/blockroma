@@ -1,6 +1,23 @@
 # Blockroma Soroban Indexer
 
 
+
+✅ 9 Tables WORK (Soroban-Specific Data)
+
+1. events - Contract events via getEvents()
+2. transactions - Transaction data via
+   getTransaction()
+3. operations - Parsed from transaction XDR
+4. token_operations - SAC token transfers
+   extracted from events
+5. ? token_metadata - Token
+   name/symbol/decimals
+6. token_balances - Token holder balances
+7. contract_data_entries - Contract storage
+8. contract_code - WASM code
+9. cursor - Indexer state
+
+
 ## For these tables please use horizon
 
 1. account_entries - Account balances, signers, thresholds
@@ -12,22 +29,6 @@
 
 
 
-
-
-✅ 9 Tables WORK (Soroban-Specific Data)
-
-1. events - Contract events via getEvents()
-2. transactions - Transaction data via
-   getTransaction()
-3. operations - Parsed from transaction XDR
-4. token_operations - SAC token transfers
-   extracted from events
-5. token_metadata - Token
-   name/symbol/decimals
-6. token_balances - Token holder balances
-7. contract_data_entries - Contract storage
-8. contract_code - WASM code
-9. cursor - Indexer state
 
 
 ## Overview

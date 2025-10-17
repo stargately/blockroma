@@ -2,15 +2,11 @@ package poller
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stellar/go/xdr"
 	"gorm.io/gorm"
 
 	"github.com/blockroma/soroban-indexer/pkg/client"
@@ -406,18 +402,11 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 	balanceCount := 0
 	contractDataCount := 0
 
-	// For each contract, proactively fetch its metadata and balance data
+	// For each contract, query existing contract data entries for this contract (passive indexing)
+	// Note: Proactive fetching via getLedgerEntries disabled - Soroban RPC returns corrupted XDR
+	// We rely on passive indexing from transaction metadata instead
 	for contractID := range contractIDs {
-		// Step 1: Fetch contract metadata (token name, symbol, decimals)
-		// Note: This currently fails for all contracts because contract instance data
-		// cannot be fetched via getLedgerEntries with ContractData key.
-		// See TOKEN_METADATA_LIMITATION.md for details and alternatives.
-		if err := p.fetchContractMetadata(ctx, tx, contractID); err == nil {
-			metadataCount++
-			p.logger.WithField("contractID", contractID).Info("Successfully fetched contract metadata")
-		}
-
-		// Step 2: Query existing contract data entries for this contract (passive indexing)
+		// Query existing contract data entries for this contract (passive indexing)
 		var entries []models.ContractDataEntry
 		if err := p.db.Where("contract_id = ?", contractID).Find(&entries).Error; err != nil {
 			p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to fetch contract data")
@@ -452,260 +441,6 @@ func (p *Poller) processContractData(ctx context.Context, tx *gorm.DB, contractI
 					p.logger.WithError(err).WithField("contractID", contractID).Warn("Failed to upsert token balance")
 				} else {
 					balanceCount++
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// fetchContractMetadata proactively fetches metadata for a contract using getLedgerEntries RPC
-func (p *Poller) fetchContractMetadata(ctx context.Context, tx *gorm.DB, contractID string) error {
-	// Build metadata key (ScvLedgerKeyContractInstance)
-	metadataKeyScVal := parser.BuildMetadataKey()
-
-	// Build the proper LedgerKey for contract data
-	ledgerKey, err := parser.BuildContractDataKey(contractID, metadataKeyScVal, xdr.ContractDataDurabilityPersistent)
-	if err != nil {
-		return fmt.Errorf("build contract data key: %w", err)
-	}
-
-	// Fetch contract data from RPC (persistent storage)
-	resp, err := p.rpcClient.GetContractData(ctx, contractID, ledgerKey, "persistent")
-	if err != nil {
-		return fmt.Errorf("get contract data: %w", err)
-	}
-
-	// Parse the XDR response
-	data, err := base64.StdEncoding.DecodeString(resp.XDR)
-	if err != nil {
-		return fmt.Errorf("decode xdr: %w", err)
-	}
-
-	var ledgerEntry xdr.LedgerEntry
-	if err := xdr.SafeUnmarshal(data, &ledgerEntry); err != nil {
-		// Known issue: Soroban RPC sometimes returns account entries with corrupted XDR
-		// when querying for contract data. Treat this as "contract data not found".
-		// See SOROBAN_RPC_LIMITATIONS.md for details.
-		return fmt.Errorf("contract data not found")
-	}
-
-	// Parse and store contract data entry
-	if ledgerEntry.Data.Type == xdr.LedgerEntryTypeContractData {
-		contractData := ledgerEntry.Data.ContractData
-
-		// Convert key and value to interface{} first
-		keyInterface := parser.ScValToInterface(contractData.Key)
-		valInterface := parser.ScValToInterface(contractData.Val)
-
-		// Marshal to JSON bytes for JSONB storage
-		keyBytes, err := json.Marshal(keyInterface)
-		if err != nil {
-			return fmt.Errorf("marshal key to JSON: %w", err)
-		}
-		valBytes, err := json.Marshal(valInterface)
-		if err != nil {
-			return fmt.Errorf("marshal val to JSON: %w", err)
-		}
-
-		// Create ledger key hash
-		key, _ := ledgerEntry.LedgerKey()
-		bin, _ := key.MarshalBinary()
-		keyHash := sha256.Sum256(bin)
-		hexKey := hex.EncodeToString(keyHash[:])
-
-		keyXDR, _ := xdr.MarshalBase64(contractData.Key)
-		valXDR, _ := xdr.MarshalBase64(contractData.Val)
-
-		durability := "persistent"
-		if contractData.Durability == xdr.ContractDataDurabilityTemporary {
-			durability = "temporary"
-		}
-
-		// Store contract data entry
-		contractDataEntry := &models.ContractDataEntry{
-			KeyHash:    hexKey,
-			ContractID: contractID,
-			Key:        models.JSONB(keyBytes),
-			KeyXdr:     keyXDR,
-			Val:        models.JSONB(valBytes),
-			ValXdr:     valXDR,
-			Durability: durability,
-		}
-
-		if err := models.UpsertContractDataEntry(tx, contractDataEntry); err != nil {
-			return fmt.Errorf("upsert contract data entry: %w", err)
-		}
-
-		// Try to parse token metadata (pass interface{} values, not JSONB bytes)
-		if metadata := parser.ParseTokenMetadata(contractID, keyInterface, valInterface); metadata != nil {
-			if err := models.UpsertTokenMetadata(tx, metadata); err != nil {
-				return fmt.Errorf("upsert token metadata: %w", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// processLedgerEntries fetches and processes ledger entries for discovered accounts
-func (p *Poller) processLedgerEntries(ctx context.Context, tx *gorm.DB, accountAddresses map[string]bool) error {
-	if len(accountAddresses) == 0 {
-		return nil
-	}
-
-	// Build ledger keys for all accounts
-	var keys []string
-	for address := range accountAddresses {
-		key, err := parser.BuildAccountLedgerKey(address)
-		if err != nil {
-			p.logger.WithError(err).WithField("address", address).Warn("Failed to build ledger key")
-			continue
-		}
-		keys = append(keys, key)
-	}
-
-	if len(keys) == 0 {
-		p.logger.Warn("No valid ledger keys built from account addresses")
-		return nil
-	}
-
-	// Process ledger entries
-	accountCount := 0
-	trustlineCount := 0
-	offerCount := 0
-	dataCount := 0
-	claimableBalanceCount := 0
-	liquidityPoolCount := 0
-
-	// Batch ledger entry requests (RPC max is 200 keys per request)
-	const maxKeysPerRequest = 200
-	for i := 0; i < len(keys); i += maxKeysPerRequest {
-		end := i + maxKeysPerRequest
-		if end > len(keys) {
-			end = len(keys)
-		}
-		batch := keys[i:end]
-
-		// Fetch this batch of ledger entries from RPC
-		resp, err := p.rpcClient.GetLedgerEntries(ctx, batch)
-		if err != nil {
-			p.logger.WithError(err).WithField("batchSize", len(batch)).Warn("Failed to fetch ledger entry batch")
-			continue // Skip this batch but continue with others
-		}
-
-		p.logger.WithField("entriesReceived", len(resp.Entries)).Info("Received ledger entries from RPC")
-
-		// Process each ledger entry in this batch
-		for _, entry := range resp.Entries {
-		// Parse the ledger entry
-		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
-		if err != nil {
-			// Known issue: Soroban RPC returns corrupted XDR for account entries
-			// See SOROBAN_RPC_LIMITATIONS.md for details
-			continue
-		}
-
-		// Upsert each model to database
-		for _, model := range parsedModels {
-			switch m := model.(type) {
-			case *models.AccountEntry:
-				if err := models.UpsertAccountEntry(tx, m); err != nil {
-					p.logger.WithError(err).WithField("accountID", m.AccountID).Warn("Failed to upsert account entry")
-				} else {
-					accountCount++
-				}
-			case *models.TrustLineEntry:
-				if err := models.UpsertTrustLineEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert trustline entry")
-				} else {
-					trustlineCount++
-				}
-			case *models.OfferEntry:
-				if err := models.UpsertOfferEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert offer entry")
-				} else {
-					offerCount++
-				}
-			case *models.DataEntry:
-				if err := models.UpsertDataEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert data entry")
-				} else {
-					dataCount++
-				}
-			case *models.ClaimableBalanceEntry:
-				if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert claimable balance entry")
-				} else {
-					claimableBalanceCount++
-				}
-			case *models.LiquidityPoolEntry:
-				if err := models.UpsertLiquidityPoolEntry(tx, m); err != nil {
-					p.logger.WithError(err).Warn("Failed to upsert liquidity pool entry")
-				} else {
-					liquidityPoolCount++
-				}
-			}
-		}
-		}
-	}
-
-	p.logger.WithFields(logrus.Fields{
-		"accounts":         accountCount,
-		"trustlines":       trustlineCount,
-		"offers":           offerCount,
-		"data":             dataCount,
-		"claimableBalance": claimableBalanceCount,
-		"liquidityPools":   liquidityPoolCount,
-	}).Info("Processed ledger entries")
-
-	return nil
-}
-
-// processClaimableBalances fetches and processes claimable balance ledger entries
-func (p *Poller) processClaimableBalances(ctx context.Context, tx *gorm.DB, balanceIDs map[string]bool) error {
-	if len(balanceIDs) == 0 {
-		return nil
-	}
-
-	// Build ledger keys for all claimable balances
-	var keys []string
-	for balanceID := range balanceIDs {
-		key, err := parser.BuildClaimableBalanceLedgerKey(balanceID)
-		if err != nil {
-			continue
-		}
-		keys = append(keys, key)
-	}
-
-	if len(keys) == 0 {
-		return nil
-	}
-
-	// Fetch ledger entries from RPC
-	resp, err := p.rpcClient.GetLedgerEntries(ctx, keys)
-	if err != nil {
-		return fmt.Errorf("get claimable balance ledger entries: %w", err)
-	}
-
-	// Process each ledger entry
-	claimableBalanceCount := 0
-
-	for _, entry := range resp.Entries {
-		// Parse the ledger entry
-		parsedModels, err := parser.ParseLedgerEntry(entry.XDR)
-		if err != nil {
-			continue
-		}
-
-		// Upsert each model to database
-		for _, model := range parsedModels {
-			if m, ok := model.(*models.ClaimableBalanceEntry); ok {
-				if err := models.UpsertClaimableBalanceEntry(tx, m); err != nil {
-					p.logger.WithError(err).WithField("balanceID", m.BalanceID).Warn("Failed to upsert claimable balance entry")
-				} else {
-					claimableBalanceCount++
 				}
 			}
 		}
@@ -1008,8 +743,6 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 		txCount := 0
 		operationCount := 0
 		contractCodeCount := 0
-		claimableBalanceIDs := make(map[string]bool)
-		accountAddresses := make(map[string]bool)
 
 		for txHash := range txHashes {
 			rpcTx, err := p.rpcClient.GetTransaction(ctx, txHash)
@@ -1030,11 +763,6 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 			}
 
 			txCount++
-
-			// Extract source account for ledger entry processing
-			if dbTx.SourceAccount != nil && *dbTx.SourceAccount != "" {
-				accountAddresses[*dbTx.SourceAccount] = true
-			}
 
 			// Parse and collect operations from this transaction
 			operations, err := parser.ParseOperations(txHash, rpcTx.EnvelopeXdr)
@@ -1062,13 +790,6 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 					}
 				}
 			}
-
-			// Extract claimable balance IDs from transaction operations
-			if balanceIDs, err := parser.ExtractClaimableBalanceIDs(rpcTx.EnvelopeXdr); err == nil {
-				for _, balanceID := range balanceIDs {
-					claimableBalanceIDs[balanceID] = true
-				}
-			}
 		}
 
 		// Process contract data for discovered contracts
@@ -1076,21 +797,9 @@ func (p *Poller) processEventBatch(ctx context.Context, eventList []client.Event
 			p.logger.WithError(err).Warn("Failed to process contract data")
 		}
 
-		// Process ledger entries for discovered accounts
-		// Account addresses were collected during transaction processing above
-		if len(accountAddresses) > 0 {
-			p.logger.WithField("accountCount", len(accountAddresses)).Info("Processing account ledger entries")
-			if err := p.processLedgerEntries(ctx, tx, accountAddresses); err != nil {
-				p.logger.WithError(err).Warn("Failed to process ledger entries")
-			}
-		}
-
-		// Process claimable balance ledger entries
-		if len(claimableBalanceIDs) > 0 {
-			if err := p.processClaimableBalances(ctx, tx, claimableBalanceIDs); err != nil {
-				p.logger.WithError(err).Warn("Failed to process claimable balances")
-			}
-		}
+		// Note: Account/trustline/offer/data/claimable balance/liquidity pool processing not supported
+		// Soroban RPC returns corrupted XDR for these ledger entry types
+		// Use Horizon API for indexing these classic Stellar ledger entries
 
 		events = eventCount
 		txs = txCount

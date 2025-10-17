@@ -186,38 +186,6 @@ func BatchUpsertContractCode(db *gorm.DB, codes []*ContractCode, config ...Batch
 	return nil
 }
 
-// BatchUpsertAccountEntries upserts multiple account entries in batches
-// Note: This function does NOT create a transaction - it should be called from within a transaction
-func BatchUpsertAccountEntries(db *gorm.DB, accounts []*AccountEntry, config ...BatchConfig) error {
-	if len(accounts) == 0 {
-		return nil
-	}
-
-	batchSize := 100
-	if len(config) > 0 && config[0].BatchSize > 0 {
-		batchSize = config[0].BatchSize
-	}
-
-	for i := 0; i < len(accounts); i += batchSize {
-		end := i + batchSize
-		if end > len(accounts) {
-			end = len(accounts)
-		}
-
-		batch := accounts[i:end]
-		if err := db.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "account_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"balance", "seq_num", "num_sub_entries", "flags",
-				"home_domain", "signers", "ext", "inflation_dest", "thresholds", "updated_at",
-			}),
-		}).Create(batch).Error; err != nil {
-			return fmt.Errorf("batch upsert account entries: %w", err)
-		}
-	}
-	return nil
-}
-
 // BatchResult contains results from batch operations
 type BatchResult struct {
 	TotalProcessed int

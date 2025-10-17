@@ -1,7 +1,6 @@
 package poller
 
 import (
-	"encoding/base64"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -9,7 +8,6 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/blockroma/soroban-indexer/pkg/client"
 	"github.com/blockroma/soroban-indexer/pkg/models"
 )
 
@@ -21,14 +19,10 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	}
 
 	// Auto-migrate all models
+	// Note: Account/trustline/offer/data/claimable balance/liquidity pool tables removed
+	// These classic Stellar ledger entries should be indexed via Horizon API instead
 	if err := db.AutoMigrate(
 		&models.Transaction{},
-		&models.AccountEntry{},
-		&models.TrustLineEntry{},
-		&models.OfferEntry{},
-		&models.DataEntry{},
-		&models.ClaimableBalanceEntry{},
-		&models.LiquidityPoolEntry{},
 	); err != nil {
 		t.Fatalf("Failed to migrate test database: %v", err)
 	}
@@ -62,7 +56,9 @@ func createTestTransactionEnvelope(sourceAccountAddr string) string {
 	return encoded
 }
 
-// createTestAccountLedgerEntry creates a test account ledger entry XDR
+// createTestAccountLedgerEntry removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func createTestAccountLedgerEntry(accountAddr string) string {
 	accountID := xdr.MustAddress(accountAddr)
 
@@ -90,6 +86,7 @@ func createTestAccountLedgerEntry(accountAddr string) string {
 	encoded, _ := xdr.MarshalBase64(ledgerEntry)
 	return encoded
 }
+*/
 
 // TestProcessLedgerEntries_AccountExtraction tests that account addresses are properly extracted
 func TestProcessLedgerEntries_AccountExtraction(t *testing.T) {
@@ -241,7 +238,9 @@ func TestProcessLedgerEntries_MixedTransactions(t *testing.T) {
 	}
 }
 
-// TestAccountEntryUpsert tests that account entries can be properly upserted
+// TestAccountEntryUpsert removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func TestAccountEntryUpsert(t *testing.T) {
 	db := setupTestDB(t)
 
@@ -314,6 +313,7 @@ func TestAccountEntryUpsert(t *testing.T) {
 		t.Errorf("Expected 1 account entry, got %d", count)
 	}
 }
+*/
 
 // TestBuildAccountLedgerKey_InvalidAddress tests error handling for invalid addresses
 func TestBuildAccountLedgerKey_InvalidAddress(t *testing.T) {
@@ -424,7 +424,9 @@ func TestTransactionQueryWithInlineFunction(t *testing.T) {
 	})
 }
 
-// TestLedgerEntryParsing tests that ledger entries are correctly parsed
+// TestLedgerEntryParsing removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func TestLedgerEntryParsing(t *testing.T) {
 	testAddr := "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
 
@@ -475,8 +477,11 @@ func TestLedgerEntryParsing(t *testing.T) {
 		t.Errorf("Expected balance 1000000, got %d", decoded.Data.Account.Balance)
 	}
 }
+*/
 
-// TestGetLedgerEntriesResponse tests the RPC response structure
+// TestGetLedgerEntriesResponse removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func TestGetLedgerEntriesResponse(t *testing.T) {
 	// Create a mock response similar to what RPC would return
 	testAddr := "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
@@ -508,3 +513,4 @@ func TestGetLedgerEntriesResponse(t *testing.T) {
 		t.Errorf("Expected account entry, got type %v", ledgerEntry.Data.Type)
 	}
 }
+*/

@@ -16,6 +16,8 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	}
 
 	// Auto-migrate all models
+	// Note: Account/trustline/offer/data/claimable balance/liquidity pool tables removed
+	// These classic Stellar ledger entries should be indexed via Horizon API instead
 	err = db.AutoMigrate(
 		&Event{},
 		&Transaction{},
@@ -24,12 +26,6 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		&TokenOperation{},
 		&TokenBalance{},
 		&ContractDataEntry{},
-		&AccountEntry{},
-		&TrustLineEntry{},
-		&OfferEntry{},
-		&LiquidityPoolEntry{},
-		&ClaimableBalanceEntry{},
-		&DataEntry{},
 	)
 	if err != nil {
 		t.Fatalf("Failed to migrate test database: %v", err)
@@ -435,43 +431,14 @@ func TestUpsertContractDataEntry(t *testing.T) {
 	}
 }
 
+// TestUpsertAccountEntry removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func TestUpsertAccountEntry(t *testing.T) {
-	db := setupTestDB(t)
-
-	entry := &AccountEntry{
-		AccountID:             "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
-		Balance:               10000000000,
-		SeqNum:                123456,
-		NumSubEntries:         5,
-		Flags:                 1,
-		HomeDomain:            "example.com",
-		Signers:               []byte(`[]`),
-		Ext:                   []byte(`{}`),
-		InflationDest:         "",
-		Thresholds:            []byte{1, 2, 3, 4},
-		LastModifiedLedgerSeq: 12345,
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
-	}
-
-	err := UpsertAccountEntry(db, entry)
-	if err != nil {
-		t.Fatalf("UpsertAccountEntry() error = %v", err)
-	}
-
-	var retrieved AccountEntry
-	result := db.First(&retrieved, "account_id = ?", entry.AccountID)
-	if result.Error != nil {
-		t.Fatalf("Failed to retrieve account entry: %v", result.Error)
-	}
-
-	if retrieved.Balance != entry.Balance {
-		t.Errorf("Balance = %v, want %v", retrieved.Balance, entry.Balance)
-	}
-	if retrieved.HomeDomain != entry.HomeDomain {
-		t.Errorf("HomeDomain = %v, want %v", retrieved.HomeDomain, entry.HomeDomain)
-	}
+	// REMOVED: AccountEntry model no longer supported
+	// Use Horizon API for account entries
 }
+*/
 
 func TestInt128(t *testing.T) {
 	var i128 util.Int128

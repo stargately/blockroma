@@ -22,7 +22,6 @@ func setupBatchTestDB(t *testing.T) *gorm.DB {
 		&Operation{},
 		&TokenOperation{},
 		&ContractCode{},
-		&AccountEntry{},
 	); err != nil {
 		t.Fatalf("Failed to migrate: %v", err)
 	}
@@ -299,49 +298,14 @@ func TestBatchUpsertContractCode(t *testing.T) {
 	}
 }
 
+// TestBatchUpsertAccountEntries removed - AccountEntry model deleted
+// These classic Stellar ledger entries should be indexed via Horizon API instead
+/*
 func TestBatchUpsertAccountEntries(t *testing.T) {
-	db := setupBatchTestDB(t)
-
-	balance := int64(1000000)
-	seqNum := int64(12345)
-
-	// Ext needs to be properly JSON-encoded
-	extJSON := []byte(`{"v":0}`)
-
-	accounts := []*AccountEntry{
-		{
-			AccountID:     "account1",
-			Balance:       balance,
-			SeqNum:        seqNum,
-			NumSubEntries: 0,
-			Flags:         0,
-			HomeDomain:    "",
-			InflationDest: "",
-			Ext:           extJSON,
-		},
-		{
-			AccountID:     "account2",
-			Balance:       balance,
-			SeqNum:        seqNum,
-			NumSubEntries: 0,
-			Flags:         0,
-			HomeDomain:    "",
-			InflationDest: "",
-			Ext:           extJSON,
-		},
-	}
-
-	err := BatchUpsertAccountEntries(db, accounts)
-	if err != nil {
-		t.Fatalf("BatchUpsertAccountEntries failed: %v", err)
-	}
-
-	var count int64
-	db.Model(&AccountEntry{}).Count(&count)
-	if count != 2 {
-		t.Errorf("Expected 2 account entries, got %d", count)
-	}
+	// REMOVED: AccountEntry model no longer supported
+	// Use Horizon API for account entries
 }
+*/
 
 func TestDefaultBatchConfig(t *testing.T) {
 	config := DefaultBatchConfig()
@@ -485,23 +449,7 @@ func TestBatchFunctionsWithinTransaction(t *testing.T) {
 			return err
 		}
 
-		// Test BatchUpsertAccountEntries
-		balance := int64(1000000)
-		seqNum := int64(12345)
-		extJSON := []byte(`{"v":0}`)
-		accounts := []*AccountEntry{
-			{
-				AccountID:     "account_tx1",
-				Balance:       balance,
-				SeqNum:        seqNum,
-				NumSubEntries: 0,
-				Flags:         0,
-				Ext:           extJSON,
-			},
-		}
-		if err := BatchUpsertAccountEntries(tx, accounts); err != nil {
-			return err
-		}
+		// BatchUpsertAccountEntries removed - not supported
 
 		return nil
 	})
@@ -511,13 +459,12 @@ func TestBatchFunctionsWithinTransaction(t *testing.T) {
 	}
 
 	// Verify all records were inserted
-	var eventCount, txCount, opCount, tokenOpCount, codeCount, accountCount int64
+	var eventCount, txCount, opCount, tokenOpCount, codeCount int64
 	db.Model(&Event{}).Count(&eventCount)
 	db.Model(&Transaction{}).Count(&txCount)
 	db.Model(&Operation{}).Count(&opCount)
 	db.Model(&TokenOperation{}).Count(&tokenOpCount)
 	db.Model(&ContractCode{}).Count(&codeCount)
-	db.Model(&AccountEntry{}).Count(&accountCount)
 
 	if eventCount != 1 {
 		t.Errorf("Expected 1 event, got %d", eventCount)
@@ -533,9 +480,6 @@ func TestBatchFunctionsWithinTransaction(t *testing.T) {
 	}
 	if codeCount != 1 {
 		t.Errorf("Expected 1 contract code, got %d", codeCount)
-	}
-	if accountCount != 1 {
-		t.Errorf("Expected 1 account entry, got %d", accountCount)
 	}
 }
 

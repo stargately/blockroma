@@ -120,19 +120,23 @@ Stellar RPC (upstream) → Poller (1s interval) → Parser → PostgreSQL ← Ha
   - `ParseTokenOperation()`: Recognizes standard SAC token event patterns
   - `ParseTokenMetadata()`: Extracts name, symbol, decimals from contract storage
   - `ParseTokenBalance()`: Extracts holder balances from contract storage
-- `ledger_entries.go`: Parses various ledger entry types (accounts, trustlines, offers, etc.)
+- `contract_data_meta.go`: Parses contract data entries and contract code
+  - Note: Classic Stellar ledger entries (accounts, trustlines, offers) are NOT indexed - use Horizon API instead
 
 **indexer/pkg/models/**
 - Database models using GORM (PostgreSQL)
 - Key tables:
   - `events`: Contract events with decoded topics/values (JSONB)
   - `transactions`: Full transaction details including memos, signatures, preconditions
+  - `operations`: Transaction operations
   - `token_operations`: Extracted token transfers/mints/burns
   - `token_metadata`: Token info (name, symbol, decimals)
   - `token_balances`: Token holder balances
-  - `account_entries`, `trust_line_entries`, `offer_entries`, etc.: Ledger state
+  - `contract_data_entries`: Soroban contract data storage
+  - `contract_code`: Soroban contract WASM code
   - `cursor`: Tracks last processed ledger for recovery
 - All models have `UpsertX()` methods for idempotent writes
+- Note: Classic Stellar ledger entries (accounts, trustlines, offers, etc.) are NOT indexed - use Horizon API instead
 
 **indexer/pkg/db/**
 - `db.go`: Database connection and migrations
@@ -140,10 +144,11 @@ Stellar RPC (upstream) → Poller (1s interval) → Parser → PostgreSQL ← Ha
 
 **deploy/hasura/**
 - Hasura GraphQL Engine for querying indexed data
-- Pre-configured metadata tracking all 13 database tables
+- Pre-configured metadata tracking all Soroban-specific database tables
 - Provides GraphQL API with queries, mutations, and subscriptions
 - Anonymous read-only access enabled by default
 - Console UI at `http://localhost:8081` for schema exploration and testing
+- Note: Classic Stellar ledger entries (accounts, trustlines, offers, etc.) are NOT included - use Horizon API for those
 
 ### Key Design Patterns
 
@@ -252,7 +257,7 @@ See `deploy/hasura/README.md` for more query examples and advanced usage.
 ### Metadata Management
 
 Hasura metadata is stored in `deploy/hasura/metadata/` and includes:
-- All 13 tables pre-tracked with anonymous read permissions
+- All Soroban-specific tables pre-tracked with anonymous read permissions
 - Proper column configurations for each table
 - Version-controlled metadata that auto-applies on startup
 
@@ -260,6 +265,8 @@ If you add new tables to the indexer:
 1. Track them in Hasura Console (http://localhost:8081/console/data)
 2. Export metadata to save changes
 3. Commit metadata files to version control
+
+**Important**: This indexer focuses on Soroban-specific data only. For classic Stellar ledger entries (accounts, trustlines, offers, data entries, claimable balances, liquidity pools), use the Horizon API instead.
 
 ## Common Development Scenarios
 

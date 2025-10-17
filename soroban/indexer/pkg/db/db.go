@@ -77,6 +77,9 @@ func ConnectWithConfig(dsn string, poolConfig ConnectionPoolConfig) (*DB, error)
 	}
 
 	// Auto-migrate tables
+	// Note: Account/trustline/offer/data/claimable balance/liquidity pool tables removed
+	// These classic Stellar ledger entries should be indexed via Horizon API instead
+	// Soroban RPC returns corrupted XDR for these entry types
 	if err := db.AutoMigrate(
 		&models.Event{},
 		&models.Transaction{},
@@ -87,12 +90,6 @@ func ConnectWithConfig(dsn string, poolConfig ConnectionPoolConfig) (*DB, error)
 		&models.TokenBalance{},
 		&models.ContractDataEntry{},
 		&models.ContractCode{},
-		&models.AccountEntry{},
-		&models.TrustLineEntry{},
-		&models.OfferEntry{},
-		&models.LiquidityPoolEntry{},
-		&models.ClaimableBalanceEntry{},
-		&models.DataEntry{},
 	); err != nil {
 		return nil, fmt.Errorf("auto migrate: %w", err)
 	}

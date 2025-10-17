@@ -275,10 +275,9 @@ func ScValToInterface(val xdr.ScVal) interface{} {
 		addrStr, _ := addr.String()
 		return addrStr
 	case xdr.ScValTypeScvLedgerKeyContractInstance:
-		// Return a proper JSON object for contract instance key
-		return map[string]interface{}{
-			"type": "LedgerKeyContractInstance",
-		}
+		// Return simple string to match reference implementation format
+		// This will be stored as JSONB: "\"ScvLedgerKeyContractInstance\""
+		return "ScvLedgerKeyContractInstance"
 	case xdr.ScValTypeScvContractInstance:
 		// Parse contract instance to match expected format
 		instance := val.MustInstance()

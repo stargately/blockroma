@@ -189,7 +189,6 @@ func runCustomMigrations(db *gorm.DB) error {
 	var nullCount int64
 	if err := db.Raw("SELECT COUNT(*) FROM events WHERE last_modified_ledger_seq IS NULL").Scan(&nullCount).Error; err != nil {
 		// Query failed, might be NOT NULL already - that's ok
-		logrus.Debug("Could not check for NULL values in last_modified_ledger_seq, column may already be NOT NULL")
 		return nil
 	}
 
@@ -200,10 +199,8 @@ func runCustomMigrations(db *gorm.DB) error {
 			return fmt.Errorf("set default value for last_modified_ledger_seq: %w", err)
 		}
 
-		if err := setColumnNotNull(db, "events", "last_modified_ledger_seq"); err != nil {
-			// This might fail if constraint already exists or on SQLite, that's ok
-			logrus.Debug("Could not add NOT NULL constraint, may already exist")
-		}
+		// Try to set NOT NULL constraint, ignore errors (may already exist or on SQLite)
+		setColumnNotNull(db, "events", "last_modified_ledger_seq")
 
 		logrus.Info("Successfully updated last_modified_ledger_seq column")
 	}
@@ -224,7 +221,6 @@ func setColumnNotNull(db *gorm.DB, tableName, columnName string) error {
 	case "sqlite":
 		// SQLite doesn't support ALTER COLUMN easily - would need to recreate the table
 		// For testing purposes, we skip this as SQLite doesn't enforce NOT NULL retroactively
-		logrus.Debug("SQLite detected - skipping NOT NULL constraint (not supported)")
 		return nil
 	default:
 		// Try PostgreSQL syntax as default
@@ -239,7 +235,6 @@ func createIndexes(db *gorm.DB) error {
 
 	// Only create specialized indexes for PostgreSQL
 	if dialector != "postgres" {
-		logrus.Debug("Skipping index creation for non-PostgreSQL database")
 		return nil
 	}
 
@@ -294,7 +289,6 @@ func createIndexes(db *gorm.DB) error {
 	}
 
 	for _, idx := range indexes {
-		logrus.WithField("index", idx.name).Debug("Creating index")
 		if err := db.Exec(idx.query).Error; err != nil {
 			logrus.WithError(err).WithField("index", idx.name).Warn("Failed to create index (may already exist)")
 			// Continue with other indexes even if one fails

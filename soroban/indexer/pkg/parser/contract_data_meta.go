@@ -29,33 +29,12 @@ func ExtractContractDataFromMeta(txHash string, metaXdr string) ([]*models.Contr
 
 	var entries []*models.ContractDataEntry
 
-	// Log every call to verify function is being invoked
-	fmt.Printf("[TRACE] ExtractContractDataFromMeta called for TX %s\n", txHash[:8])
-
-	// Check metadata version and log what we actually have
-	metaType := fmt.Sprintf("V%d", meta.V)
-	isSoroban := false
-	if meta.V4 != nil {
-		metaType = "V4 (Soroban)"
-		isSoroban = true
-	} else if meta.V3 != nil {
-		metaType = "V3 (Soroban)"
-		isSoroban = true
-	} else if meta.V2 != nil {
-		metaType = "V2 (classic)"
-	} else if meta.V1 != nil {
-		metaType = "V1 (classic)"
-	}
-	fmt.Printf("[TRACE] TX %s: Metadata type=%s\n", txHash[:8], metaType)
-
 	// Check if this is a Soroban transaction (V3 or V4)
+	isSoroban := meta.V4 != nil || meta.V3 != nil
 	if !isSoroban {
-		// Not a Soroban transaction
-		fmt.Printf("[TRACE] TX %s: Not Soroban metadata (classic Stellar transaction)\n", txHash[:8])
+		// Not a Soroban transaction (classic Stellar)
 		return entries, nil
 	}
-
-	fmt.Printf("[TRACE] TX %s: Has %s metadata (Soroban transaction)\n", txHash[:8], metaType)
 
 	// Get the changes from either V3 or V4
 	var txChangesAfter xdr.LedgerEntryChanges
@@ -73,60 +52,21 @@ func ExtractContractDataFromMeta(txHash string, metaXdr string) ([]*models.Contr
 		}
 	}
 
-	// Count total changes
-	totalChanges := len(txChangesAfter)
-	for _, op := range operations {
-		if v3Op, ok := op.(xdr.OperationMeta); ok {
-			totalChanges += len(v3Op.Changes)
-		} else if v4Op, ok := op.(xdr.OperationMetaV2); ok {
-			totalChanges += len(v4Op.Changes)
-		}
-	}
-
-	// Log summary of what we found
-	fmt.Printf("[TRACE] TX %s: TxChangesAfter=%d, Operations=%d, totalChanges=%d\n",
-		txHash[:8], len(txChangesAfter), len(operations), totalChanges)
-
-	// Early return if no changes at all
-	if totalChanges == 0 {
-		fmt.Printf("[TRACE] TX %s: No ledger changes, skipping\n", txHash[:8])
-		return entries, nil
-	}
-
-	fmt.Printf("[DEBUG] TX %s: Processing %d ledger changes\n", txHash[:8], totalChanges)
-
 	// Process ledger entry changes after the transaction
 	// This includes created, updated, and restored contract data entries
-	contractDataChanges := 0
-	otherChanges := 0
 	for _, change := range txChangesAfter {
-		// Get the ledger entry from the change
 		ledgerEntry, ok := getLedgerEntryFromChange(change)
 		if !ok {
 			continue
 		}
 
-		// Count entry types
-		if ledgerEntry.Data.Type == xdr.LedgerEntryTypeContractData {
-			contractDataChanges++
-		} else {
-			otherChanges++
-		}
-
 		entry, err := extractContractDataFromLedgerEntry(ledgerEntry)
 		if err != nil {
-			// Log error but continue processing
 			continue
 		}
 		if entry != nil {
 			entries = append(entries, entry)
 		}
-	}
-
-	// Log what we found
-	if contractDataChanges > 0 || otherChanges > 0 {
-		fmt.Printf("[DEBUG] TX %s: TxChangesAfter has %d ContractData entries, %d other entries\n",
-			txHash, contractDataChanges, otherChanges)
 	}
 
 	// Also process operation-level changes
@@ -154,8 +94,6 @@ func ExtractContractDataFromMeta(txHash string, metaXdr string) ([]*models.Contr
 		}
 	}
 
-	// Final summary
-	fmt.Printf("[TRACE] TX %s: Extracted %d contract data entries\n", txHash[:8], len(entries))
 	return entries, nil
 }
 
@@ -268,4 +206,120 @@ func extractContractDataFromLedgerEntry(entry xdr.LedgerEntry) (*models.Contract
 		ValXdr:     valXDR,
 		Durability: durability,
 	}, nil
+}
+
+// ExtractContractInstanceFromMeta extracts contract instance data from transaction metadata
+// This specifically looks for contract deployment transactions and extracts the contract instance,
+// which contains token metadata (name, symbol, decimals)
+func ExtractContractInstanceFromMeta(txHash string, metaXdr string) (map[string]*models.TokenMetadata, error) {
+	// Decode metadata XDR
+	data, err := base64.StdEncoding.DecodeString(metaXdr)
+	if err != nil {
+		return nil, fmt.Errorf("decode meta xdr: %w", err)
+	}
+
+	var meta xdr.TransactionMeta
+	if err := xdr.SafeUnmarshal(data, &meta); err != nil {
+		return nil, fmt.Errorf("unmarshal transaction meta: %w", err)
+	}
+
+	metadataMap := make(map[string]*models.TokenMetadata)
+
+	// Check if this is a Soroban transaction (V3 or V4)
+	isSoroban := meta.V4 != nil || meta.V3 != nil
+	if !isSoroban {
+		return metadataMap, nil
+	}
+
+	// Get the changes from either V3 or V4
+	var txChangesAfter xdr.LedgerEntryChanges
+	var operations []interface{}
+
+	if meta.V4 != nil {
+		txChangesAfter = meta.V4.TxChangesAfter
+		for _, op := range meta.V4.Operations {
+			operations = append(operations, op)
+		}
+	} else if meta.V3 != nil {
+		txChangesAfter = meta.V3.TxChangesAfter
+		for _, op := range meta.V3.Operations {
+			operations = append(operations, op)
+		}
+	}
+
+	// Process ledger entry changes after the transaction
+	for _, change := range txChangesAfter {
+		ledgerEntry, ok := getLedgerEntryFromChange(change)
+		if !ok {
+			continue
+		}
+
+		metadata := extractTokenMetadataFromLedgerEntry(ledgerEntry)
+		if metadata != nil {
+			metadataMap[metadata.ContractID] = metadata
+		}
+	}
+
+	// Also process operation-level changes
+	for _, op := range operations {
+		var changes xdr.LedgerEntryChanges
+		if v3Op, ok := op.(xdr.OperationMeta); ok {
+			changes = v3Op.Changes
+		} else if v4Op, ok := op.(xdr.OperationMetaV2); ok {
+			changes = v4Op.Changes
+		}
+
+		for _, change := range changes {
+			ledgerEntry, ok := getLedgerEntryFromChange(change)
+			if !ok {
+				continue
+			}
+
+			metadata := extractTokenMetadataFromLedgerEntry(ledgerEntry)
+			if metadata != nil {
+				metadataMap[metadata.ContractID] = metadata
+			}
+		}
+	}
+
+	return metadataMap, nil
+}
+
+// extractTokenMetadataFromLedgerEntry extracts token metadata from a contract data ledger entry
+// if the entry is a contract instance with token metadata
+func extractTokenMetadataFromLedgerEntry(entry xdr.LedgerEntry) *models.TokenMetadata {
+	// Only process contract data entries
+	if entry.Data.Type != xdr.LedgerEntryTypeContractData {
+		return nil
+	}
+
+	contractData := entry.Data.ContractData
+	if contractData == nil {
+		return nil
+	}
+
+	// Extract contract ID from the contract address
+	if contractData.Contract.Type != xdr.ScAddressTypeScAddressTypeContract {
+		return nil
+	}
+
+	contractIDHash := contractData.Contract.ContractId
+	if contractIDHash == nil {
+		return nil
+	}
+
+	// Encode contract ID to C... format
+	contractID, err := strkey.Encode(strkey.VersionByteContract, (*contractIDHash)[:])
+	if err != nil {
+		return nil
+	}
+
+	// Check if the key indicates this is a contract instance
+	// Contract instance keys are special - they're stored as ScvLedgerKeyContractInstance
+	keyInterface := ScValToInterface(contractData.Key)
+	valInterface := ScValToInterface(contractData.Val)
+
+	// Try to parse token metadata from this entry
+	metadata := ParseTokenMetadata(contractID, keyInterface, valInterface)
+	return metadata
 }

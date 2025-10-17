@@ -85,6 +85,17 @@ func ExtractContractCodeFromEnvelope(txHash string, ledger uint32, ledgerCloseTi
 	// Extract contract code from each operation
 	var codes []*models.ContractCode
 	for _, op := range operations {
+		// Debug: Check operation types to understand what we're seeing
+		if op.Body.Type == xdr.OperationTypeInvokeHostFunction {
+			if invokeOp, ok := op.Body.GetInvokeHostFunctionOp(); ok {
+				if invokeOp.HostFunction.Type != xdr.HostFunctionTypeHostFunctionTypeUploadContractWasm {
+					// This is an InvokeHostFunction but NOT an UploadContractWasm
+					// Most Soroban transactions are InvokeContract, not UploadContractWasm
+					// Only log this at debug level to avoid spam
+				}
+			}
+		}
+
 		code, err := ExtractContractCode(txHash, ledger, ledgerCloseTime, op.Body)
 		if err != nil {
 			// Log error but continue processing

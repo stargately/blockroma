@@ -221,6 +221,85 @@ func TestParseTokenMetadata_WrongKey(t *testing.T) {
 	}
 }
 
+func TestParseTokenMetadata_MapKeyFormat(t *testing.T) {
+	// Test that the map format (old ScValToInterface output) still works for backwards compatibility
+	// This ensures we can parse existing data in the database with the old format
+	key := map[string]interface{}{
+		"type": "LedgerKeyContractInstance",
+	}
+	value := map[string]interface{}{
+		"storage": []interface{}{
+			map[string]interface{}{
+				"key": "METADATA",
+				"value": []interface{}{
+					map[string]interface{}{"key": "name", "value": "Map Token"},
+					map[string]interface{}{"key": "symbol", "value": "MAP"},
+					map[string]interface{}{"key": "decimal", "value": 9},
+				},
+			},
+		},
+	}
+
+	metadata := ParseTokenMetadata("contract-789", key, value)
+
+	if metadata == nil {
+		t.Fatal("Expected non-nil metadata for map key format (backwards compatibility)")
+	}
+
+	if metadata.Name != "Map Token" {
+		t.Errorf("Name = %v, want Map Token", metadata.Name)
+	}
+	if metadata.Symbol != "MAP" {
+		t.Errorf("Symbol = %v, want MAP", metadata.Symbol)
+	}
+	if metadata.Decimal != 9 {
+		t.Errorf("Decimal = %v, want 9", metadata.Decimal)
+	}
+}
+
+func TestParseTokenMetadata_StringKeyWithoutQuotes(t *testing.T) {
+	// Test the simple string format (what ScValToInterface now returns)
+	key := "ScvLedgerKeyContractInstance"
+	value := map[string]interface{}{
+		"storage": []interface{}{
+			map[string]interface{}{
+				"key": "METADATA",
+				"value": []interface{}{
+					map[string]interface{}{"key": "name", "value": "Simple Token"},
+					map[string]interface{}{"key": "symbol", "value": "SIM"},
+					map[string]interface{}{"key": "decimal", "value": 6},
+				},
+			},
+			map[string]interface{}{
+				"key":   "Admin",
+				"value": "GBVFTZL5HIPT4PFQVTZVIWR77V7LWYCXU4CLYWWHHOEXB64XPG5LDMTU",
+			},
+		},
+	}
+
+	metadata := ParseTokenMetadata("contract-456", key, value)
+
+	if metadata == nil {
+		t.Fatal("Expected non-nil metadata for simple string key")
+	}
+
+	if metadata.ContractID != "contract-456" {
+		t.Errorf("ContractID = %v, want contract-456", metadata.ContractID)
+	}
+	if metadata.Name != "Simple Token" {
+		t.Errorf("Name = %v, want Simple Token", metadata.Name)
+	}
+	if metadata.Symbol != "SIM" {
+		t.Errorf("Symbol = %v, want SIM", metadata.Symbol)
+	}
+	if metadata.Decimal != 6 {
+		t.Errorf("Decimal = %v, want 6", metadata.Decimal)
+	}
+	if metadata.AdminAddress != "GBVFTZL5HIPT4PFQVTZVIWR77V7LWYCXU4CLYWWHHOEXB64XPG5LDMTU" {
+		t.Errorf("AdminAddress = %v, want GBVFTZL5HIPT4PFQVTZVIWR77V7LWYCXU4CLYWWHHOEXB64XPG5LDMTU", metadata.AdminAddress)
+	}
+}
+
 func TestParseTokenBalance(t *testing.T) {
 	key := []string{"Balance", "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"}
 	value := "10000000000"

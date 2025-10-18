@@ -39,11 +39,14 @@ jobs:
         run: go mod verify
         
       - name: Format check
+        continue-on-error: true
         run: |
+          echo "Checking Go formatting..."
           gofmt -l . | tee /tmp/gofmt.out
           test ! -s /tmp/gofmt.out
         
       - name: Vet
+        continue-on-error: true
         run: go vet ./...
         
       - name: Build

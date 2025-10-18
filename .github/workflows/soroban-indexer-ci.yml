@@ -1,0 +1,62 @@
+name: Soroban Indexer CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'soroban/indexer/**'
+      - '.github/workflows/soroban-indexer-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'soroban/indexer/**'
+      - '.github/workflows/soroban-indexer-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: soroban/indexer
+
+    strategy:
+      matrix:
+        go-version: ['1.23']
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: soroban/indexer/go.sum
+          
+      - name: Download dependencies
+        run: go mod download
+        
+      - name: Verify dependencies
+        run: go mod verify
+        
+      - name: Format check
+        continue-on-error: true
+        run: |
+          echo "Checking Go formatting..."
+          gofmt -l . | tee /tmp/gofmt.out
+          test ! -s /tmp/gofmt.out
+        
+      - name: Vet
+        continue-on-error: true
+        run: go vet ./...
+        
+      - name: Build
+        run: make build
+        
+      - name: Test
+        run: make test-coverage
+        
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./soroban/indexer/coverage.out
+          flags: soroban-indexer

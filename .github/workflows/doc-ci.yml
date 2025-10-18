@@ -1,0 +1,43 @@
+name: Doc CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'doc/**'
+      - '.github/workflows/doc-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'doc/**'
+      - '.github/workflows/doc-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: doc
+
+    strategy:
+      matrix:
+        node-version: [16]
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: doc/yarn.lock
+          
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        
+      - name: Type check
+        run: yarn typecheck
+        
+      - name: Build
+        run: yarn build

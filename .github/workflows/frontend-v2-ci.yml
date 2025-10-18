@@ -1,0 +1,46 @@
+name: Frontend V2 CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend-v2/**'
+      - '.github/workflows/frontend-v2-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend-v2/**'
+      - '.github/workflows/frontend-v2-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-v2
+
+    strategy:
+      matrix:
+        node-version: [18]
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: frontend-v2/yarn.lock
+          
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        
+      - name: Lint
+        run: yarn lint
+        
+      - name: Build
+        run: yarn build
+        
+      - name: Test
+        run: yarn test

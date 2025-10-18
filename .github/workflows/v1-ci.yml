@@ -1,0 +1,48 @@
+name: V1 CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v1
+
+    strategy:
+      matrix:
+        node-version: [16]
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: v1/yarn.lock
+          
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        
+      - name: Lint
+        run: yarn lint
+        
+      - name: Build
+        run: yarn build
+        
+      - name: Test
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+        run: yarn cover
